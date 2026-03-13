@@ -1,12 +1,38 @@
 ﻿# WeChat cloud deployment script for Windows PowerShell
 
+param(
+  [string]$ProjectRoot = $PSScriptRoot,
+  [string]$CloudEnv = $env:GOLDNOTE_CLOUD_ENV
+)
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Gold Note Mini Program - Cloud Deploy" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-$PROJECT_ROOT = "G:\Iflow\goldnote"
-$CLOUD_ENV = "goldnote-7gvcgw84da48b20a"
+$PROJECT_ROOT = if ($ProjectRoot) { $ProjectRoot } else { (Get-Location).Path }
+
+if (-not $CloudEnv) {
+  $existingConfigPath = Join-Path $PROJECT_ROOT ".cloudbaserc.json"
+  if (Test-Path $existingConfigPath) {
+    try {
+      $existingConfig = Get-Content -Path $existingConfigPath -Raw | ConvertFrom-Json
+      if ($existingConfig.envId) {
+        $CloudEnv = $existingConfig.envId
+      }
+    } catch {
+      Write-Host "[WARN] Existing .cloudbaserc.json could not be parsed, will require explicit cloud env input." -ForegroundColor Yellow
+    }
+  }
+}
+
+if (-not $CloudEnv) {
+  Write-Host "[ERR] Missing cloud env ID." -ForegroundColor Red
+  Write-Host "Pass -CloudEnv <env-id> or set GOLDNOTE_CLOUD_ENV before running this script." -ForegroundColor Yellow
+  exit 1
+}
+
+$CLOUD_ENV = $CloudEnv
 
 Write-Host "Project root: $PROJECT_ROOT" -ForegroundColor Gray
 Write-Host "Cloud env ID: $CLOUD_ENV" -ForegroundColor Gray
