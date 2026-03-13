@@ -1,0 +1,76 @@
+[自动热重载] 已开启代码文件保存后自动热重载
+[Deprecation] SharedArrayBuffer will require cross-origin isolation as of M92, around July 2021. See https://developer.chrome.com/blog/enabling-shared-array-buffer/ for more details.
+[system] WeChatLib: 3.14.3 (2026.3.5 11:48:51)
+[system] Subpackages: N/A
+[system] LazyCodeLoading: true
+Lazy code loading is enabled. Only injecting required components.
+Fri Mar 13 2026 12:44:27 GMT+0800 (中国标准时间) 文章推荐
+getSystemInfo API 提示
+小程序基础库从 3.7.0 起正式支持 HarmonyOS 平台，开发者可通过 wx.getDeviceInfo() 判断平台进行兼容处理，让小程序在 HarmonyOS 也获得最佳体验，查看指引[https://developers.weixin.qq.com/community/develop/doc/00008e041106f0259bb33530164409]
+关于上述警告，点击查看更多信息：https://developers.weixin.qq.com/community/develop/doc/00008e041106f0259bb33530164409]
+工具 cloud:true 调试能力已启用
+当前 cloudVersion: undefined
+cloud sdk (build ts 1670494204239) injection skipped for sdk version 3.14.3
+app.js:3 [Perf] App.onLaunch took 137ms
+(anonymous) @ app.js:3
+async function (async)
+(anonymous) @ appservice.app.js:5
+[基础库] 正在使用灰度中的基础库 3.14.3 进行调试。如有问题，请前往工具栏-详情-本地设置更改基础库版本。
+[自动热重载] 已开启代码文件保存后自动热重载
+[system] Launch Time: 5139 ms
+[自动热重载] 已开启代码文件保存后自动热重载
+[pages/index/index] [Component] <canvas>: canvas 2d 接口支持同层渲染且性能更佳，建议切换使用。详见文档 https://developers.weixin.qq.com/miniprogram/dev/component/canvas.html#Canvas-2D-%E7%A4%BA%E4%BE%8B%E4%BB%A3%E7%A0%81
+[自动热重载] 已开启代码文件保存后自动热重载
+storage.js:253 云端保存交易失败 Error: cloud.callFunction:fail Error: errCode: -504002 functions execute fail | errMsg: /var/user/index.js:26
+    const match = tx.id?.match(new RegExp(`^${code}(\\d{4,})$`))
+                        ^
+
+SyntaxError: Unexpected token .
+    at createScript (vm.js:80:10)
+    at Object.runInThisContext (vm.js:139:10)
+    at Module._compile (module.js:607:28)
+    at Object.Module._extensions..js (module.js:654:10)
+    at Module.load (module.js:556:32)
+    at tryModuleLoad (module.js:499:12)
+    at Function.Module._load (module.js:491:3)
+    at Module.require (module.js:587:17)
+    at require (internal/module.js:11:18)
+    at Object.module.exports.load (/data/scf/frame/node8/userFunction.js:19:19) 更多错误信息请访问：https://docs.cloudbase.net/error-code/basic/FUNCTIONS_EXECUTE_FAIL (callId: 1773377091873-0.045526210027924785) (trace: 12:44:51 start->12:44:54 normal poll->12:44:57 system error (Error: errCode: -504002 functions execute fail | errMsg: /var/user/index.js:26
+    const match = tx.id?.match(new RegExp(`^${code}(\\d{4,})$`))
+                        ^
+
+SyntaxError: Unexpected token .
+    at createScript (vm.js:80:10)
+    at Object.runInThisContext (vm.js:139:10)
+    at Module._compile (module.js:607:28)
+    at Object.Module._extensions..js (module.js:654:10)
+    at Module.load (module.js:556:32)
+    at tryModuleLoad (module.js:499:12)
+    at Function.Module._load (module.js:491:3)
+    at Module.require (module.js:587:17)
+    at require (internal/module.js:11:18)
+    at Object.module.exports.load (/data/scf/frame/node8/userFunction.js:19:19) 更多错误信息请访问：https://docs.cloudbase.net/error-code/basic/FUNCTIONS_EXECUTE_FAIL), abort)
+    at N (<anonymous>:1:255194)
+    at <anonymous>:1:293136(env: Windows,mp,2.01.2510280; lib: 3.14.3)
+_callee2$ @ storage.js:253
+s @ regeneratorRuntime.js?forceSync=true:1
+(anonymous) @ regeneratorRuntime.js?forceSync=true:1
+(anonymous) @ regeneratorRuntime.js?forceSync=true:1
+asyncGeneratorStep @ asyncToGenerator.js?forceSync=true:1
+i @ asyncToGenerator.js?forceSync=true:1
+Promise.then (async)
+asyncGeneratorStep @ asyncToGenerator.js?forceSync=true:1
+c @ asyncToGenerator.js?forceSync=true:1
+(anonymous) @ asyncToGenerator.js?forceSync=true:1
+(anonymous) @ asyncToGenerator.js?forceSync=true:1
+_saveTransactionAsync @ storage.js:256
+saveTransactionAsync @ storage.js:228
+_callee2$ @ transaction.js? [sm]:227
+s @ regeneratorRuntime.js?forceSync=true:1
+(anonymous) @ regeneratorRuntime.js?forceSync=true:1
+(anonymous) @ regeneratorRuntime.js?forceSync=true:1
+asyncGeneratorStep @ asyncToGenerator.js?forceSync=true:1
+c @ asyncToGenerator.js?forceSync=true:1
+(anonymous) @ asyncToGenerator.js?forceSync=true:1
+(anonymous) @ asyncToGenerator.js?forceSync=true:1
+submitTransaction @ transaction.js? [sm]:260

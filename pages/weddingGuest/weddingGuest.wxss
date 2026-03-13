@@ -1,0 +1,95 @@
+.container {
+  min-height: 100vh;
+  padding: 20rpx;
+  background: linear-gradient(180deg, #fffaf0 0%, #f7f3ef 100%);
+}
+
+.hero {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.countdown {
+  margin-top: 8rpx;
+  padding: 10rpx;
+  border-radius: 10rpx;
+  background: #fef08a;
+  color: #854d0e;
+  font-weight: 700;
+  font-size: 22rpx;
+}
+
+.card {
+  margin-top: 10rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 12rpx;
+}
+
+.label {
+  font-size: 23rpx;
+  color: #334155;
+  font-weight: 700;
+}
+
+.value {
+  margin-top: 6rpx;
+  color: #1e293b;
+  font-size: 21rpx;
+}
+
+.info-row {
+  margin-top: 6rpx;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8rpx;
+}
+
+.value.inline {
+  margin-top: 0;
+  background: #f8fafc;
+  border-radius: 10rpx;
+  padding: 8rpx 10rpx;
+}
+
+.input {
+  margin-top: 8rpx;
+  min-height: 66rpx;
+  line-height: 36rpx;
+  background: #f5f5f5;
+  border-radius: 10rpx;
+  padding: 12rpx;
+  box-sizing: border-box;
+}
+
+.btn {
+  margin-top: 8rpx;
+  border-radius: 10rpx;
+  background: linear-gradient(135deg, #efc379, #d9953f);
+  color: #ffffff;
+  min-height: 66rpx;
+  line-height: 66rpx;
+  font-size: 22rpx;
+}
+
+.track {
+  margin-top: 8rpx;
+  height: 12rpx;
+  border-radius: 10rpx;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 10rpx;
+  background: linear-gradient(90deg, #efc379, #d9953f);
+}
+
+.error {
+  margin-top: 80rpx;
+  text-align: center;
+  color: #b91c1c;
+  font-size: 22rpx;
+}

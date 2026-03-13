@@ -1,0 +1,361 @@
+.container {
+  padding: 20rpx;
+  padding-bottom: 120rpx;
+  min-height: 100vh;
+  background: #f7f3ef;
+}
+
+.user-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.user-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #f0f0f0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar.default {
+  background: linear-gradient(135deg, #efc379, #d9953f);
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.scene-btn {
+  padding: 6rpx 12rpx;
+  border-radius: 10rpx;
+  background: #ffffff;
+  border: 1rpx solid #ead9bf;
+  color: #7d5e2e;
+  font-size: 20rpx;
+}
+
+.user-nickname {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.user-tip {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.user-actions {
+  margin-top: 8rpx;
+  display: flex;
+  gap: 8rpx;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 16rpx;
+  margin-bottom: 12rpx;
+  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.compact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10rpx;
+}
+
+.compact-item {
+  margin-bottom: 10rpx;
+}
+
+.type-selector {
+  display: flex;
+  gap: 16rpx;
+}
+
+.type-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx;
+  border-radius: 10rpx;
+  border: 2rpx solid #e0e0e0;
+  background: #f9f9f9;
+  transition: all 0.3s;
+}
+
+.type-item.active {
+  border-color: #d9953f;
+  background: linear-gradient(135deg, rgba(239, 195, 121, 0.18), rgba(217, 149, 63, 0.1));
+}
+
+.type-item.active.btn-sell {
+  border-color: #ff5252;
+  background: linear-gradient(135deg, rgba(255, 82, 82, 0.1), rgba(211, 47, 47, 0.1));
+}
+
+.type-icon {
+  font-size: 40rpx;
+  margin-bottom: 8rpx;
+}
+
+.type-text {
+  font-size: 26rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+.form-item {
+  margin-bottom: 10rpx;
+}
+
+.form-label {
+  font-size: 23rpx;
+  color: #666;
+  margin-bottom: 6rpx;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  height: 68rpx;
+  background: #f5f5f5;
+  border-radius: 10rpx;
+  padding: 0 14rpx;
+  font-size: 24rpx;
+  color: #333;
+}
+
+.form-picker {
+  width: 100%;
+  height: 68rpx;
+  background: #f5f5f5;
+  border-radius: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14rpx;
+  font-size: 24rpx;
+  color: #333;
+}
+
+.picker {
+  flex: 1;
+}
+
+.picker-arrow {
+  font-size: 36rpx;
+  color: #999;
+  margin-left: 16rpx;
+}
+
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.chip-btn {
+  padding: 8rpx 14rpx;
+  border-radius: 10rpx;
+  background: #f3f3f3;
+  border: 1rpx solid #e8e8e8;
+}
+
+.chip-btn.active {
+  background: #f8ead1;
+  border-color: #e4c38f;
+}
+
+.chip-btn-text {
+  font-size: 22rpx;
+  color: #6d532e;
+}
+
+.inline-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.inline-label {
+  margin-bottom: 0;
+  min-width: 120rpx;
+  flex-shrink: 0;
+}
+
+.inline-chip-group {
+  flex: 1;
+}
+
+.inline-picker {
+  flex: 1;
+  margin-top: 0;
+}
+
+.fee-preview {
+  background: #f9f9f9;
+  border-radius: 10rpx;
+  padding: 12rpx;
+  margin-top: 8rpx;
+}
+
+.fee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 0;
+}
+
+.fee-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.fee-value {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.fee-value.highlight {
+  color: #d9953f;
+  font-weight: bold;
+  font-size: 28rpx;
+}
+
+.btn-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16rpx;
+  background: white;
+  box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: linear-gradient(135deg, #efc379, #d9953f);
+  color: white;
+  border: none;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  box-shadow: 0 4rpx 12rpx rgba(217, 149, 63, 0.4);
+  text-align: center;
+}
+
+.btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.btn-sell {
+  background: linear-gradient(135deg, #ff5252, #d32f2f);
+  box-shadow: 0 4rpx 12rpx rgba(255, 82, 82, 0.4);
+}
+
+.holding-info {
+  text-align: center;
+  padding: 14rpx;
+  margin-top: 14rpx;
+}
+
+.info-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.empty-text {
+  color: #999;
+  font-size: 24rpx;
+}
+
+.recent-item {
+  border-top: 1rpx solid #f0f0f0;
+  padding: 10rpx 0;
+}
+
+.compact-record .recent-meta {
+  font-size: 20rpx;
+}
+
+.recent-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4rpx;
+}
+
+.recent-row:last-child {
+  margin-bottom: 0;
+}
+
+.recent-id {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.recent-type {
+  font-size: 22rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+}
+
+.recent-type.buy {
+  color: #ff5252;
+  background: rgba(255, 82, 82, 0.1);
+}
+
+.recent-type.sell {
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.recent-meta {
+  font-size: 22rpx;
+  color: #666;
+}
+
+.recent-meta.fee {
+  color: #d9953f;
+  font-weight: 500;
+}

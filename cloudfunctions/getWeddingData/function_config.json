@@ -1,0 +1,8 @@
+{
+  "name": "getWeddingData",
+  "runtime": "Nodejs16.13",
+  "handler": "index.main",
+  "envVariables": {},
+  "triggers": [],
+  "layers": []
+}

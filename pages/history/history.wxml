@@ -1,0 +1,283 @@
+<wxs src="../../utils/fmt.wxs" module="fmt" />
+<view class="container">
+  <view class="user-card" wx:if="{{user}}">
+    <view class="user-avatar" wx:if="{{user.avatarUrl}}">
+      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
+    </view>
+    <view class="user-avatar default" wx:else>
+      <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
+    </view>
+    <view class="user-info">
+      <text class="user-nickname">{{user.nickname}}</text>
+      <text class="user-tip">黄金笔记 · 历史页</text>
+      <view class="user-actions">
+        <text class="scene-btn" bindtap="onGoSelector">场景</text>
+        <text class="scene-btn" bindtap="onGoWedding">结婚笔记</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">统计模式</view>
+    <view class="mode-selector">
+      <view class="mode-item {{mode === 'today' ? 'active' : ''}}" bindtap="selectToday">
+        <text class="mode-text">今日统计</text>
+      </view>
+      <view class="mode-item {{mode === 'range' ? 'active' : ''}}" bindtap="selectRange">
+        <text class="mode-text">时段统计</text>
+      </view>
+      <view class="mode-item {{mode === 'custom' ? 'active' : ''}}" bindtap="selectCustom">
+        <text class="mode-text">自选记录</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{mode === 'range'}}">
+    <view class="card-title">选择时段</view>
+    <view class="form-item inline-item">
+      <text class="form-label inline-label">开始日期</text>
+      <picker class="form-picker inline-picker" mode="date" value="{{startDate}}" end="{{today}}" bindchange="onStartDateChange">
+        <view class="picker">{{startDate || '请选择开始日期'}}</view>
+        <text class="picker-arrow">›</text>
+      </picker>
+    </view>
+    <view class="form-item inline-item">
+      <text class="form-label inline-label">结束日期</text>
+      <picker class="form-picker inline-picker" mode="date" value="{{endDate}}" end="{{today}}" bindchange="onEndDateChange">
+        <view class="picker">{{endDate || '请选择结束日期'}}</view>
+        <text class="picker-arrow">›</text>
+      </picker>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">记录筛选</view>
+    <view class="form-item inline-item">
+      <text class="form-label inline-label">平台筛选</text>
+      <view class="chip-group inline-chip-group">
+        <view
+          class="chip-btn {{platformFilterIndex === index ? 'active' : ''}}"
+          wx:for="{{platformFilters}}"
+          wx:key="*this"
+          data-index="{{index}}"
+          bindtap="onPlatformFilterTap"
+        >
+          <text class="chip-btn-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="form-item inline-item" style="margin-bottom: 0;">
+      <text class="form-label inline-label">类型筛选</text>
+      <view class="chip-group inline-chip-group">
+        <view
+          class="chip-btn {{typeFilterIndex === index ? 'active' : ''}}"
+          wx:for="{{typeFilters}}"
+          wx:key="*this"
+          data-index="{{index}}"
+          bindtap="onTypeFilterTap"
+        >
+          <text class="chip-btn-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{showStats}}">
+    <view class="card-title">统计结果</view>
+
+    <view class="stat-section" wx:if="{{buyStats}}">
+      <view class="stat-header">买入</view>
+      <view class="stat-row">
+        <text class="stat-label">成交均价</text>
+        <text class="stat-value">¥{{fmt.toFixed(buyStats.avgPrice, 2)}}/克</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">总克数</text>
+        <text class="stat-value">{{fmt.toFixed(buyStats.totalWeight, 2)}} 克</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">总金额</text>
+        <text class="stat-value">¥{{fmt.toFixed(buyStats.totalAmount, 2)}}</text>
+      </view>
+      <view class="stat-row" wx:if="{{buyStats.totalFee > 0}}">
+        <text class="stat-label">手续费</text>
+        <text class="stat-value">¥{{fmt.toFixed(buyStats.totalFee, 2)}}</text>
+      </view>
+    </view>
+
+    <view class="stat-section" wx:if="{{sellStats}}">
+      <view class="stat-header">卖出</view>
+      <view class="stat-row">
+        <text class="stat-label">成交均价</text>
+        <text class="stat-value">¥{{fmt.toFixed(sellStats.avgPrice, 2)}}/克</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">总克数</text>
+        <text class="stat-value">{{fmt.toFixed(sellStats.totalWeight, 2)}} 克</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">总金额</text>
+        <text class="stat-value">¥{{fmt.toFixed(sellStats.totalAmount, 2)}}</text>
+      </view>
+      <view class="stat-row" wx:if="{{sellStats.totalFee > 0}}">
+        <text class="stat-label">手续费</text>
+        <text class="stat-value">¥{{fmt.toFixed(sellStats.totalFee, 2)}}</text>
+      </view>
+    </view>
+
+    <view class="no-data" wx:if="{{!buyStats && !sellStats}}">
+      <text>该时段暂无交易记录</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{mode === 'custom'}}">
+    <view class="card-title">选择记录</view>
+
+    <view class="form-item" wx:if="{{transactions.length > 0}}">
+      <text class="form-label">应用编号选择（点击编号直接选中记录）</text>
+      <view class="quick-no-list">
+        <view class="quick-no-item {{item.selected ? 'selected' : ''}}" wx:for="{{transactions}}" wx:key="id" bindtap="toggleSelection" data-id="{{item.id}}">
+          #{{item.displayNo}}
+        </view>
+      </view>
+    </view>
+
+    <view class="record-list">
+      <view
+        class="record-item {{item.selected ? 'selected' : ''}}"
+        wx:for="{{transactions}}"
+        wx:key="id"
+        bindtap="toggleSelection"
+        data-id="{{item.id}}"
+      >
+        <view class="record-header">
+          <view class="record-left">
+            <text class="record-no">#{{item.displayNo}}</text>
+            <text class="record-type {{item.type === 'buy' ? 'buy' : 'sell'}}">{{item.type === 'buy' ? '买入' : '卖出'}}</text>
+          </view>
+          <text class="record-date">{{item.displayTime}}</text>
+        </view>
+
+        <view class="record-body">
+          <view class="record-info">
+            <text class="info-label">交易号</text>
+            <text class="info-value">{{item.id}}</text>
+          </view>
+          <view class="record-info">
+            <text class="info-label">平台</text>
+            <text class="info-value">{{item.platform}}</text>
+          </view>
+          <view class="record-info">
+            <text class="info-label">价格</text>
+            <text class="info-value">¥{{fmt.toFixed(item.price, 2)}}</text>
+          </view>
+          <view class="record-info">
+            <text class="info-label">克数</text>
+            <text class="info-value">{{fmt.toFixed(item.weight, 2)}}g</text>
+          </view>
+          <view class="record-info">
+            <text class="info-label">金额</text>
+            <text class="info-value">¥{{fmt.toFixed(item.net_amount, 2)}}</text>
+          </view>
+          <view class="record-info" wx:if="{{item.fee_amount > 0}}">
+            <text class="info-label">手续费</text>
+            <text class="info-value">¥{{fmt.toFixed(item.fee_amount, 2)}}</text>
+          </view>
+        </view>
+
+        <view class="record-actions">
+          <button class="action-btn" catchtap="editTransaction" data-id="{{item.id}}">修改</button>
+          <button class="action-btn danger" catchtap="deleteTransaction" data-id="{{item.id}}">删除</button>
+        </view>
+
+        <view class="record-check" wx:if="{{item.selected}}">✓</view>
+      </view>
+    </view>
+
+    <view class="btn-row" wx:if="{{selectedCount > 0}}">
+      <button class="btn secondary" bindtap="clearSelection">清空选择</button>
+      <button class="btn" bindtap="calculateCustom">计算均价</button>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{customStats && mode === 'custom'}}">
+    <view class="card-title">选定记录统计</view>
+
+    <view class="stat-section" wx:if="{{customStats.buy}}">
+      <view class="stat-header">买入（{{customStats.buy.count}}笔）</view>
+      <view class="stat-row">
+        <text class="stat-label">成交均价</text>
+        <text class="stat-value">¥{{fmt.toFixed(customStats.buy.avgPrice, 2)}}/克</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">总克数</text>
+        <text class="stat-value">{{fmt.toFixed(customStats.buy.totalWeight, 2)}} 克</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">总金额</text>
+        <text class="stat-value">¥{{fmt.toFixed(customStats.buy.totalAmount, 2)}}</text>
+      </view>
+      <view class="stat-row" wx:if="{{customStats.buy.totalFee > 0}}">
+        <text class="stat-label">手续费</text>
+        <text class="stat-value">¥{{fmt.toFixed(customStats.buy.totalFee, 2)}}</text>
+      </view>
+    </view>
+
+    <view class="stat-section" wx:if="{{customStats.sell}}">
+      <view class="stat-header">卖出（{{customStats.sell.count}}笔）</view>
+      <view class="stat-row">
+        <text class="stat-label">成交均价</text>
+        <text class="stat-value">¥{{fmt.toFixed(customStats.sell.avgPrice, 2)}}/克</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">总克数</text>
+        <text class="stat-value">{{fmt.toFixed(customStats.sell.totalWeight, 2)}} 克</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">总金额</text>
+        <text class="stat-value">¥{{fmt.toFixed(customStats.sell.totalAmount, 2)}}</text>
+      </view>
+      <view class="stat-row" wx:if="{{customStats.sell.totalFee > 0}}">
+        <text class="stat-label">手续费</text>
+        <text class="stat-value">¥{{fmt.toFixed(customStats.sell.totalFee, 2)}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="edit-mask" wx:if="{{editVisible}}">
+    <view class="edit-card">
+      <view class="card-title">修改交易</view>
+
+      <view class="form-item">
+        <text class="form-label">成交价格（元/克）</text>
+        <input class="form-input" type="digit" value="{{editForm.price}}" bindinput="onEditPriceInput" />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">交易克数</text>
+        <input class="form-input" type="digit" value="{{editForm.weight}}" bindinput="onEditWeightInput" />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">交易平台</text>
+        <picker class="form-picker" range="{{platforms}}" value="{{editForm.platformIndex}}" bindchange="onEditPlatformChange">
+          <view class="picker">{{platforms[editForm.platformIndex]}}</view>
+          <text class="picker-arrow">›</text>
+        </picker>
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">交易日期</text>
+        <picker class="form-picker" mode="date" value="{{editForm.date}}" end="{{today}}" bindchange="onEditDateChange">
+          <view class="picker">{{editForm.date}}</view>
+          <text class="picker-arrow">›</text>
+        </picker>
+      </view>
+
+      <view class="btn-row">
+        <button class="btn secondary" bindtap="closeEdit">取消</button>
+        <button class="btn" bindtap="submitEdit">保存</button>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,22 @@
+﻿{
+    "functionsRoot":  "cloudfunctions",
+    "functions":  [
+                      {
+                          "name":  "login"
+                      },
+                      {
+                          "name":  "getTransactions"
+                      },
+                      {
+                          "name":  "saveTransaction"
+                      },
+                      {
+                          "name":  "getWeddingData"
+                      },
+                      {
+                          "name":  "saveWeddingData"
+                      }
+                  ],
+    "functionRoot":  "cloudfunctions",
+    "envId":  "goldnote-7gvcgw84da48b20a"
+}

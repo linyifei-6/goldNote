@@ -1,0 +1,100 @@
+.container {
+  min-height: 100vh;
+  padding: 40rpx;
+  background: #f5f5f5;
+}
+
+.card {
+  margin-top: 120rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 40rpx 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.subtitle {
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 40rpx;
+}
+
+.btn-wechat {
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, #07c160, #06ae56);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32rpx;
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3);
+}
+
+.wechat-tip {
+  margin-top: -12rpx;
+  margin-bottom: 20rpx;
+  font-size: 24rpx;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.wechat-icon {
+  font-size: 36rpx;
+  margin-right: 12rpx;
+}
+
+.wechat-text {
+  flex: none;
+}
+
+.form-wrap {
+  margin-top: 8rpx;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #4b5563;
+  margin-bottom: 14rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 88rpx;
+  border-radius: 12rpx;
+  background: #f4f7fb;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  color: #111827;
+  margin-bottom: 24rpx;
+}
+
+.btn-confirm {
+  width: 100%;
+  height: 92rpx;
+  line-height: 92rpx;
+  border-radius: 46rpx;
+  background: linear-gradient(135deg, #f6b73c, #f59e0b);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+.nickname-tip {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  color: #6b7280;
+  line-height: 1.5;
+}

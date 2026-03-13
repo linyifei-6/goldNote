@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="header-card" wx:if="{{user}}">
+    <view class="avatar" wx:if="{{user.avatarUrl}}" bindtap="onAvatarTap">
+      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
+    </view>
+    <view class="avatar default" wx:else bindtap="onAvatarTap">{{user.nickname.substring(0,1)}}</view>
+    <view class="meta">
+      <view class="nickname">{{user.nickname}}</view>
+      <view class="tip">请选择要进入的笔记场景</view>
+      <view class="edit-nickname" bindtap="onOpenNicknameEditor">修改昵称</view>
+    </view>
+  </view>
+
+  <view class="choice-card gold" bindtap="onGoGold">
+    <view class="choice-title">黄金笔记</view>
+    <view class="choice-desc">黄金持仓、交易记录、收益分析</view>
+    <view class="choice-cta">进入黄金笔记</view>
+  </view>
+
+  <view class="choice-card wedding" bindtap="onGoWedding">
+    <view class="choice-title">结婚笔记</view>
+    <view class="choice-desc">按结婚阶段管理任务、预算和提醒记录</view>
+    <view class="choice-cta">进入结婚笔记</view>
+  </view>
+
+  <button class="logout-btn" bindtap="onLogout">退出登录</button>
+
+  <view class="modal-mask" wx:if="{{showNicknameEditor}}" bindtap="onCloseNicknameEditor"></view>
+  <view class="nickname-modal" wx:if="{{showNicknameEditor}}">
+    <view class="nickname-modal-title">修改昵称</view>
+    <input
+      class="nickname-input"
+      placeholder="请输入新昵称（最多20字）"
+      value="{{nicknameDraft}}"
+      maxlength="20"
+      bindinput="onNicknameInput"
+    />
+      <view class="recent-title" wx:if="{{recentNicknames.length > 0}}">最近常用昵称</view>
+      <view class="recent-list" wx:if="{{recentNicknames.length > 0}}">
+        <view class="recent-item" wx:for="{{recentNicknames}}" wx:key="*this" data-nickname="{{item}}" bindtap="onPickRecentNickname">{{item}}</view>
+      </view>
+    <view class="nickname-actions">
+      <button class="btn-ghost" bindtap="onCloseNicknameEditor" disabled="{{nicknameSaving}}">取消</button>
+      <button class="btn-solid" bindtap="onSaveNickname" loading="{{nicknameSaving}}">保存</button>
+    </view>
+  </view>
+</view>

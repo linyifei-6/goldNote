@@ -1,0 +1,74 @@
+{
+  "indexes": [
+    {
+      "collectionName": "transactions",
+      "indexName": "userId_date",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "date",
+          "direction": "desc"
+        }
+      ]
+    },
+    {
+      "collectionName": "transactions",
+      "indexName": "userId_platform",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "platform",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "transactions",
+      "indexName": "userId_timestamp",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "timestamp",
+          "direction": "desc"
+        }
+      ]
+    },
+    {
+      "collectionName": "wedding_tasks",
+      "indexName": "userId_dueDate",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "dueDate",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "wedding_expenses",
+      "indexName": "userId_date",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "date",
+          "direction": "desc"
+        }
+      ]
+    }
+  ]
+}

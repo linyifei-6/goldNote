@@ -1,0 +1,33 @@
+<view class="container" wx:if="{{!notFound}}">
+  <view class="hero">{{ownerName}} 的婚礼邀请</view>
+  <view class="countdown">{{countdownText}}</view>
+
+  <view class="card">
+    <view class="label">邀请语</view>
+    <view class="value">{{inviteMessage}}</view>
+  </view>
+
+  <view class="card">
+    <view class="label">婚礼信息</view>
+    <view class="info-row">
+      <view class="value inline">日期：{{weddingDate || '待定'}}</view>
+      <view class="value inline">地点：{{weddingLocation || '待定'}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="label">任务进度条</view>
+    <view class="value">{{taskProgressText}}</view>
+    <view class="track"><view class="fill" style="width: {{taskProgressPercent}}%;"></view></view>
+  </view>
+
+  <view class="card">
+    <view class="label">亲友确认出席</view>
+    <input class="input" maxlength="30" placeholder="请输入你的姓名" value="{{guestName}}" bindinput="onGuestNameInput" />
+    <button class="btn" bindtap="onConfirmAttendance">我已确认出席</button>
+  </view>
+</view>
+
+<view class="container" wx:else>
+  <view class="error">邀请链接无效或已失效</view>
+</view>

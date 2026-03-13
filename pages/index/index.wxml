@@ -1,0 +1,162 @@
+<wxs src="../../utils/fmt.wxs" module="fmt" />
+<view class="container">
+  <view class="user-card" wx:if="{{user}}" bindtap="onUserActions">
+    <view class="user-avatar" wx:if="{{user.avatarUrl}}">
+      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
+    </view>
+    <view class="user-avatar default" wx:else>
+      <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
+    </view>
+    <view class="user-info">
+      <text class="user-nickname">{{user.nickname}}</text>
+      <text class="user-tip">点击可退出登录或清除数据</text>
+      <view class="user-actions">
+        <text class="scene-btn" catchtap="onGoSelector">场景</text>
+        <text class="scene-btn" catchtap="onGoWedding">结婚笔记</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="summary-card">
+    <view class="summary-title">持仓总览</view>
+    <view class="summary-sub">总持仓 + 收益 + 分平台</view>
+
+    <view class="summary-body">
+      <view class="summary-left">
+        <view class="holding-main">
+          <view class="holding-weight">{{fmt.toFixed(holdings.currentHolding, 4)}}</view>
+          <view class="holding-unit">克</view>
+        </view>
+
+        <view class="kpi-row">
+          <view class="kpi-item">
+            <text class="kpi-label">成本均价</text>
+            <text class="kpi-value">¥{{fmt.toFixed(holdings.avgCost, 2)}}</text>
+          </view>
+          <view class="kpi-item">
+            <text class="kpi-label">持仓收益</text>
+            <text class="kpi-value {{unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(unrealizedProfit, 2)}}</text>
+          </view>
+          <view class="kpi-item">
+            <text class="kpi-label">累计收益</text>
+            <text class="kpi-value {{totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(totalProfit, 2)}}</text>
+          </view>
+          <view class="kpi-item">
+            <text class="kpi-label">收益率</text>
+            <text class="kpi-value {{totalReturnRate >= 0 ? 'profit-positive' : 'profit-negative'}}">{{fmt.toFixed(totalReturnRate, 2)}}%</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="summary-right">
+        <view class="platform-mini-title">分平台持仓/收益</view>
+        <view class="platform-mini-empty" wx:if="{{summaryPlatforms.length === 0}}">暂无平台数据</view>
+        <view class="platform-mini-item" wx:for="{{summaryPlatforms}}" wx:key="platform">
+          <view class="mini-platform-left">
+            <text class="mini-platform-name">{{item.platform}}</text>
+            <text class="mini-platform-hold">{{fmt.toFixed(item.currentHolding, 2)}}g</text>
+          </view>
+          <view class="mini-platform-right">
+            <text class="mini-platform-profit {{item.realizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">累计 ¥{{fmt.toFixed(item.realizedProfit, 2)}}</text>
+            <text class="mini-platform-profit sub {{item.unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">持有 ¥{{fmt.toFixed(item.unrealizedProfit, 2)}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="holding-foot">
+      <text>总投入 ¥{{fmt.toFixed(holdings.totalInvestment, 2)}}</text>
+      <text>持仓市值 ¥{{fmt.toFixed(currentValue, 2)}}</text>
+    </view>
+  </view>
+
+  <view class="card price-card">
+    <view class="card-title-row">
+      <view class="card-title">实时金价</view>
+      <text class="update-status" wx:if="{{lastUpdateTime && autoUpdateMode}}">{{lastUpdateTime}}</text>
+    </view>
+
+    <view wx:if="{{autoUpdateMode}}">
+      <view class="quote-strip">
+        <view class="quote-left">
+          <view class="price-main compact-main">
+            <text class="price-value compact-price">{{currentPrice ? '¥' + currentPrice : '--'}}</text>
+            <text class="price-unit">/克</text>
+            <text class="updating-icon" wx:if="{{isUpdating}}">...</text>
+          </view>
+          <view class="quote-meta-line">
+            <text class="quote-meta">{{priceSource || '加载中'}}</text>
+            <text class="quote-dot">·</text>
+            <text class="quote-meta">{{countdown}}s</text>
+            <text class="quote-dot" wx:if="{{internationalPrice}}">·</text>
+            <text class="quote-meta" wx:if="{{internationalPrice}}">{{internationalPrice}}</text>
+          </view>
+        </view>
+        <view class="quote-actions">
+          <view class="quote-btn" bindtap="onFetchPriceTap">
+            <text class="quote-btn-text">Qveris</text>
+          </view>
+          <view class="quote-btn" bindtap="togglePriceMode">
+            <text class="quote-btn-text">手动</text>
+          </view>
+          <view class="quote-btn" wx:if="{{usingSimulator}}" bindtap="showConfigGuide">
+            <text class="quote-btn-text">配置</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else>
+      <view class="form-item">
+        <input class="form-input" type="digit" placeholder="请输入当前黄金市价（元/克）" value="{{currentPrice}}" bindinput="onPriceInput" />
+      </view>
+      <view class="tip">持仓收益依赖当前市价，未输入时默认为0</view>
+      <view class="mode-switch" bindtap="togglePriceMode">
+        <text class="switch-text">切换至实时API</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title-row">
+      <view class="card-title">累计收益曲线</view>
+      <view class="curve-hint">趋势视图</view>
+    </view>
+    <view class="curve-metrics">
+      <text class="metric-item">持仓收益：¥{{fmt.toFixed(unrealizedProfit, 2)}}</text>
+      <text class="metric-item">持有均价：¥{{fmt.toFixed(holdings.avgCost, 2)}}/克</text>
+      <text class="metric-item">当前金价：{{currentPrice ? ('¥' + currentPrice + '/克') : '--'}}</text>
+    </view>
+    <canvas canvas-id="cumulativeProfitCanvas" class="curve-canvas" style="width: 680rpx; height: 320rpx;" />
+    <view class="curve-controls">
+      <view class="form-item control-item">
+        <text class="form-label">查看范围</text>
+        <view class="chip-group">
+          <view
+            class="chip-btn {{curvePlatformIndex === index ? 'active' : ''}}"
+            wx:for="{{platforms}}"
+            wx:key="*this"
+            data-index="{{index}}"
+            bindtap="onCurvePlatformTap"
+          >
+            <text class="chip-btn-text">{{item}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="form-item control-item" style="margin-bottom: 0;">
+        <text class="form-label">时间范围</text>
+        <view class="chip-group">
+          <view
+            class="chip-btn {{curveRangeIndex === index ? 'active' : ''}}"
+            wx:for="{{curveRanges}}"
+            wx:key="*this"
+            data-index="{{index}}"
+            bindtap="onCurveRangeTap"
+          >
+            <text class="chip-btn-text">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

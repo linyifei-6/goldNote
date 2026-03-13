@@ -1,0 +1,133 @@
+<wxs src="../../utils/fmt.wxs" module="fmt" />
+<view class="container">
+  <view class="user-card" wx:if="{{user}}">
+    <view class="user-avatar" wx:if="{{user.avatarUrl}}">
+      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
+    </view>
+    <view class="user-avatar default" wx:else>
+      <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
+    </view>
+    <view class="user-info">
+      <text class="user-nickname">{{user.nickname}}</text>
+      <text class="user-tip">黄金笔记 · 交易页</text>
+      <view class="user-actions">
+        <text class="scene-btn" bindtap="onGoSelector">场景</text>
+        <text class="scene-btn" bindtap="onGoWedding">结婚笔记</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 交易类型选择 -->
+  <view class="card">
+    <view class="card-title">交易类型</view>
+    <view class="type-selector">
+      <view class="type-item {{transactionType === 'buy' ? 'active' : ''}}" bindtap="selectBuy">
+        <text class="type-icon">📈</text>
+        <text class="type-text">买入</text>
+      </view>
+      <view class="type-item {{transactionType === 'sell' ? 'active' : ''}}" bindtap="selectSell">
+        <text class="type-icon">📉</text>
+        <text class="type-text">卖出</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 交易表单 -->
+  <view class="card">
+    <view class="card-title">交易信息</view>
+
+    <view class="compact-grid">
+      <view class="form-item compact-item">
+        <text class="form-label">成交价格（元/克）</text>
+        <input class="form-input" type="digit" placeholder="成交价格" value="{{price}}" bindinput="onPriceInput" />
+      </view>
+
+      <view class="form-item compact-item">
+        <text class="form-label">交易克数</text>
+        <input class="form-input" type="digit" placeholder="交易克数" value="{{weight}}" bindinput="onWeightInput" />
+      </view>
+    </view>
+
+    <view class="form-item compact-item inline-item">
+      <text class="form-label inline-label">交易平台</text>
+      <view class="chip-group inline-chip-group">
+        <view
+          class="chip-btn {{platformIndex === index ? 'active' : ''}}"
+          wx:for="{{platforms}}"
+          wx:key="*this"
+          data-index="{{index}}"
+          bindtap="onPlatformTap"
+        >
+          <text class="chip-btn-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-item compact-item inline-item">
+      <text class="form-label inline-label">交易日期</text>
+      <picker class="form-picker inline-picker" mode="date" value="{{date}}" end="{{today}}" bindchange="onDateChange">
+        <view class="picker">{{date || '请选择日期'}}</view>
+        <text class="picker-arrow">›</text>
+      </picker>
+    </view>
+
+    <!-- 费用预览 -->
+    <view class="fee-preview" wx:if="{{transactionType === 'sell' && price && weight}}">
+      <view class="fee-row">
+        <text class="fee-label">卖出手续费率</text>
+        <text class="fee-value">{{feeRateText}}</text>
+      </view>
+      <view class="fee-row">
+        <text class="fee-label">手续费金额</text>
+        <text class="fee-value">¥{{fmt.toFixed(feeAmount, 2)}}</text>
+      </view>
+      <view class="fee-row">
+        <text class="fee-label">实际到账</text>
+        <text class="fee-value highlight">¥{{fmt.toFixed(netAmount, 2)}}</text>
+      </view>
+    </view>
+
+    <view class="fee-preview" wx:if="{{transactionType === 'buy' && price && weight}}">
+      <view class="fee-row">
+        <text class="fee-label">交易金额</text>
+        <text class="fee-value highlight">¥{{fmt.toFixed(displayAmount, 2)}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="btn-container">
+    <button class="btn {{transactionType === 'sell' ? 'btn-sell' : ''}}" bindtap="submitTransaction">
+      {{transactionType === 'buy' ? '确认买入' : '确认卖出'}}
+    </button>
+  </view>
+
+  <!-- 持仓提示 -->
+  <view class="holding-info" wx:if="{{transactionType === 'sell' && platformHolding > 0}}">
+    <text class="info-text">当前平台可卖出：{{fmt.toFixed(platformHolding, 2)}} 克</text>
+  </view>
+
+  <!-- 最近成交记录 -->
+  <view class="card">
+    <view class="card-title">最新成交记录</view>
+    <view wx:if="{{recentTransactions.length === 0}}" class="empty-text">暂无成交记录</view>
+    <view wx:for="{{recentTransactions}}" wx:key="id" class="recent-item compact-record">
+      <view class="recent-row">
+        <text class="recent-id">{{item.id}}</text>
+        <text class="recent-type {{item.type === 'buy' ? 'buy' : 'sell'}}">{{item.type === 'buy' ? '买入' : '卖出'}}</text>
+      </view>
+      <view class="recent-row">
+        <text class="recent-meta">平台：{{item.platform}}</text>
+        <text class="recent-meta">时间：{{item.displayTime}}</text>
+      </view>
+      <view class="recent-row">
+        <text class="recent-meta">金额：¥{{fmt.toFixed(item.net_amount, 2)}}</text>
+        <text class="recent-meta">克重：{{fmt.toFixed(item.weight, 2)}}g</text>
+        <text class="recent-meta">价格：¥{{fmt.toFixed(item.price, 2)}}</text>
+      </view>
+      <view class="recent-row" wx:if="{{item.fee_amount > 0}}">
+        <text class="recent-meta fee">手续费：¥{{fmt.toFixed(item.fee_amount, 2)}}</text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,28 @@
+{
+  "name": "goldnote-cloud-storage",
+  "version": "1.0.0",
+  "description": "云存储配置 - 用于存储用户头像、交易凭证等文件",
+  "storageConfig": {
+    "buckets": [
+      {
+        "name": "goldnote-files",
+        "description": "主存储桶 - 用户文件",
+        "acl": "private-read-write"
+      }
+    ],
+    "folders": [
+      {
+        "path": "/avatars/",
+        "description": "用户头像"
+      },
+      {
+        "path": "/transactions/",
+        "description": "交易凭证图片"
+      },
+      {
+        "path": "/wedding/",
+        "description": "婚礼相关图片"
+      }
+    ]
+  }
+}

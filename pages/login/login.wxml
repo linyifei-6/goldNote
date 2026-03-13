@@ -1,0 +1,28 @@
+<wxs src="../../utils/fmt.wxs" module="fmt" />
+<view class="container">
+  <view class="card">
+    <view class="title">双笔记中心</view>
+    <view class="subtitle">微信账号是唯一身份认证，昵称仅用于展示</view>
+
+    <view wx:if="{{!needNicknameConfirm}}">
+      <button class="btn-wechat" bindtap="onWechatLogin" loading="{{loginLoading}}">
+        <text class="wechat-icon">🔐</text>
+        <text class="wechat-text">微信授权</text>
+      </button>
+      <view class="wechat-tip">点击后会弹出微信授权页面，确认后进入昵称确认步骤</view>
+    </view>
+
+    <view wx:if="{{needNicknameConfirm}}" class="form-wrap">
+      <view class="form-label">昵称（可修改）</view>
+      <input
+        class="form-input"
+        placeholder="请输入昵称（最多20字）"
+        value="{{nickname}}"
+        maxlength="20"
+        bindinput="onNicknameInput"
+      />
+      <button class="btn-confirm" bindtap="onConfirmWechatLogin" loading="{{loginLoading}}">确认并登录</button>
+      <view class="nickname-tip">修改昵称不会影响账号身份或历史数据</view>
+    </view>
+  </view>
+</view>

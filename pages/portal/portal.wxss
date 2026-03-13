@@ -1,0 +1,188 @@
+.container {
+  min-height: 100vh;
+  padding: 36rpx;
+  background: linear-gradient(180deg, #fff8ef 0%, #f7f8fb 56%, #eff4ff 100%);
+}
+
+.header-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.06);
+  margin-bottom: 24rpx;
+}
+
+.avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #374151;
+}
+
+.avatar::after {
+  border: none;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.meta {
+  margin-left: 18rpx;
+}
+
+.nickname {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.tip {
+  margin-top: 6rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+}
+
+.edit-nickname {
+  margin-top: 10rpx;
+  display: inline-block;
+  font-size: 22rpx;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+}
+
+.choice-card {
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.08);
+}
+
+.choice-card.gold {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.choice-card.wedding {
+  background: linear-gradient(135deg, #f7c6df, #f5b1d1);
+}
+
+.choice-title {
+  color: #fff;
+  font-size: 38rpx;
+  font-weight: 700;
+}
+
+.choice-desc {
+  margin-top: 10rpx;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 25rpx;
+}
+
+.choice-cta {
+  margin-top: 24rpx;
+  display: inline-block;
+  color: #111827;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.logout-btn {
+  margin-top: 28rpx;
+  border-radius: 44rpx;
+  background: #ffffff;
+  color: #374151;
+  border: 1rpx solid #d1d5db;
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.nickname-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 84%;
+  background: #fff;
+  border-radius: 18rpx;
+  padding: 26rpx;
+  box-shadow: 0 18rpx 48rpx rgba(15, 23, 42, 0.28);
+}
+
+.nickname-modal-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16rpx;
+}
+
+.nickname-input {
+  height: 84rpx;
+  border-radius: 12rpx;
+  background: #f3f4f6;
+  padding: 0 18rpx;
+  font-size: 28rpx;
+  color: #111827;
+}
+
+.nickname-actions {
+  margin-top: 20rpx;
+  display: flex;
+  gap: 14rpx;
+}
+
+.recent-title {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  color: #6b7280;
+}
+
+.recent-list {
+  margin-top: 10rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.recent-item {
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #eef2ff;
+  color: #374151;
+  font-size: 24rpx;
+}
+
+.btn-ghost {
+  flex: 1;
+  border-radius: 42rpx;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-solid {
+  flex: 1;
+  border-radius: 42rpx;
+  background: #2563eb;
+  color: #fff;
+}

@@ -1,0 +1,322 @@
+<view class="container">
+  <view class="user-card" wx:if="{{user}}" bindtap="onUserActions">
+    <view class="user-avatar" wx:if="{{user.avatarUrl}}">
+      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
+    </view>
+    <view class="user-avatar default" wx:else>
+      <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
+    </view>
+    <view class="user-info">
+      <text class="user-nickname">{{user.nickname}}</text>
+      <text class="user-tip">点击可退出登录</text>
+      <view class="user-actions">
+        <text class="scene-btn" catchtap="onGoSelector">场景</text>
+        <text class="scene-btn" catchtap="onGoGold">黄金笔记</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="top-countdown {{weddingDate ? 'active' : ''}}" bindtap="onToggleBasicInfoEditor">
+    <view class="countdown-main" wx:if="{{weddingDate}}">
+      <image class="wedding-day-icon" src="/images/结婚日.png" mode="aspectFit" />
+      <text class="wedding-day-text">结婚日</text>
+      <text class="countdown-inline">{{countdownText}}</text>
+    </view>
+    <view wx:else>{{countdownText}}</view>
+  </view>
+
+  <view class="card nav-card">
+    <view class="section-nav">
+      <view class="section-item" wx:for="{{sectionTabs}}" wx:key="key" data-section="{{item.key}}" bindtap="onSwitchSection">
+        <image class="section-icon" src="{{activeSection === item.key ? item.activeIcon : item.icon}}" mode="aspectFit" />
+        <text class="section-label {{activeSection === item.key ? 'active' : ''}}">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{showBasicInfoEditor}}">
+    <view class="section-title">婚礼基础信息</view>
+    <view class="form-grid compact-grid">
+      <view>
+        <view class="picker-label">婚礼日期</view>
+        <picker mode="date" value="{{weddingDate}}" bindchange="onWeddingDateChange">
+          <view class="picker-value {{weddingDate ? '' : 'muted'}}">{{weddingDate || '点击设置婚礼日期'}}</view>
+        </picker>
+      </view>
+      <view>
+        <view class="picker-label">总预算（元）</view>
+        <input class="input" type="digit" placeholder="请输入总预算" value="{{totalBudgetInput}}" bindinput="onTotalBudgetInput" />
+      </view>
+    </view>
+
+    <view class="picker-label">婚礼地点</view>
+    <view class="inline-input-row">
+      <input class="input inline-input" placeholder="请输入婚礼地点" maxlength="40" value="{{weddingLocation}}" bindinput="onLocationInput" />
+      <button class="mini-location-btn inline-locate-btn" bindtap="onUseCurrentLocation">当前位置</button>
+    </view>
+    <button class="submit-btn" bindtap="onSaveBasicInfo">保存基础信息</button>
+  </view>
+
+  <view class="card" wx:if="{{activeSection === 'task'}}">
+    <view class="section-title">备婚任务</view>
+    <view class="progress-text">{{taskProgressText}}</view>
+    <view class="progress-track">
+      <view class="progress-fill" style="width: {{taskProgressPercent}}%;"></view>
+    </view>
+    <input class="input" placeholder="例如：选婚纱、定酒店" maxlength="60" value="{{taskTitle}}" bindinput="onTaskTitleInput" />
+    <view class="picker-label">任务类型</view>
+    <view class="selector-chip-row">
+      <text class="selector-chip {{taskTypeIndex === index ? 'active' : ''}}" wx:for="{{taskTypeOptions}}" wx:key="*this" data-index="{{index}}" bindtap="onTaskTypeTap">{{item}}</text>
+    </view>
+    <input class="input" wx:if="{{taskTypeOptions[taskTypeIndex] === '其他'}}" placeholder="请输入自定义任务类型" maxlength="20" value="{{taskCustomType}}" bindinput="onTaskCustomTypeInput" />
+    <view class="picker-label">优先级</view>
+    <view class="star-selector">
+      <view class="star-option" wx:for="{{priorityLevels}}" wx:key="*this" data-index="{{index}}" bindtap="onTaskPriorityTap">
+        <image class="star-icon" src="{{index <= taskPriorityIndex ? '/images/星星-active.png' : '/images/星星.png'}}" mode="aspectFit" />
+      </view>
+    </view>
+    <view class="picker-label">截止日期</view>
+    <picker mode="date" value="{{taskDueDate}}" bindchange="onTaskDateChange">
+      <view class="picker-value">{{taskDueDate}}</view>
+    </picker>
+    <view class="form-grid">
+      <view>
+        <view class="picker-label">预算支出（元）</view>
+        <input class="input" type="digit" placeholder="预算金额" value="{{taskBudgetInput}}" bindinput="onTaskBudgetInput" />
+      </view>
+      <view>
+        <view class="picker-label">实际支出（元）</view>
+        <input class="input" type="digit" placeholder="实际金额" value="{{taskActualInput}}" bindinput="onTaskActualInput" />
+      </view>
+    </view>
+    <button class="submit-btn" bindtap="onAddTask">添加任务</button>
+
+    <view class="quick-filter-title">常用类型筛选</view>
+    <view class="task-filter-row wrap">
+      <text class="filter-pill {{taskQuickTypeActive === item ? 'active' : ''}}" wx:for="{{taskQuickTypeOptions}}" wx:key="*this" data-value="{{item}}" bindtap="onQuickTypeFilterTap">{{item}}</text>
+    </view>
+
+    <view class="quick-filter-title">常用状态筛选</view>
+    <view class="task-filter-row wrap">
+      <text class="filter-pill {{taskQuickStatusActive === item ? 'active' : ''}}" wx:for="{{taskQuickStatusOptions}}" wx:key="*this" data-value="{{item}}" bindtap="onQuickStatusFilterTap">{{item}}</text>
+    </view>
+
+    <view class="quick-filter-title">排序方式</view>
+    <view class="task-filter-row wrap">
+      <text class="selector-chip {{taskSortIndex === index ? 'active' : ''}}" wx:for="{{taskSortOptions}}" wx:key="*this" data-index="{{index}}" bindtap="onTaskSortTap">{{item}}</text>
+    </view>
+
+    <view class="task-filter-row">
+      <text class="mode-btn" bindtap="onToggleSelectingMode">{{selectingMode ? '退出批量模式' : '批量模式'}}</text>
+    </view>
+
+    <view class="task-filter-row" wx:if="{{selectingMode}}">
+      <text class="selected-tip">已选 {{selectedTaskIds.length}} 项</text>
+      <text class="batch-btn" bindtap="onBatchCompleteTasks">批量完成</text>
+      <text class="batch-btn danger" bindtap="onBatchDeleteTasks">批量删除</text>
+    </view>
+
+    <view class="empty" wx:if="{{filteredTasks.length === 0}}">暂无匹配任务</view>
+    <view class="task-item" wx:for="{{filteredTasks}}" wx:key="id">
+      <view class="task-left" data-id="{{item.id}}" data-checked="{{item.checked}}" bindtap="onToggleTask">
+        <text class="task-check {{item.checked ? 'checked' : ''}}">{{item.checked ? '✓' : ''}}</text>
+        <view class="task-main">
+          <view class="task-title-row">
+            <view class="task-title {{item.checked ? 'done-text' : ''}}">{{item.title}}</view>
+            <text class="task-type-tag">{{item.type}}</text>
+          </view>
+          <view class="task-meta-row">
+            <text class="task-priority">{{item.priorityStars}}</text>
+            <text class="task-meta">截止 {{item.dueDate || '未设置'}}</text>
+            <text class="task-status {{item.statusClass}}">{{item.statusTag}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="task-actions">
+        <text class="action" wx:if="{{!selectingMode}}" data-id="{{item.id}}" bindtap="onOpenTaskDetail">详情</text>
+        <text class="action" wx:if="{{!selectingMode}}" data-id="{{item.id}}" bindtap="onOpenTaskEdit">编辑</text>
+        <text class="action danger" wx:if="{{!selectingMode}}" data-id="{{item.id}}" bindtap="onDeleteTask">删除</text>
+        <text class="action" wx:if="{{selectingMode}}" data-id="{{item.id}}" bindtap="onToggleTaskSelect">{{item.selected ? '取消' : '选中'}}</text>
+      </view>
+    </view>
+
+    <view class="undo-bar" wx:if="{{undoDeleteVisible}}">
+      <text class="undo-text">{{undoDeleteText}}</text>
+      <text class="undo-action" bindtap="onUndoDeleteTask">撤销</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{activeSection === 'budget'}}">
+    <view class="section-title">预算管理</view>
+    <view class="budget-summary">
+      <view class="stat-item">
+        <text class="stat-num">{{taskBudgetTotalText}}</text>
+        <text class="stat-label">任务预算</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{taskCostTotalText}}</text>
+        <text class="stat-label">任务实际</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{spentBudgetText}}</text>
+        <text class="stat-label">其他支出</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num {{remainingBudget < 0 ? 'warn' : ''}}">{{remainingBudgetText}}</text>
+        <text class="stat-label">剩余预算</text>
+      </view>
+    </view>
+
+    <view class="section-subtitle">任务事项花费（默认来自备婚任务，可点击编辑）</view>
+    <view class="selector-chip-row">
+      <text class="selector-chip {{budgetTypeIndex === index ? 'active' : ''}}" wx:for="{{budgetTypeOptions}}" wx:key="*this" data-index="{{index}}" bindtap="onBudgetTypeTap">{{item}}</text>
+    </view>
+    <view class="empty" wx:if="{{filteredBudgetTaskList.length === 0}}">暂无匹配任务，请先在备婚任务中添加</view>
+    <view class="expense-item" wx:for="{{filteredBudgetTaskList}}" wx:key="id" data-id="{{item.id}}" bindtap="onOpenTaskBudgetEdit">
+      <view>
+        <view class="expense-title">{{item.type}} | {{item.title}}</view>
+        <view class="expense-meta">{{item.priorityStars}} | 截止 {{item.dueDate || '未设置'}} | 预算 {{item.budgetAmountText}} / 实际 {{item.actualAmountText}}</view>
+      </view>
+      <view class="expense-right">
+        <text class="expense-amount">{{item.actualAmountText}}</text>
+      </view>
+    </view>
+
+    <view class="form-grid">
+      <view>
+        <view class="picker-label">类别</view>
+        <input class="input" placeholder="如：场地、餐饮" maxlength="30" value="{{expenseCategory}}" bindinput="onExpenseCategoryInput" />
+      </view>
+      <view>
+        <view class="picker-label">金额（元）</view>
+        <input class="input" type="digit" placeholder="请输入金额" value="{{expenseAmount}}" bindinput="onExpenseAmountInput" />
+      </view>
+    </view>
+    <view class="picker-label">支出日期</view>
+    <picker mode="date" value="{{expenseDate}}" bindchange="onExpenseDateChange">
+      <view class="picker-value">{{expenseDate}}</view>
+    </picker>
+    <button class="submit-btn" bindtap="onAddExpense">记录支出</button>
+
+    <view class="empty" wx:if="{{expenses.length === 0}}">暂无支出记录</view>
+    <view class="expense-item" wx:for="{{expenses}}" wx:key="id">
+      <view>
+        <view class="expense-title">{{item.category}}</view>
+        <view class="expense-meta">{{item.date}}</view>
+      </view>
+      <view class="expense-right">
+        <text class="expense-amount">-{{item.amountText}}</text>
+        <text class="action danger" data-id="{{item.id}}" bindtap="onDeleteExpense">删除</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{activeSection === 'friends'}}">
+    <view class="section-title">亲友</view>
+    <view class="picker-label">邀请语</view>
+    <textarea class="textarea" maxlength="120" value="{{inviteMessage}}" bindinput="onInviteMessageInput" placeholder="如：诚邀您见证我们的婚礼" />
+    <view class="btn-row">
+      <button class="mini-btn" bindtap="onSaveInviteMessage">保存邀请语</button>
+      <button class="mini-btn" bindtap="onRegenerateInviteLink">更新链接</button>
+    </view>
+
+    <view class="picker-label">专属邀请链接</view>
+    <view class="link-box">{{inviteLink}}</view>
+    <view class="btn-row">
+      <button class="mini-btn" bindtap="onCopyInviteLink">复制邀请链接</button>
+      <button class="mini-btn" bindtap="onPreviewGuestPage">预览亲友页</button>
+    </view>
+
+    <view class="invite-stats">
+      <text>已确认：{{inviteStats.confirmed}}</text>
+      <text>未确认：{{inviteStats.unconfirmed}}</text>
+    </view>
+
+    <view class="form-grid">
+      <view>
+        <view class="picker-label">亲友姓名</view>
+        <input class="input" maxlength="30" placeholder="请输入姓名" value="{{inviteeName}}" bindinput="onInviteeNameInput" />
+      </view>
+      <view>
+        <view class="picker-label">状态</view>
+        <view class="selector-chip-row compact-row">
+          <text class="selector-chip {{inviteeStatusIndex === index ? 'active' : ''}}" wx:for="{{inviteeStatusOptions}}" wx:key="*this" data-index="{{index}}" bindtap="onInviteeStatusTap">{{item}}</text>
+        </view>
+      </view>
+    </view>
+    <button class="submit-btn" bindtap="onAddInvitee">添加亲友状态</button>
+
+    <view class="empty" wx:if="{{invitees.length === 0}}">暂无亲友状态记录</view>
+    <view class="invitee-item" wx:for="{{invitees}}" wx:key="id">
+      <view>
+        <view class="expense-title">{{item.name}}</view>
+        <view class="status {{item.status === '已确认' ? 'done' : ''}}">{{item.status}}</view>
+      </view>
+      <view class="btn-row">
+        <text class="action" data-id="{{item.id}}" data-status="{{item.status}}" bindtap="onToggleInviteeStatus">切换状态</text>
+        <text class="action danger" data-id="{{item.id}}" bindtap="onDeleteInvitee">删除</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-nav-spacer"></view>
+
+  <view class="modal-mask" wx:if="{{taskEditVisible}}" bindtap="onCancelTaskEdit"></view>
+  <view class="modal-card" wx:if="{{taskEditVisible}}">
+    <view class="section-title">编辑任务花费</view>
+    <input class="input" placeholder="事项名称" maxlength="60" value="{{taskEditForm.title}}" bindinput="onTaskEditTitleInput" />
+    <view class="picker-label">任务类型</view>
+    <view class="selector-chip-row compact-row">
+      <text class="selector-chip {{taskEditForm.typeIndex === index ? 'active' : ''}}" wx:for="{{taskTypeOptions}}" wx:key="*this" data-index="{{index}}" bindtap="onTaskEditTypeTap">{{item}}</text>
+    </view>
+    <input class="input" wx:if="{{taskTypeOptions[taskEditForm.typeIndex] === '其他'}}" placeholder="请输入自定义任务类型" maxlength="20" value="{{taskEditForm.customType}}" bindinput="onTaskEditCustomTypeInput" />
+    <view class="picker-label">截止日期</view>
+    <picker mode="date" value="{{taskEditForm.dueDate}}" bindchange="onTaskEditDateChange">
+      <view class="picker-value">{{taskEditForm.dueDate}}</view>
+    </picker>
+    <view class="picker-label">优先级</view>
+    <view class="star-selector edit-stars">
+      <view class="star-option" wx:for="{{priorityLevels}}" wx:key="*this" data-index="{{index}}" bindtap="onTaskEditPriorityTap">
+        <image class="star-icon" src="{{index <= taskEditForm.priorityIndex ? '/images/星星-active.png' : '/images/星星.png'}}" mode="aspectFit" />
+      </view>
+    </view>
+    <view class="picker-label">备注</view>
+    <textarea class="textarea" maxlength="300" placeholder="可记录进展或注意事项" value="{{taskEditForm.note}}" bindinput="onTaskEditNoteInput" />
+    <view class="picker-label">预算支出（元）</view>
+    <input class="input" type="digit" placeholder="请输入花费金额" value="{{taskEditForm.budgetAmount}}" bindinput="onTaskEditAmountInput" />
+    <view class="picker-label">实际支出（元）</view>
+    <input class="input" type="digit" placeholder="请输入实际支出" value="{{taskEditForm.actualAmount}}" bindinput="onTaskEditActualAmountInput" />
+    <view class="btn-row">
+      <button class="mini-btn" bindtap="onCancelTaskEdit">取消</button>
+      <button class="mini-btn confirm" bindtap="onSaveTaskEdit">保存</button>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{taskDetailVisible}}" bindtap="onCloseTaskDetail"></view>
+  <view class="detail-drawer" wx:if="{{taskDetailVisible}}">
+    <view class="section-title">任务详情</view>
+    <view class="detail-line">事项：{{taskDetail.title}}</view>
+    <view class="detail-line">类型：{{taskDetail.type}}</view>
+    <view class="detail-line">优先级：{{taskDetail.priorityStars}}</view>
+    <view class="detail-line">截止：{{taskDetail.dueDate || '未设置'}}</view>
+    <view class="detail-line">预算支出：{{taskDetailBudgetText}} 元</view>
+    <view class="detail-line">实际支出：{{taskDetailActualText}} 元</view>
+    <view class="picker-label">备注</view>
+    <textarea class="textarea" maxlength="300" placeholder="填写任务备注" value="{{taskDetailNote}}" bindinput="onTaskDetailNoteInput" />
+    <view class="btn-row">
+      <button class="mini-btn" bindtap="onCloseTaskDetail">关闭</button>
+      <button class="mini-btn confirm" bindtap="onSaveTaskDetail">保存备注</button>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{dueSoonModalVisible}}"></view>
+  <view class="due-soon-modal" wx:if="{{dueSoonModalVisible}}">
+    <view class="due-soon-title">重点提醒：{{dueSoonList.length + dueSoonMoreCount}} 项任务10天内到期</view>
+    <view class="due-soon-item" wx:for="{{dueSoonList}}" wx:key="no">
+      <view class="due-soon-line">{{item.no}}. {{item.title}}</view>
+      <view class="due-soon-line sub">{{item.dayText}}</view>
+    </view>
+    <view class="due-soon-more" wx:if="{{dueSoonMoreCount > 0}}">还有 {{dueSoonMoreCount}} 项未展示，请前往任务页查看</view>
+    <button class="submit-btn" bindtap="onCloseDueSoonModal">立即查看</button>
+  </view>
+</view>

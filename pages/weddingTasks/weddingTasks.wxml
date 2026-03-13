@@ -1,0 +1,29 @@
+<view class="container">
+  <view class="tip">列表任务，支持拖动排序：长按某任务后，点击目标位置完成排序。</view>
+
+  <view class="card">
+    <input class="input" placeholder="例如：确认主持人流程" maxlength="60" value="{{taskTitle}}" bindinput="onTaskTitleInput" />
+    <view class="inline-row">
+      <view class="inline-label">截止日期</view>
+      <picker mode="date" value="{{taskDueDate}}" bindchange="onTaskDateChange" class="inline-picker-wrap">
+        <view class="picker">{{taskDueDate}}</view>
+      </picker>
+    </view>
+    <button class="btn" bindtap="onAddTask">添加任务</button>
+  </view>
+
+  <view class="drag-hint" wx:if="{{draggingHint}}">{{draggingHint}}</view>
+  <button class="cancel-btn" wx:if="{{draggingId}}" bindtap="onCancelDrag">取消拖动</button>
+
+  <view class="empty" wx:if="{{tasks.length === 0}}">暂无任务</view>
+  <view class="task" wx:for="{{tasks}}" wx:key="id" data-id="{{item.id}}" bindtap="onDropToHere" bindlongpress="onStartDrag">
+    <view class="left" data-id="{{item.id}}" data-checked="{{item.checked}}" bindtap="onToggleTask">
+      <text class="check {{item.checked ? 'checked' : ''}}">{{item.checked ? '✓' : ''}}</text>
+      <view>
+        <view class="title {{item.checked ? 'done' : ''}}">{{item.title}}</view>
+        <view class="meta">截止 {{item.dueDate || '未设置'}}</view>
+      </view>
+    </view>
+    <text class="delete" data-id="{{item.id}}" bindtap="onDeleteTask">删除</text>
+  </view>
+</view>

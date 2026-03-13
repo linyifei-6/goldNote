@@ -1,0 +1,20 @@
+var fmt = {
+  toFixed: function(val, digits) {
+    if (val === undefined || val === null) return '0.00';
+    var d = digits === undefined ? 2 : digits;
+    var num = parseFloat(val);
+    if (isNaN(num)) return (0).toFixed(d);
+    return num.toFixed(d);
+  },
+  absFixed: function(val, digits) {
+    if (val === undefined || val === null) return '0.00';
+    var d = digits === undefined ? 2 : digits;
+    var num = parseFloat(val);
+    if (isNaN(num)) return (0).toFixed(d);
+    return Math.abs(num).toFixed(d);
+  }
+};
+module.exports = {
+  toFixed: fmt.toFixed,
+  absFixed: fmt.absFixed
+};
