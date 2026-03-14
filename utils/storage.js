@@ -398,6 +398,7 @@ function clearTransactions(userId) {
 
 async function clearTransactionsAsync(userId) {
   const activeUserId = userId || requireCurrentUser().id
+  const localSnapshot = getTransactions(activeUserId)
 
   // 先清本地，确保用户立即看到清空结果。
   saveTransactions([], activeUserId)
@@ -417,6 +418,10 @@ async function clearTransactionsAsync(userId) {
 
     const result = (res && res.result) || { success: false, message: '云端清空失败' }
     if (!result.success) {
+      const fallback = await clearTransactionsByDeleteFallback(localSnapshot, activeUserId, result.message)
+      if (fallback.success) {
+        return fallback
+      }
       await syncTransactionsFromCloud(activeUserId)
       return { success: false, message: result.message || '云端清空失败' }
     }
@@ -427,7 +432,51 @@ async function clearTransactionsAsync(userId) {
     }
   } catch (error) {
     console.error('云端清空交易失败', error)
+    const fallback = await clearTransactionsByDeleteFallback(localSnapshot, activeUserId, error && error.message)
+    if (fallback.success) {
+      return fallback
+    }
     await syncTransactionsFromCloud(activeUserId)
+    return { success: false, message: error.message || '云端清空失败' }
+  }
+}
+
+async function clearTransactionsByDeleteFallback(transactions, userId, reason) {
+  const message = String(reason || '')
+  const shouldFallback = /未知|unknown|操作类型|action/i.test(message)
+  if (!shouldFallback) {
+    return { success: false }
+  }
+
+  const list = Array.isArray(transactions) ? transactions : []
+  try {
+    for (let index = 0; index < list.length; index++) {
+      const item = list[index]
+      if (!item || !item.id) {
+        continue
+      }
+
+      const res = await wx.cloud.callFunction({
+        name: 'saveTransaction',
+        data: {
+          action: 'delete',
+          userId,
+          transaction: {
+            id: item.id
+          }
+        }
+      })
+
+      const result = (res && res.result) || {}
+      if (!result.success) {
+        return { success: false, message: result.message || '云端清空失败' }
+      }
+    }
+
+    saveTransactions([], userId)
+    return { success: true, deletedCount: list.length, fallback: true }
+  } catch (error) {
+    console.error('降级删除云端交易失败', error)
     return { success: false, message: error.message || '云端清空失败' }
   }
 }
