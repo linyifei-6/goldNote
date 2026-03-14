@@ -50,6 +50,20 @@ function calculateFee(type, price, weight, platform) {
   }
 }
 
+function normalizePlatform(platform) {
+  const text = String(platform || '').trim()
+  if (!text) return '其他'
+  return ['招商', '民生', '浙商', '其他'].includes(text) ? text : '其他'
+}
+
+function normalizeDate(dateText, fallbackDate) {
+  const text = String(dateText || '').trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return text
+  }
+  return fallbackDate
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const { action, transaction, userId } = event
@@ -116,7 +130,7 @@ exports.main = async (event, context) => {
 
     } else if (action === 'update') {
       // 更新交易
-      const { id, ...updateData } = transaction
+      const { id, ...updateData } = transaction || {}
       
       const targetTx = await transactionsCollection
         .where({ userId: targetUserId, id: id })
@@ -127,12 +141,37 @@ exports.main = async (event, context) => {
         return { success: false, message: '交易记录不存在' }
       }
 
+      const type = ['buy', 'sell'].includes(updateData.type)
+        ? updateData.type
+        : targetTx.type
+      const price = Number(updateData.price)
+      const weight = Number(updateData.weight)
+      const platform = normalizePlatform(updateData.platform || targetTx.platform)
+      const fallbackDate = String(targetTx.date || new Date().toISOString().split('T')[0])
+      const txDate = normalizeDate(updateData.date, fallbackDate)
+
+      if (!(price > 0) || !(weight > 0)) {
+        return { success: false, message: '成交价格和克数必须大于 0' }
+      }
+
+      const now = new Date()
+      const timeText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+      const feeInfo = calculateFee(type, price, weight, platform)
+
       await transactionsCollection
         .where({ userId: targetUserId, id: id })
         .update({
           data: {
-            ...updateData,
-            updatedAt: new Date()
+            type,
+            price,
+            weight,
+            platform,
+            date: txDate,
+            fee_rate: feeInfo.feeRate,
+            fee_amount: feeInfo.feeAmount,
+            net_amount: feeInfo.netAmount,
+            timestamp: `${txDate} ${timeText}`,
+            updatedAt: now
           }
         })
 
