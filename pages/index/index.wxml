@@ -55,6 +55,7 @@
           <view class="mini-platform-left">
             <text class="mini-platform-name">{{item.platform}}</text>
             <text class="mini-platform-hold">{{fmt.toFixed(item.currentHolding, 2)}}g</text>
+            <text class="mini-platform-avg">均价 ¥{{fmt.toFixed(item.avgCost, 2)}}</text>
           </view>
           <view class="mini-platform-right">
             <text class="mini-platform-profit {{item.realizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">累计 ¥{{fmt.toFixed(item.realizedProfit, 2)}}</text>
@@ -95,6 +96,9 @@
         <view class="quote-actions">
           <view class="quote-btn" bindtap="onFetchPriceTap">
             <text class="quote-btn-text">Qveris</text>
+          </view>
+          <view class="quote-btn" bindtap="onToggleSimulatorUpdate">
+            <text class="quote-btn-text">{{simulatorPaused ? '开始' : '暂停'}}</text>
           </view>
           <view class="quote-btn" bindtap="togglePriceMode">
             <text class="quote-btn-text">手动</text>

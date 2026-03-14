@@ -11,6 +11,7 @@ Page({
     lastUpdateTime: '',
     isUpdating: false,
     autoUpdateMode: true,
+    simulatorPaused: false,
     priceSource: '',
     usingSimulator: false,
     countdown: 2,
@@ -43,7 +44,9 @@ Page({
 
   onShow() {
     this.refreshPage()
-    this.startAutoUpdate()
+    if (this.data.autoUpdateMode && !this.data.simulatorPaused) {
+      this.startAutoUpdate()
+    }
   },
 
   onHide() {
@@ -110,7 +113,10 @@ Page({
 
   togglePriceMode() {
     const autoUpdateMode = !this.data.autoUpdateMode
-    this.setData({ autoUpdateMode })
+    this.setData({
+      autoUpdateMode,
+      simulatorPaused: autoUpdateMode ? false : this.data.simulatorPaused
+    })
 
     if (autoUpdateMode) {
       this.startAutoUpdate()
@@ -127,6 +133,23 @@ Page({
 
   onFetchPriceTap() {
     this.fetchGoldPrice(false, 'qveris')
+  },
+
+  onToggleSimulatorUpdate() {
+    if (!this.data.autoUpdateMode) {
+      return
+    }
+
+    if (this.data.simulatorPaused) {
+      this.setData({ simulatorPaused: false })
+      this.startAutoUpdate()
+      wx.showToast({ title: '模拟已开始', icon: 'none' })
+      return
+    }
+
+    this.setData({ simulatorPaused: true })
+    this.stopAutoUpdate()
+    wx.showToast({ title: '模拟已暂停', icon: 'none' })
   },
 
   onCurvePlatformChange(e) {
@@ -258,16 +281,35 @@ Page({
       ...Object.keys(profitMap)
     ])]
 
+    const orderMap = {
+      民生: 0,
+      浙商: 1,
+      招商: 2,
+      其他: 3
+    }
+
     return platforms.map((platform) => {
       const holding = holdingMap[platform] || {}
       const profit = profitMap[platform] || {}
       return {
         platform,
         currentHolding: Number(holding.currentHolding) || 0,
+        avgCost: Number(holding.avgCost) || 0,
         realizedProfit: Number(profit.realizedProfit) || 0,
         unrealizedProfit: Number(profit.unrealizedProfit) || 0
       }
-    }).sort((a, b) => b.currentHolding - a.currentHolding)
+    }).sort((a, b) => {
+      const left = Object.prototype.hasOwnProperty.call(orderMap, a.platform)
+        ? orderMap[a.platform]
+        : 999
+      const right = Object.prototype.hasOwnProperty.call(orderMap, b.platform)
+        ? orderMap[b.platform]
+        : 999
+      if (left !== right) {
+        return left - right
+      }
+      return b.currentHolding - a.currentHolding
+    })
   },
 
   calculateProfits() {
@@ -486,6 +528,7 @@ Page({
   startAutoUpdate() {
     // 清除可能存在的旧定时器
     this.stopAutoUpdate()
+    this.setData({ simulatorPaused: false })
     
     // 立即执行一次
     this.fetchGoldPrice(true, 'simulator')
@@ -535,6 +578,10 @@ Page({
    */
   fetchGoldPrice(isAutoRefresh = false, preferredSource) {
     if (isAutoRefresh && !this.data.autoUpdateMode) {
+      return
+    }
+
+    if (isAutoRefresh && this.data.simulatorPaused) {
       return
     }
 
@@ -600,7 +647,9 @@ Page({
         if (isAutoRefresh) {
           console.log(`${selectedSource} 失败，3秒后重试...`)
           setTimeout(() => {
-            this.fetchGoldPrice(true, 'simulator')
+            if (this.data.autoUpdateMode && !this.data.simulatorPaused) {
+              this.fetchGoldPrice(true, 'simulator')
+            }
           }, 3000)
         }
       })
