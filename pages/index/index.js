@@ -445,9 +445,13 @@ Page({
     wx.showModal({
       title: '警示',
       content: '确定要清除当前账号的所有交易数据吗？此操作不可恢复。',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
-          storage.clearTransactions()
+          const result = await storage.clearTransactionsAsync()
+          if (!result.success) {
+            wx.showToast({ title: result.message || '清空失败，请重试', icon: 'none' })
+            return
+          }
           this.refreshPage()
           wx.showToast({ title: '数据已清除', icon: 'success' })
         }

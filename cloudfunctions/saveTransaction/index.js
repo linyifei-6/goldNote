@@ -151,6 +151,18 @@ exports.main = async (event, context) => {
 
       return { success: true, message: '删除成功' }
 
+    } else if (action === 'clearAll') {
+      // 清空当前用户全部交易
+      const removeResult = await transactionsCollection
+        .where({ userId: targetUserId })
+        .remove()
+
+      return {
+        success: true,
+        message: '清空成功',
+        deletedCount: (removeResult && removeResult.stats && removeResult.stats.removed) || 0
+      }
+
     } else {
       return { success: false, message: '未知的操作类型' }
     }

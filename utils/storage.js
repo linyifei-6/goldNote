@@ -396,6 +396,42 @@ function clearTransactions(userId) {
   saveTransactions([], userId)
 }
 
+async function clearTransactionsAsync(userId) {
+  const activeUserId = userId || requireCurrentUser().id
+
+  // 先清本地，确保用户立即看到清空结果。
+  saveTransactions([], activeUserId)
+
+  if (!canUseCloud()) {
+    return { success: true, localOnly: true }
+  }
+
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'saveTransaction',
+      data: {
+        action: 'clearAll',
+        userId: activeUserId
+      }
+    })
+
+    const result = (res && res.result) || { success: false, message: '云端清空失败' }
+    if (!result.success) {
+      await syncTransactionsFromCloud(activeUserId)
+      return { success: false, message: result.message || '云端清空失败' }
+    }
+
+    return {
+      success: true,
+      deletedCount: Number(result.deletedCount) || 0
+    }
+  } catch (error) {
+    console.error('云端清空交易失败', error)
+    await syncTransactionsFromCloud(activeUserId)
+    return { success: false, message: error.message || '云端清空失败' }
+  }
+}
+
 function sortTransactionsForReplay(transactions) {
   return [...transactions].sort((a, b) => {
     const left = a.timestamp || `${a.date} 00:00:00`
@@ -1717,6 +1753,7 @@ module.exports = {
   getTransactions,
   saveTransactions,
   clearTransactions,
+  clearTransactionsAsync,
   saveTransaction,
   saveTransactionAsync,
   updateTransaction,
