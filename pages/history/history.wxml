@@ -19,8 +19,8 @@
 
   <view class="card">
     <view class="card-title">综合筛选</view>
-    <view class="filter-grid-4">
-      <view class="filter-col">
+    <view class="filter-grid-main">
+      <view class="filter-col filter-col-time">
         <text class="filter-col-title">时间</text>
         <view class="chip-group compact-group">
           <view
@@ -49,47 +49,49 @@
         </view>
       </view>
 
-      <view class="filter-col">
-        <text class="filter-col-title">交易</text>
-        <view class="chip-group compact-group">
-          <view
-            class="chip-btn compact {{quickQueryKey === item.key ? 'active' : ''}}"
-            wx:for="{{quickTradeOptions}}"
-            wx:key="key"
-            data-key="{{item.key}}"
-            bindtap="onQuickQueryTap"
-          >
-            <text class="chip-btn-text">{{item.label}}</text>
+      <view class="filter-col filter-col-right filter-col-stack">
+        <view class="sub-filter-block">
+          <text class="filter-col-title">交易</text>
+          <view class="chip-group compact-group">
+            <view
+              class="chip-btn compact {{quickQueryKey === item.key ? 'active' : ''}}"
+              wx:for="{{quickTradeOptions}}"
+              wx:key="key"
+              data-key="{{item.key}}"
+              bindtap="onQuickQueryTap"
+            >
+              <text class="chip-btn-text">{{item.label}}</text>
+            </view>
           </view>
         </view>
-      </view>
 
-      <view class="filter-col">
-        <text class="filter-col-title">平台</text>
-        <view class="chip-group compact-group">
-          <view
-            class="chip-btn compact {{platformFilterIndex === index ? 'active' : ''}}"
-            wx:for="{{platformFilters}}"
-            wx:key="*this"
-            data-index="{{index}}"
-            bindtap="onPlatformFilterTap"
-          >
-            <text class="chip-btn-text">{{item}}</text>
+        <view class="sub-filter-block">
+          <text class="filter-col-title">平台</text>
+          <view class="chip-group compact-group">
+            <view
+              class="chip-btn compact {{platformFilterIndex === index ? 'active' : ''}}"
+              wx:for="{{platformFilters}}"
+              wx:key="*this"
+              data-index="{{index}}"
+              bindtap="onPlatformFilterTap"
+            >
+              <text class="chip-btn-text">{{item}}</text>
+            </view>
           </view>
         </view>
-      </view>
 
-      <view class="filter-col">
-        <text class="filter-col-title">类型</text>
-        <view class="chip-group compact-group">
-          <view
-            class="chip-btn compact {{typeFilterIndex === index ? 'active' : ''}}"
-            wx:for="{{typeFilters}}"
-            wx:key="*this"
-            data-index="{{index}}"
-            bindtap="onTypeFilterTap"
-          >
-            <text class="chip-btn-text">{{item}}</text>
+        <view class="sub-filter-block">
+          <text class="filter-col-title">类型</text>
+          <view class="chip-group compact-group">
+            <view
+              class="chip-btn compact {{typeFilterIndex === index ? 'active' : ''}}"
+              wx:for="{{typeFilters}}"
+              wx:key="*this"
+              data-index="{{index}}"
+              bindtap="onTypeFilterTap"
+            >
+              <text class="chip-btn-text">{{item}}</text>
+            </view>
           </view>
         </view>
       </view>
@@ -160,8 +162,77 @@
 
     <view class="query-record-wrap" wx:if="{{queryResultTransactions.length > 0}}">
       <view class="query-record-title">本次查询交易（{{queryResultTransactions.length}}笔）</view>
+
+      <view class="btn-row" wx:if="{{querySelectedCount > 0}}">
+        <button class="btn secondary" bindtap="clearQuerySelection">清空选择</button>
+        <button class="btn" bindtap="calculateQueryCustom">计算均价</button>
+      </view>
+
+      <view class="selected-stats-wrap selected-stats-top" wx:if="{{queryCustomStats}}">
+        <view class="query-record-title">本次查询选定记录统计（{{querySelectedCount}}笔）</view>
+        <view class="stats-dual" wx:if="{{queryCustomStats.buy || queryCustomStats.sell}}">
+          <view class="stat-section dense" wx:if="{{queryCustomStats.buy}}">
+            <view class="stat-head-row">
+              <view class="stat-header with-icon">
+                <text class="stat-icon buy">↗</text>
+                <text>买入</text>
+              </view>
+              <text class="stat-mini">{{queryCustomStats.buy.count || 0}} 笔</text>
+            </view>
+            <view class="stat-grid">
+              <view class="stat-cell">
+                <text class="stat-label">均价</text>
+                <text class="stat-value">¥{{fmt.toFixed(queryCustomStats.buy.avgPrice, 2)}}/克</text>
+              </view>
+              <view class="stat-cell">
+                <text class="stat-label">总克数</text>
+                <text class="stat-value">{{fmt.toFixed(queryCustomStats.buy.totalWeight, 2)}} 克</text>
+              </view>
+              <view class="stat-cell span2">
+                <text class="stat-label">总金额</text>
+                <text class="stat-value">¥{{fmt.toFixed(queryCustomStats.buy.totalAmount, 2)}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="stat-section dense" wx:if="{{queryCustomStats.sell}}">
+            <view class="stat-head-row">
+              <view class="stat-header with-icon">
+                <text class="stat-icon sell">↘</text>
+                <text>卖出</text>
+              </view>
+              <text class="stat-mini">{{queryCustomStats.sell.count || 0}} 笔</text>
+            </view>
+            <view class="stat-grid">
+              <view class="stat-cell">
+                <text class="stat-label">均价</text>
+                <text class="stat-value">¥{{fmt.toFixed(queryCustomStats.sell.avgPrice, 2)}}/克</text>
+              </view>
+              <view class="stat-cell">
+                <text class="stat-label">总克数</text>
+                <text class="stat-value">{{fmt.toFixed(queryCustomStats.sell.totalWeight, 2)}} 克</text>
+              </view>
+              <view class="stat-cell">
+                <text class="stat-label">总金额</text>
+                <text class="stat-value">¥{{fmt.toFixed(queryCustomStats.sell.totalAmount, 2)}}</text>
+              </view>
+              <view class="stat-cell" wx:if="{{queryCustomStats.sell.totalFee > 0}}">
+                <text class="stat-label">手续费</text>
+                <text class="stat-value">¥{{fmt.toFixed(queryCustomStats.sell.totalFee, 2)}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <view class="record-list">
-        <view class="record-item" wx:for="{{queryResultTransactions}}" wx:key="id">
+        <view
+          class="record-item {{item.selected ? 'selected' : ''}}"
+          wx:for="{{queryResultTransactions}}"
+          wx:key="id"
+          bindtap="toggleQuerySelection"
+          data-id="{{item.id}}"
+        >
           <view class="record-header">
             <view class="record-left">
               <text class="record-no">#{{item.displayNo}}</text>
@@ -201,6 +272,8 @@
             <button class="action-btn" catchtap="editTransaction" data-id="{{item.id}}">修改</button>
             <button class="action-btn danger" catchtap="deleteTransaction" data-id="{{item.id}}">删除</button>
           </view>
+
+          <view class="record-check" wx:if="{{item.selected}}">✓</view>
         </view>
       </view>
     </view>
@@ -208,6 +281,64 @@
 
   <view class="card">
     <view class="card-title">交易总览</view>
+
+    <view class="selected-stats-wrap selected-stats-top" wx:if="{{customStats}}">
+      <view class="query-record-title">选定记录统计（{{selectedCount}}笔）</view>
+      <view class="stats-dual" wx:if="{{customStats.buy || customStats.sell}}">
+        <view class="stat-section dense" wx:if="{{customStats.buy}}">
+          <view class="stat-head-row">
+            <view class="stat-header with-icon">
+              <text class="stat-icon buy">↗</text>
+              <text>买入</text>
+            </view>
+            <text class="stat-mini">{{customStats.buy.count || 0}} 笔</text>
+          </view>
+          <view class="stat-grid">
+            <view class="stat-cell">
+              <text class="stat-label">均价</text>
+              <text class="stat-value">¥{{fmt.toFixed(customStats.buy.avgPrice, 2)}}/克</text>
+            </view>
+            <view class="stat-cell">
+              <text class="stat-label">总克数</text>
+              <text class="stat-value">{{fmt.toFixed(customStats.buy.totalWeight, 2)}} 克</text>
+            </view>
+            <view class="stat-cell span2">
+              <text class="stat-label">总金额</text>
+              <text class="stat-value">¥{{fmt.toFixed(customStats.buy.totalAmount, 2)}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="stat-section dense" wx:if="{{customStats.sell}}">
+          <view class="stat-head-row">
+            <view class="stat-header with-icon">
+              <text class="stat-icon sell">↘</text>
+              <text>卖出</text>
+            </view>
+            <text class="stat-mini">{{customStats.sell.count || 0}} 笔</text>
+          </view>
+          <view class="stat-grid">
+            <view class="stat-cell">
+              <text class="stat-label">均价</text>
+              <text class="stat-value">¥{{fmt.toFixed(customStats.sell.avgPrice, 2)}}/克</text>
+            </view>
+            <view class="stat-cell">
+              <text class="stat-label">总克数</text>
+              <text class="stat-value">{{fmt.toFixed(customStats.sell.totalWeight, 2)}} 克</text>
+            </view>
+            <view class="stat-cell">
+              <text class="stat-label">总金额</text>
+              <text class="stat-value">¥{{fmt.toFixed(customStats.sell.totalAmount, 2)}}</text>
+            </view>
+            <view class="stat-cell" wx:if="{{customStats.sell.totalFee > 0}}">
+              <text class="stat-label">手续费</text>
+              <text class="stat-value">¥{{fmt.toFixed(customStats.sell.totalFee, 2)}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <view class="record-list">
       <view
         class="record-item {{item.selected ? 'selected' : ''}}"
@@ -259,55 +390,11 @@
         <view class="record-check" wx:if="{{item.selected}}">✓</view>
       </view>
     </view>
-
-    <view class="btn-row" wx:if="{{selectedCount > 0}}">
-      <button class="btn secondary" bindtap="clearSelection">清空选择</button>
-      <button class="btn" bindtap="calculateCustom">计算均价</button>
-    </view>
   </view>
 
-  <view class="card" wx:if="{{customStats}}">
-    <view class="card-title">选定记录统计</view>
-
-    <view class="stat-section" wx:if="{{customStats.buy}}">
-      <view class="stat-header">买入（{{customStats.buy.count}}笔）</view>
-      <view class="stat-row">
-        <text class="stat-label">成交均价</text>
-        <text class="stat-value">¥{{fmt.toFixed(customStats.buy.avgPrice, 2)}}/克</text>
-      </view>
-      <view class="stat-row">
-        <text class="stat-label">总克数</text>
-        <text class="stat-value">{{fmt.toFixed(customStats.buy.totalWeight, 2)}} 克</text>
-      </view>
-      <view class="stat-row">
-        <text class="stat-label">总金额</text>
-        <text class="stat-value">¥{{fmt.toFixed(customStats.buy.totalAmount, 2)}}</text>
-      </view>
-      <view class="stat-row" wx:if="{{customStats.buy.totalFee > 0}}">
-        <text class="stat-label">手续费</text>
-        <text class="stat-value">¥{{fmt.toFixed(customStats.buy.totalFee, 2)}}</text>
-      </view>
-    </view>
-
-    <view class="stat-section" wx:if="{{customStats.sell}}">
-      <view class="stat-header">卖出（{{customStats.sell.count}}笔）</view>
-      <view class="stat-row">
-        <text class="stat-label">成交均价</text>
-        <text class="stat-value">¥{{fmt.toFixed(customStats.sell.avgPrice, 2)}}/克</text>
-      </view>
-      <view class="stat-row">
-        <text class="stat-label">总克数</text>
-        <text class="stat-value">{{fmt.toFixed(customStats.sell.totalWeight, 2)}} 克</text>
-      </view>
-      <view class="stat-row">
-        <text class="stat-label">总金额</text>
-        <text class="stat-value">¥{{fmt.toFixed(customStats.sell.totalAmount, 2)}}</text>
-      </view>
-      <view class="stat-row" wx:if="{{customStats.sell.totalFee > 0}}">
-        <text class="stat-label">手续费</text>
-        <text class="stat-value">¥{{fmt.toFixed(customStats.sell.totalFee, 2)}}</text>
-      </view>
-    </view>
+  <view class="floating-action-bar" wx:if="{{selectedCount > 0}}">
+    <button class="btn secondary" bindtap="clearSelection">清空选择</button>
+    <button class="btn" bindtap="calculateCustom">计算均价</button>
   </view>
 
   <view class="edit-mask" wx:if="{{editVisible}}">
@@ -335,8 +422,12 @@
       <view class="form-item">
         <text class="form-label">交易日期</text>
         <picker class="form-picker" mode="date" value="{{editForm.date}}" end="{{today}}" bindchange="onEditDateChange">
-          <view class="picker">{{editForm.date}}</view>
-          <text class="picker-arrow">›</text>
+          <view class="unified-date-picker">
+            <view class="unified-date-inner">
+              <text class="unified-date-tag">日</text>
+              <text class="unified-date-value">{{editForm.date || '请选择日期'}}</text>
+            </view>
+          </view>
         </picker>
       </view>
 

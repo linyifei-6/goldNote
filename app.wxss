@@ -124,3 +124,45 @@ page {
   font-size: 30rpx;
   color: #333;
 }
+
+.unified-date-picker {
+  width: 100%;
+  min-height: 64rpx;
+  background: #f3f3f3;
+  border: 1rpx solid #e7e7e7;
+  border-radius: 10rpx;
+  padding: 0 10rpx;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.unified-date-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.unified-date-tag {
+  font-size: 22rpx;
+  color: #9a8056;
+  background: #f8ead1;
+  border-radius: 6rpx;
+  padding: 2rpx 6rpx;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.unified-date-value {
+  font-size: 28rpx;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unified-date-picker.muted .unified-date-value {
+  color: #94a3b8;
+}

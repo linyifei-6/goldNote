@@ -6,7 +6,12 @@
     <view class="inline-row">
       <view class="inline-label">截止日期</view>
       <picker mode="date" value="{{taskDueDate}}" bindchange="onTaskDateChange" class="inline-picker-wrap">
-        <view class="picker">{{taskDueDate}}</view>
+        <view class="unified-date-picker">
+          <view class="unified-date-inner">
+            <text class="unified-date-tag">止</text>
+            <text class="unified-date-value">{{taskDueDate || '请选择日期'}}</text>
+          </view>
+        </view>
       </picker>
     </view>
     <button class="btn" bindtap="onAddTask">添加任务</button>

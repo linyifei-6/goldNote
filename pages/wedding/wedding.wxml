@@ -40,7 +40,12 @@
       <view>
         <view class="picker-label">婚礼日期</view>
         <picker mode="date" value="{{weddingDate}}" bindchange="onWeddingDateChange">
-          <view class="picker-value {{weddingDate ? '' : 'muted'}}">{{weddingDate || '点击设置婚礼日期'}}</view>
+          <view class="unified-date-picker {{weddingDate ? '' : 'muted'}}">
+            <view class="unified-date-inner">
+              <text class="unified-date-tag">日</text>
+              <text class="unified-date-value">{{weddingDate || '点击设置婚礼日期'}}</text>
+            </view>
+          </view>
         </picker>
       </view>
       <view>
@@ -77,7 +82,12 @@
     </view>
     <view class="picker-label">截止日期</view>
     <picker mode="date" value="{{taskDueDate}}" bindchange="onTaskDateChange">
-      <view class="picker-value">{{taskDueDate}}</view>
+      <view class="unified-date-picker">
+        <view class="unified-date-inner">
+          <text class="unified-date-tag">止</text>
+          <text class="unified-date-value">{{taskDueDate || '请选择日期'}}</text>
+        </view>
+      </view>
     </picker>
     <view class="form-grid">
       <view>
@@ -194,7 +204,12 @@
     </view>
     <view class="picker-label">支出日期</view>
     <picker mode="date" value="{{expenseDate}}" bindchange="onExpenseDateChange">
-      <view class="picker-value">{{expenseDate}}</view>
+      <view class="unified-date-picker">
+        <view class="unified-date-inner">
+          <text class="unified-date-tag">日</text>
+          <text class="unified-date-value">{{expenseDate || '请选择日期'}}</text>
+        </view>
+      </view>
     </picker>
     <button class="submit-btn" bindtap="onAddExpense">记录支出</button>
 
@@ -272,7 +287,12 @@
     <input class="input" wx:if="{{taskTypeOptions[taskEditForm.typeIndex] === '其他'}}" placeholder="请输入自定义任务类型" maxlength="20" value="{{taskEditForm.customType}}" bindinput="onTaskEditCustomTypeInput" />
     <view class="picker-label">截止日期</view>
     <picker mode="date" value="{{taskEditForm.dueDate}}" bindchange="onTaskEditDateChange">
-      <view class="picker-value">{{taskEditForm.dueDate}}</view>
+      <view class="unified-date-picker">
+        <view class="unified-date-inner">
+          <text class="unified-date-tag">止</text>
+          <text class="unified-date-value">{{taskEditForm.dueDate || '请选择日期'}}</text>
+        </view>
+      </view>
     </picker>
     <view class="picker-label">优先级</view>
     <view class="star-selector edit-stars">

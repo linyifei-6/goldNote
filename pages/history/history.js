@@ -25,6 +25,9 @@ Page({
     sellStats: null,
     queryResultTransactions: [],
     querySummary: '',
+    querySelectedTxIds: [],
+    querySelectedCount: 0,
+    queryCustomStats: null,
     allTransactions: [],
     transactions: [],
     selectedTxIds: [],
@@ -214,9 +217,23 @@ Page({
       showStats: true,
       buyStats,
       sellStats,
-      queryResultTransactions: list,
-      querySummary: querySummary || ''
+      queryResultTransactions: list.map(tx => ({
+        ...tx,
+        selected: false
+      })),
+      querySummary: querySummary || '',
+      querySelectedTxIds: [],
+      querySelectedCount: 0,
+      queryCustomStats: null
     })
+  },
+
+  buildStatsByTransactions(transactions) {
+    const list = Array.isArray(transactions) ? transactions : []
+    return {
+      buy: storage.calculateAveragePrice(list, 'buy'),
+      sell: storage.calculateAveragePrice(list, 'sell')
+    }
   },
 
   getQuickDateRange(key) {
@@ -334,6 +351,40 @@ Page({
     })
   },
 
+  toggleQuerySelection(e) {
+    const targetId = e.currentTarget.dataset.id
+    const queryResultTransactions = this.data.queryResultTransactions.map(tx => {
+      if (tx.id !== targetId) {
+        return tx
+      }
+      return {
+        ...tx,
+        selected: !tx.selected
+      }
+    })
+
+    const querySelectedTxIds = queryResultTransactions
+      .filter(tx => tx.selected)
+      .map(tx => tx.id)
+
+    this.setData({
+      queryResultTransactions,
+      querySelectedTxIds,
+      querySelectedCount: querySelectedTxIds.length,
+      queryCustomStats: null
+    })
+  },
+
+  clearQuerySelection() {
+    const queryResultTransactions = this.data.queryResultTransactions.map(tx => ({ ...tx, selected: false }))
+    this.setData({
+      queryResultTransactions,
+      querySelectedTxIds: [],
+      querySelectedCount: 0,
+      queryCustomStats: null
+    })
+  },
+
   calculateCustom() {
     const { allTransactions, selectedTxIds } = this.data
 
@@ -344,49 +395,25 @@ Page({
 
     const selectedSet = new Set(selectedTxIds)
     const selectedTransactions = allTransactions.filter(tx => selectedSet.has(tx.id))
-    const buyTransactions = selectedTransactions.filter(tx => tx.type === 'buy')
-    const sellTransactions = selectedTransactions.filter(tx => tx.type === 'sell')
-
-    let buyStats = null
-    let sellStats = null
-
-    if (buyTransactions.length > 0) {
-      let totalAmount = 0
-      let totalWeight = 0
-      buyTransactions.forEach(tx => {
-        totalAmount += tx.price * tx.weight
-        totalWeight += tx.weight
-      })
-
-      buyStats = {
-        count: buyTransactions.length,
-        avgPrice: totalAmount / totalWeight,
-        totalWeight,
-        totalAmount
-      }
-    }
-
-    if (sellTransactions.length > 0) {
-      let totalAmount = 0
-      let totalWeight = 0
-      sellTransactions.forEach(tx => {
-        totalAmount += tx.price * tx.weight
-        totalWeight += tx.weight
-      })
-
-      sellStats = {
-        count: sellTransactions.length,
-        avgPrice: totalAmount / totalWeight,
-        totalWeight,
-        totalAmount
-      }
-    }
 
     this.setData({
-      customStats: {
-        buy: buyStats,
-        sell: sellStats
-      }
+      customStats: this.buildStatsByTransactions(selectedTransactions)
+    })
+  },
+
+  calculateQueryCustom() {
+    const { queryResultTransactions, querySelectedTxIds } = this.data
+
+    if (querySelectedTxIds.length === 0) {
+      wx.showToast({ title: '请选择至少一条记录', icon: 'none' })
+      return
+    }
+
+    const selectedSet = new Set(querySelectedTxIds)
+    const selectedTransactions = queryResultTransactions.filter(tx => selectedSet.has(tx.id))
+
+    this.setData({
+      queryCustomStats: this.buildStatsByTransactions(selectedTransactions)
     })
   },
 

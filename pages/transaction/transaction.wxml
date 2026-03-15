@@ -66,8 +66,12 @@
     <view class="form-item compact-item inline-item">
       <text class="form-label inline-label">交易日期</text>
       <picker class="form-picker inline-picker" mode="date" value="{{date}}" end="{{today}}" bindchange="onDateChange">
-        <view class="picker">{{date || '请选择日期'}}</view>
-        <text class="picker-arrow">›</text>
+        <view class="unified-date-picker">
+          <view class="unified-date-inner">
+            <text class="unified-date-tag">日</text>
+            <text class="unified-date-value">{{date || '请选择日期'}}</text>
+          </view>
+        </view>
       </picker>
     </view>
 

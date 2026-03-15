@@ -1,6 +1,6 @@
 .container {
   padding: 20rpx;
-  padding-bottom: 40rpx;
+  padding-bottom: 180rpx;
   min-height: 100vh;
   background: #f7f3ef;
 }
@@ -134,44 +134,66 @@
   gap: 10rpx;
 }
 
-.filter-grid-4 {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.filter-grid-main {
+  display: flex;
   gap: 8rpx;
+  align-items: start;
 }
 
 .filter-col {
+  min-width: 0;
   background: #fafafa;
   border: 1rpx solid #ededed;
   border-radius: 12rpx;
-  padding: 8rpx;
+  padding: 7rpx;
+}
+
+.filter-col-time {
+  flex: 0 0 46%;
+}
+
+.filter-col-right {
+  flex: 1;
+}
+
+.filter-col-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.sub-filter-block {
+  background: #f7f7f7;
+  border: 1rpx solid #ececec;
+  border-radius: 10rpx;
+  padding: 6rpx;
 }
 
 .filter-col-title {
   display: block;
-  font-size: 20rpx;
+  font-size: 19rpx;
   color: #8b6f43;
-  margin-bottom: 8rpx;
+  margin-bottom: 6rpx;
   font-weight: 600;
 }
 
 .compact-group {
-  gap: 6rpx;
+  gap: 5rpx;
 }
 
 .date-row-compact {
-  margin-top: 8rpx;
+  margin-top: 6rpx;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6rpx;
+  gap: 5rpx;
 }
 
 .date-picker-compact {
-  height: 52rpx;
+  height: 48rpx;
   background: #f3f3f3;
   border: 1rpx solid #e7e7e7;
   border-radius: 8rpx;
-  padding: 0 8rpx;
+  padding: 0 7rpx;
   display: flex;
   align-items: center;
 }
@@ -184,16 +206,16 @@
 }
 
 .date-tag {
-  font-size: 18rpx;
+  font-size: 17rpx;
   color: #9a8056;
   background: #f8ead1;
   border-radius: 6rpx;
-  padding: 2rpx 6rpx;
+  padding: 1rpx 5rpx;
   line-height: 1.2;
 }
 
 .date-value {
-  font-size: 20rpx;
+  font-size: 19rpx;
   color: #666;
   white-space: nowrap;
   overflow: hidden;
@@ -208,7 +230,7 @@
 }
 
 .chip-btn.compact {
-  padding: 7rpx 12rpx;
+  padding: 6rpx 10rpx;
 }
 
 .chip-btn.active {
@@ -217,7 +239,7 @@
 }
 
 .chip-btn-text {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: #6d532e;
 }
 
@@ -385,6 +407,21 @@
   border-top: 1rpx dashed #ececec;
 }
 
+.selected-stats-wrap {
+  margin-top: 10rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx dashed #ececec;
+}
+
+.selected-stats-top {
+  margin-top: 8rpx;
+  padding-top: 0;
+  border-top: none;
+  margin-bottom: 10rpx;
+  padding-bottom: 10rpx;
+  border-bottom: 1rpx dashed #ececec;
+}
+
 .query-record-title {
   font-size: 24rpx;
   font-weight: 600;
@@ -485,12 +522,6 @@
   color: #ff5252;
 }
 
-@media (max-width: 640px) {
-  .filter-grid-4 {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 .info-label {
   font-size: 20rpx;
   color: #999;
@@ -523,6 +554,25 @@
   display: flex;
   gap: 16rpx;
   margin-top: 12rpx;
+}
+
+.floating-action-bar {
+  position: fixed;
+  left: 20rpx;
+  right: 20rpx;
+  bottom: calc(18rpx + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  gap: 16rpx;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1rpx solid #f0e2cc;
+  border-radius: 999rpx;
+  padding: 10rpx;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.08);
+}
+
+.floating-action-bar .btn {
+  margin: 0;
 }
 
 .btn {
