@@ -370,11 +370,11 @@ Page({
     const ctx = wx.createCanvasContext('cumulativeProfitCanvas', this)
 
     const width = 340
-    const height = 180
+    const height = 160
     const paddingLeft = 58
     const paddingRight = 16
-    const paddingTop = 22
-    const paddingBottom = 38
+    const paddingTop = 18
+    const paddingBottom = 26
     const chartWidth = width - paddingLeft - paddingRight
     const chartHeight = height - paddingTop - paddingBottom
     const axisBottomY = height - paddingBottom
@@ -399,12 +399,12 @@ Page({
     ctx.setFillStyle('#9a9a9a')
     ctx.setFontSize(10)
     ctx.fillText('收益(元)', 6, 16)
-    ctx.fillText('日期', width - 28, height - 6)
+    ctx.fillText('日期', width - 28, height - 4)
 
     if (points.length === 0) {
       ctx.setFillStyle('#999999')
       ctx.setFontSize(12)
-      ctx.fillText('暂无收益曲线数据', 126, 95)
+      ctx.fillText('暂无收益曲线数据', 126, 86)
       ctx.draw()
       return
     }
@@ -467,6 +467,36 @@ Page({
       ctx.fill()
     })
 
+    const maxIndex = values.indexOf(maxVal)
+    const minIndex = values.indexOf(minVal)
+    const latestIndex = points.length - 1
+    const markerMap = {}
+
+    markerMap[maxIndex] = `最高 ${maxVal.toFixed(2)}`
+    markerMap[minIndex] = markerMap[minIndex]
+      ? `${markerMap[minIndex]} / 最低 ${minVal.toFixed(2)}`
+      : `最低 ${minVal.toFixed(2)}`
+    markerMap[latestIndex] = markerMap[latestIndex]
+      ? `${markerMap[latestIndex]} / 最新 ${(Number(points[latestIndex].value) || 0).toFixed(2)}`
+      : `最新 ${(Number(points[latestIndex].value) || 0).toFixed(2)}`
+
+    Object.keys(markerMap).forEach((key) => {
+      const idx = Number(key)
+      if (!Number.isFinite(idx)) return
+      const point = points[idx]
+      if (!point) return
+
+      const x = paddingLeft + xStep * idx
+      const y = axisBottomY - ((point.value - plotMin) / plotSpan) * chartHeight
+      const label = markerMap[idx]
+      const textX = Math.max(paddingLeft + 2, Math.min(width - paddingRight - 120, x + 4))
+      const textY = Math.max(paddingTop + 10, y - 8)
+
+      ctx.setFillStyle('#d93025')
+      ctx.setFontSize(10)
+      ctx.fillText(label, textX, textY)
+    })
+
     const formatAxisDate = (rawLabel) => {
       const datePart = String(rawLabel || '').split(' ')[0]
       if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
@@ -478,8 +508,8 @@ Page({
     ctx.setFillStyle('#999999')
     ctx.setFontSize(10)
 
-    const minSpacing = 46
-    const labelY = height - 10
+    const minSpacing = 42
+    const labelY = height - 4
     const rightLimit = width - paddingRight - 28
     const candidateIndices = [0]
 
@@ -503,15 +533,15 @@ Page({
       }
 
       const pointX = paddingLeft + xStep * pointIndex
-      let textX = pointX - 14
+      let textX = pointX - 16
       if (order === 0) {
-        textX = paddingLeft - 12
+        textX = paddingLeft - 14
       }
       if (order === uniqueIndices.length - 1) {
-        textX = Math.min(rightLimit, pointX - 18)
+        textX = Math.min(rightLimit, pointX - 20)
       }
 
-      textX = Math.max(paddingLeft - 12, Math.min(rightLimit, textX))
+      textX = Math.max(paddingLeft - 14, Math.min(rightLimit, textX))
       if (textX - lastTextX < minSpacing) {
         return
       }
