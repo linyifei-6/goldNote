@@ -21,32 +21,11 @@
     <view class="card-title">统计模式</view>
     <view class="mode-selector">
       <view class="mode-item {{mode === 'today' ? 'active' : ''}}" bindtap="selectToday">
-        <text class="mode-text">快速查询</text>
-      </view>
-      <view class="mode-item {{mode === 'range' ? 'active' : ''}}" bindtap="selectRange">
-        <text class="mode-text">时段统计</text>
+        <text class="mode-text">查询统计</text>
       </view>
       <view class="mode-item {{mode === 'custom' ? 'active' : ''}}" bindtap="selectCustom">
         <text class="mode-text">自选记录</text>
       </view>
-    </view>
-  </view>
-
-  <view class="card" wx:if="{{mode === 'range'}}">
-    <view class="card-title">选择时段</view>
-    <view class="form-item inline-item">
-      <text class="form-label inline-label">开始日期</text>
-      <picker class="form-picker inline-picker" mode="date" value="{{startDate}}" end="{{today}}" bindchange="onStartDateChange">
-        <view class="picker">{{startDate || '请选择开始日期'}}</view>
-        <text class="picker-arrow">›</text>
-      </picker>
-    </view>
-    <view class="form-item inline-item">
-      <text class="form-label inline-label">结束日期</text>
-      <picker class="form-picker inline-picker" mode="date" value="{{endDate}}" end="{{today}}" bindchange="onEndDateChange">
-        <view class="picker">{{endDate || '请选择结束日期'}}</view>
-        <text class="picker-arrow">›</text>
-      </picker>
     </view>
   </view>
 
@@ -65,6 +44,20 @@
           >
             <text class="chip-btn-text">{{item.label}}</text>
           </view>
+        </view>
+        <view class="date-row-compact">
+          <picker class="date-picker-compact" mode="date" value="{{startDate}}" end="{{today}}" bindchange="onStartDateChange">
+            <view class="date-picker-inner">
+              <text class="date-tag">起</text>
+              <text class="date-value">{{startDate || '开始日期'}}</text>
+            </view>
+          </picker>
+          <picker class="date-picker-compact" mode="date" value="{{endDate}}" end="{{today}}" bindchange="onEndDateChange">
+            <view class="date-picker-inner">
+              <text class="date-tag">止</text>
+              <text class="date-value">{{endDate || '结束日期'}}</text>
+            </view>
+          </picker>
         </view>
       </view>
 

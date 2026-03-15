@@ -92,12 +92,12 @@
 
 .mode-selector {
   display: flex;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 
 .mode-item {
   flex: 1;
-  padding: 18rpx;
+  padding: 14rpx;
   border-radius: 10rpx;
   border: 2rpx solid #e0e0e0;
   background: #f9f9f9;
@@ -111,7 +111,7 @@
 }
 
 .mode-text {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #666;
   font-weight: 500;
 }
@@ -175,7 +175,7 @@
   background: #fafafa;
   border: 1rpx solid #ededed;
   border-radius: 12rpx;
-  padding: 10rpx 8rpx;
+  padding: 8rpx;
 }
 
 .filter-col-title {
@@ -188,6 +188,47 @@
 
 .compact-group {
   gap: 6rpx;
+}
+
+.date-row-compact {
+  margin-top: 8rpx;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6rpx;
+}
+
+.date-picker-compact {
+  height: 52rpx;
+  background: #f3f3f3;
+  border: 1rpx solid #e7e7e7;
+  border-radius: 8rpx;
+  padding: 0 8rpx;
+  display: flex;
+  align-items: center;
+}
+
+.date-picker-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.date-tag {
+  font-size: 18rpx;
+  color: #9a8056;
+  background: #f8ead1;
+  border-radius: 6rpx;
+  padding: 2rpx 6rpx;
+  line-height: 1.2;
+}
+
+.date-value {
+  font-size: 20rpx;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chip-btn {

@@ -11,7 +11,8 @@ Page({
       { key: 'yesterday', label: '昨日' },
       { key: 'thisWeek', label: '本周' },
       { key: 'lastWeek', label: '上周' },
-      { key: 'thisMonth', label: '本月' }
+      { key: 'thisMonth', label: '本月' },
+      { key: 'customRange', label: '时段' }
     ],
     quickTradeOptions: [
       { key: 'last10Buy', label: '最近10次买入' },
@@ -147,15 +148,6 @@ Page({
     this.calculateTodayStats()
   },
 
-  selectRange() {
-    this.setData({
-      mode: 'range',
-      showStats: true,
-      customStats: null
-    })
-    this.calculateRangeStats()
-  },
-
   selectCustom() {
     this.setData({
       mode: 'custom',
@@ -170,16 +162,26 @@ Page({
     const quickQueryKey = String(e.currentTarget.dataset.key || '')
     if (!quickQueryKey) return
     this.setData({ quickQueryKey })
+    if (quickQueryKey === 'customRange') {
+      this.calculateRangeStats()
+      return
+    }
     this.calculateTodayStats()
   },
 
   onStartDateChange(e) {
-    this.setData({ startDate: e.detail.value })
+    this.setData({
+      startDate: e.detail.value,
+      quickQueryKey: 'customRange'
+    })
     this.calculateRangeStats()
   },
 
   onEndDateChange(e) {
-    this.setData({ endDate: e.detail.value })
+    this.setData({
+      endDate: e.detail.value,
+      quickQueryKey: 'customRange'
+    })
     this.calculateRangeStats()
   },
 
@@ -195,6 +197,9 @@ Page({
     } else if (key === 'last10Tx') {
       filteredTransactions = source.slice(0, 10)
       querySummary = '快速查询：最近10次交易'
+    } else if (key === 'customRange') {
+      this.calculateRangeStats()
+      return
     } else {
       const range = this.getQuickDateRange(key)
       filteredTransactions = storage.filterByDateRange(source, range.startDate, range.endDate)
