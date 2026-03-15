@@ -101,43 +101,51 @@
     <view class="card-title">统计结果</view>
     <view class="query-summary" wx:if="{{querySummary}}">{{querySummary}}</view>
 
-    <view class="stat-section" wx:if="{{buyStats}}">
-      <view class="stat-header">买入</view>
-      <view class="stat-row">
-        <text class="stat-label">成交均价</text>
-        <text class="stat-value">¥{{fmt.toFixed(buyStats.avgPrice, 2)}}/克</text>
+    <view class="stats-dual" wx:if="{{buyStats || sellStats}}">
+      <view class="stat-section dense" wx:if="{{buyStats}}">
+        <view class="stat-head-row">
+          <view class="stat-header">买入</view>
+          <text class="stat-mini">{{buyStats.count || 0}} 笔</text>
+        </view>
+        <view class="stat-grid">
+          <view class="stat-cell">
+            <text class="stat-label">均价</text>
+            <text class="stat-value">¥{{fmt.toFixed(buyStats.avgPrice, 2)}}/克</text>
+          </view>
+          <view class="stat-cell">
+            <text class="stat-label">总克数</text>
+            <text class="stat-value">{{fmt.toFixed(buyStats.totalWeight, 2)}} 克</text>
+          </view>
+          <view class="stat-cell span2">
+            <text class="stat-label">总金额</text>
+            <text class="stat-value">¥{{fmt.toFixed(buyStats.totalAmount, 2)}}</text>
+          </view>
+        </view>
       </view>
-      <view class="stat-row">
-        <text class="stat-label">总克数</text>
-        <text class="stat-value">{{fmt.toFixed(buyStats.totalWeight, 2)}} 克</text>
-      </view>
-      <view class="stat-row">
-        <text class="stat-label">总金额</text>
-        <text class="stat-value">¥{{fmt.toFixed(buyStats.totalAmount, 2)}}</text>
-      </view>
-      <view class="stat-row" wx:if="{{buyStats.totalFee > 0}}">
-        <text class="stat-label">手续费</text>
-        <text class="stat-value">¥{{fmt.toFixed(buyStats.totalFee, 2)}}</text>
-      </view>
-    </view>
 
-    <view class="stat-section" wx:if="{{sellStats}}">
-      <view class="stat-header">卖出</view>
-      <view class="stat-row">
-        <text class="stat-label">成交均价</text>
-        <text class="stat-value">¥{{fmt.toFixed(sellStats.avgPrice, 2)}}/克</text>
-      </view>
-      <view class="stat-row">
-        <text class="stat-label">总克数</text>
-        <text class="stat-value">{{fmt.toFixed(sellStats.totalWeight, 2)}} 克</text>
-      </view>
-      <view class="stat-row">
-        <text class="stat-label">总金额</text>
-        <text class="stat-value">¥{{fmt.toFixed(sellStats.totalAmount, 2)}}</text>
-      </view>
-      <view class="stat-row" wx:if="{{sellStats.totalFee > 0}}">
-        <text class="stat-label">手续费</text>
-        <text class="stat-value">¥{{fmt.toFixed(sellStats.totalFee, 2)}}</text>
+      <view class="stat-section dense" wx:if="{{sellStats}}">
+        <view class="stat-head-row">
+          <view class="stat-header">卖出</view>
+          <text class="stat-mini">{{sellStats.count || 0}} 笔</text>
+        </view>
+        <view class="stat-grid">
+          <view class="stat-cell">
+            <text class="stat-label">均价</text>
+            <text class="stat-value">¥{{fmt.toFixed(sellStats.avgPrice, 2)}}/克</text>
+          </view>
+          <view class="stat-cell">
+            <text class="stat-label">总克数</text>
+            <text class="stat-value">{{fmt.toFixed(sellStats.totalWeight, 2)}} 克</text>
+          </view>
+          <view class="stat-cell">
+            <text class="stat-label">总金额</text>
+            <text class="stat-value">¥{{fmt.toFixed(sellStats.totalAmount, 2)}}</text>
+          </view>
+          <view class="stat-cell" wx:if="{{sellStats.totalFee > 0}}">
+            <text class="stat-label">手续费</text>
+            <text class="stat-value">¥{{fmt.toFixed(sellStats.totalFee, 2)}}</text>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -182,6 +190,11 @@
               <text class="info-label">手续费</text>
               <text class="info-value">¥{{fmt.toFixed(item.fee_amount, 2)}}</text>
             </view>
+          </view>
+
+          <view class="record-actions">
+            <button class="action-btn" catchtap="editTransaction" data-id="{{item.id}}">修改</button>
+            <button class="action-btn danger" catchtap="deleteTransaction" data-id="{{item.id}}">删除</button>
           </view>
         </view>
       </view>
