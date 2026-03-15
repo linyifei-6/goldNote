@@ -82,7 +82,8 @@ Page({
     }
 
     const selectedPlatform = platformOptions[curvePlatformIndex]
-    const allCurvePoints = storage.buildProfitCurve(transactions, selectedPlatform)
+    const rawCurvePoints = storage.buildProfitCurve(transactions, selectedPlatform)
+    const allCurvePoints = this.buildDailyCumulativeCurve(rawCurvePoints)
     const cumulativeCurvePoints = this.filterCurveBySelectedRange(allCurvePoints)
     const platformAnalysis = this.buildPlatformAnalysis(transactions, currentPriceNum)
     const summaryPlatforms = this.buildSummaryPlatforms(platformAnalysis.holdings, platformAnalysis.profits)
@@ -101,6 +102,29 @@ Page({
     wx.nextTick(() => {
       this.drawCumulativeCurve()
     })
+  },
+
+  buildDailyCumulativeCurve(points) {
+    const list = Array.isArray(points) ? points : []
+    if (list.length === 0) {
+      return []
+    }
+
+    const dailyMap = {}
+    list.forEach((item) => {
+      const day = String(item.label || '').split(' ')[0]
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+        return
+      }
+      dailyMap[day] = Number(item.value) || 0
+    })
+
+    return Object.keys(dailyMap)
+      .sort((a, b) => (a > b ? 1 : -1))
+      .map((day) => ({
+        label: day,
+        value: dailyMap[day]
+      }))
   },
 
   onPriceInput(e) {
@@ -347,22 +371,40 @@ Page({
 
     const width = 340
     const height = 180
-    const padding = 24
-    const bottomPadding = 34
+    const paddingLeft = 58
+    const paddingRight = 16
+    const paddingTop = 22
+    const paddingBottom = 38
+    const chartWidth = width - paddingLeft - paddingRight
+    const chartHeight = height - paddingTop - paddingBottom
+    const axisBottomY = height - paddingBottom
 
     ctx.clearRect(0, 0, width, height)
 
     ctx.setStrokeStyle('#e8e8e8')
     ctx.setLineWidth(1)
+
+    // X 轴
     ctx.beginPath()
-    ctx.moveTo(padding, height - bottomPadding)
-    ctx.lineTo(width - padding, height - bottomPadding)
+    ctx.moveTo(paddingLeft, axisBottomY)
+    ctx.lineTo(width - paddingRight, axisBottomY)
     ctx.stroke()
+
+    // Y 轴
+    ctx.beginPath()
+    ctx.moveTo(paddingLeft, paddingTop)
+    ctx.lineTo(paddingLeft, axisBottomY)
+    ctx.stroke()
+
+    ctx.setFillStyle('#9a9a9a')
+    ctx.setFontSize(10)
+    ctx.fillText('收益(元)', 6, 16)
+    ctx.fillText('日期', width - 28, height - 6)
 
     if (points.length === 0) {
       ctx.setFillStyle('#999999')
       ctx.setFontSize(12)
-      ctx.fillText('暂无收益曲线数据', 120, 95)
+      ctx.fillText('暂无收益曲线数据', 126, 95)
       ctx.draw()
       return
     }
@@ -370,26 +412,43 @@ Page({
     const values = points.map(item => item.value)
     const maxVal = Math.max(...values)
     const minVal = Math.min(...values)
-    const span = maxVal === minVal ? 1 : (maxVal - minVal)
+    const span = maxVal === minVal ? Math.max(1, Math.abs(maxVal) * 0.2) : (maxVal - minVal)
+    const plotMin = maxVal === minVal ? minVal - span / 2 : minVal
+    const plotMax = maxVal === minVal ? maxVal + span / 2 : maxVal
+    const plotSpan = plotMax - plotMin
 
-    if (minVal < 0 && maxVal > 0) {
-      const zeroY = height - bottomPadding - ((0 - minVal) / span) * (height - bottomPadding - padding)
+    const yTicks = [plotMin, plotMin + plotSpan / 2, plotMax]
+    yTicks.forEach((tick) => {
+      const y = axisBottomY - ((tick - plotMin) / plotSpan) * chartHeight
       ctx.setStrokeStyle('#f0f0f0')
       ctx.beginPath()
-      ctx.moveTo(padding, zeroY)
-      ctx.lineTo(width - padding, zeroY)
+      ctx.moveTo(paddingLeft, y)
+      ctx.lineTo(width - paddingRight, y)
+      ctx.stroke()
+
+      ctx.setFillStyle('#8d8d8d')
+      ctx.setFontSize(10)
+      ctx.fillText(tick.toFixed(0), 8, y + 4)
+    })
+
+    if (minVal < 0 && maxVal > 0) {
+      const zeroY = axisBottomY - ((0 - plotMin) / plotSpan) * chartHeight
+      ctx.setStrokeStyle('#f0f0f0')
+      ctx.beginPath()
+      ctx.moveTo(paddingLeft, zeroY)
+      ctx.lineTo(width - paddingRight, zeroY)
       ctx.stroke()
     }
 
-    const xStep = points.length > 1 ? (width - padding * 2) / (points.length - 1) : 0
+    const xStep = points.length > 1 ? chartWidth / (points.length - 1) : 0
 
     ctx.setStrokeStyle('#f6b73c')
     ctx.setLineWidth(2)
     ctx.beginPath()
 
     points.forEach((point, index) => {
-      const x = padding + xStep * index
-      const y = height - bottomPadding - ((point.value - minVal) / span) * (height - bottomPadding - padding)
+      const x = paddingLeft + xStep * index
+      const y = axisBottomY - ((point.value - plotMin) / plotSpan) * chartHeight
 
       if (index === 0) {
         ctx.moveTo(x, y)
@@ -400,8 +459,8 @@ Page({
     ctx.stroke()
 
     points.forEach((point, index) => {
-      const x = padding + xStep * index
-      const y = height - bottomPadding - ((point.value - minVal) / span) * (height - bottomPadding - padding)
+      const x = paddingLeft + xStep * index
+      const y = axisBottomY - ((point.value - plotMin) / plotSpan) * chartHeight
       ctx.setFillStyle('#f6b73c')
       ctx.beginPath()
       ctx.arc(x, y, 2.5, 0, Math.PI * 2)
@@ -411,13 +470,12 @@ Page({
     const last = points[points.length - 1]
     ctx.setFillStyle('#666666')
     ctx.setFontSize(12)
-    ctx.fillText(`最新累计收益 ¥${last.value.toFixed(2)}`, 12, 18)
+    ctx.fillText(`最新累计收益 ¥${last.value.toFixed(2)}`, 12, 30)
 
-    const crossYear = new Set(points.map(item => String(item.label || '').split('-')[0])).size > 1
     const formatAxisDate = (rawLabel) => {
       const datePart = String(rawLabel || '').split(' ')[0]
       if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
-        return crossYear ? datePart : datePart.slice(5)
+        return datePart.slice(5)
       }
       return datePart
     }
@@ -425,14 +483,14 @@ Page({
     ctx.setFillStyle('#999999')
     ctx.setFontSize(10)
 
-    const availableWidth = width - padding * 2
+    const availableWidth = chartWidth
     const minSpacing = 54
     const firstLabel = formatAxisDate(points[0].label)
     const lastLabel = formatAxisDate(points[points.length - 1].label)
 
-    ctx.fillText(firstLabel, padding, height - 10)
+    ctx.fillText(firstLabel, paddingLeft - 12, height - 10)
     if (points.length > 1) {
-      const lastTextX = Math.max(padding + minSpacing, width - padding - (crossYear ? 52 : 36))
+      const lastTextX = Math.max(paddingLeft + minSpacing, width - paddingRight - 36)
       ctx.fillText(lastLabel, lastTextX, height - 10)
     }
 
@@ -448,18 +506,18 @@ Page({
       }
 
       const uniqueMiddle = [...new Set(middleIndices)].filter(index => index > 0 && index < points.length - 1)
-      let lastMiddleX = padding
+      let lastMiddleX = paddingLeft
 
       uniqueMiddle.forEach(pointIndex => {
         const label = formatAxisDate(points[pointIndex].label)
-        const x = padding + xStep * pointIndex
-        const rightLimit = width - padding - minSpacing
+        const x = paddingLeft + xStep * pointIndex
+        const rightLimit = width - paddingRight - minSpacing
 
-        if (!label || x <= padding + minSpacing || x >= rightLimit || x - lastMiddleX < minSpacing) {
+        if (!label || x <= paddingLeft + minSpacing || x >= rightLimit || x - lastMiddleX < minSpacing) {
           return
         }
 
-        const textX = Math.max(padding + minSpacing, Math.min(rightLimit, x - (crossYear ? 22 : 13)))
+        const textX = Math.max(paddingLeft + minSpacing, Math.min(rightLimit, x - 13))
         ctx.fillText(label, textX, height - 10)
         lastMiddleX = x
       })
