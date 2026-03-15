@@ -6,12 +6,14 @@ Page({
     user: null,
     mode: 'today',
     quickQueryKey: 'today',
-    quickQueryOptions: [
+    quickTimeOptions: [
       { key: 'today', label: '今日' },
       { key: 'yesterday', label: '昨日' },
       { key: 'thisWeek', label: '本周' },
       { key: 'lastWeek', label: '上周' },
-      { key: 'thisMonth', label: '本月' },
+      { key: 'thisMonth', label: '本月' }
+    ],
+    quickTradeOptions: [
       { key: 'last10Buy', label: '最近10次买入' },
       { key: 'last10Tx', label: '最近10次交易' }
     ],

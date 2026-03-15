@@ -32,21 +32,6 @@
     </view>
   </view>
 
-  <view class="card" wx:if="{{mode === 'today'}}">
-    <view class="card-title">快速查询窗口</view>
-    <view class="chip-group quick-query-group">
-      <view
-        class="chip-btn {{quickQueryKey === item.key ? 'active' : ''}}"
-        wx:for="{{quickQueryOptions}}"
-        wx:key="key"
-        data-key="{{item.key}}"
-        bindtap="onQuickQueryTap"
-      >
-        <text class="chip-btn-text">{{item.label}}</text>
-      </view>
-    </view>
-  </view>
-
   <view class="card" wx:if="{{mode === 'range'}}">
     <view class="card-title">选择时段</view>
     <view class="form-item inline-item">
@@ -66,32 +51,65 @@
   </view>
 
   <view class="card">
-    <view class="card-title">记录筛选</view>
-    <view class="form-item inline-item">
-      <text class="form-label inline-label">平台筛选</text>
-      <view class="chip-group inline-chip-group">
-        <view
-          class="chip-btn {{platformFilterIndex === index ? 'active' : ''}}"
-          wx:for="{{platformFilters}}"
-          wx:key="*this"
-          data-index="{{index}}"
-          bindtap="onPlatformFilterTap"
-        >
-          <text class="chip-btn-text">{{item}}</text>
+    <view class="card-title">综合筛选</view>
+    <view class="filter-grid-4">
+      <view class="filter-col">
+        <text class="filter-col-title">时间</text>
+        <view class="chip-group compact-group">
+          <view
+            class="chip-btn compact {{quickQueryKey === item.key ? 'active' : ''}}"
+            wx:for="{{quickTimeOptions}}"
+            wx:key="key"
+            data-key="{{item.key}}"
+            bindtap="onQuickQueryTap"
+          >
+            <text class="chip-btn-text">{{item.label}}</text>
+          </view>
         </view>
       </view>
-    </view>
-    <view class="form-item inline-item" style="margin-bottom: 0;">
-      <text class="form-label inline-label">类型筛选</text>
-      <view class="chip-group inline-chip-group">
-        <view
-          class="chip-btn {{typeFilterIndex === index ? 'active' : ''}}"
-          wx:for="{{typeFilters}}"
-          wx:key="*this"
-          data-index="{{index}}"
-          bindtap="onTypeFilterTap"
-        >
-          <text class="chip-btn-text">{{item}}</text>
+
+      <view class="filter-col">
+        <text class="filter-col-title">交易</text>
+        <view class="chip-group compact-group">
+          <view
+            class="chip-btn compact {{quickQueryKey === item.key ? 'active' : ''}}"
+            wx:for="{{quickTradeOptions}}"
+            wx:key="key"
+            data-key="{{item.key}}"
+            bindtap="onQuickQueryTap"
+          >
+            <text class="chip-btn-text">{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="filter-col">
+        <text class="filter-col-title">平台</text>
+        <view class="chip-group compact-group">
+          <view
+            class="chip-btn compact {{platformFilterIndex === index ? 'active' : ''}}"
+            wx:for="{{platformFilters}}"
+            wx:key="*this"
+            data-index="{{index}}"
+            bindtap="onPlatformFilterTap"
+          >
+            <text class="chip-btn-text">{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="filter-col">
+        <text class="filter-col-title">类型</text>
+        <view class="chip-group compact-group">
+          <view
+            class="chip-btn compact {{typeFilterIndex === index ? 'active' : ''}}"
+            wx:for="{{typeFilters}}"
+            wx:key="*this"
+            data-index="{{index}}"
+            bindtap="onTypeFilterTap"
+          >
+            <text class="chip-btn-text">{{item}}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -104,7 +122,10 @@
     <view class="stats-dual" wx:if="{{buyStats || sellStats}}">
       <view class="stat-section dense" wx:if="{{buyStats}}">
         <view class="stat-head-row">
-          <view class="stat-header">买入</view>
+          <view class="stat-header with-icon">
+            <text class="stat-icon buy">↗</text>
+            <text>买入</text>
+          </view>
           <text class="stat-mini">{{buyStats.count || 0}} 笔</text>
         </view>
         <view class="stat-grid">
@@ -125,7 +146,10 @@
 
       <view class="stat-section dense" wx:if="{{sellStats}}">
         <view class="stat-head-row">
-          <view class="stat-header">卖出</view>
+          <view class="stat-header with-icon">
+            <text class="stat-icon sell">↘</text>
+            <text>卖出</text>
+          </view>
           <text class="stat-mini">{{sellStats.count || 0}} 笔</text>
         </view>
         <view class="stat-grid">
