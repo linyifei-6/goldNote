@@ -18,18 +18,6 @@
   </view>
 
   <view class="card">
-    <view class="card-title">统计模式</view>
-    <view class="mode-selector">
-      <view class="mode-item {{mode === 'today' ? 'active' : ''}}" bindtap="selectToday">
-        <text class="mode-text">查询统计</text>
-      </view>
-      <view class="mode-item {{mode === 'custom' ? 'active' : ''}}" bindtap="selectCustom">
-        <text class="mode-text">自选记录</text>
-      </view>
-    </view>
-  </view>
-
-  <view class="card">
     <view class="card-title">综合筛选</view>
     <view class="filter-grid-4">
       <view class="filter-col">
@@ -218,18 +206,8 @@
     </view>
   </view>
 
-  <view class="card" wx:if="{{mode === 'custom'}}">
-    <view class="card-title">选择记录</view>
-
-    <view class="form-item" wx:if="{{transactions.length > 0}}">
-      <text class="form-label">应用编号选择（点击编号直接选中记录）</text>
-      <view class="quick-no-list">
-        <view class="quick-no-item {{item.selected ? 'selected' : ''}}" wx:for="{{transactions}}" wx:key="id" bindtap="toggleSelection" data-id="{{item.id}}">
-          #{{item.displayNo}}
-        </view>
-      </view>
-    </view>
-
+  <view class="card">
+    <view class="card-title">交易总览</view>
     <view class="record-list">
       <view
         class="record-item {{item.selected ? 'selected' : ''}}"
@@ -288,7 +266,7 @@
     </view>
   </view>
 
-  <view class="card" wx:if="{{customStats && mode === 'custom'}}">
+  <view class="card" wx:if="{{customStats}}">
     <view class="card-title">选定记录统计</view>
 
     <view class="stat-section" wx:if="{{customStats.buy}}">

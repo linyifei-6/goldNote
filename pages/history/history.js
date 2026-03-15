@@ -4,7 +4,6 @@ const auth = require('../../utils/auth')
 Page({
   data: {
     user: null,
-    mode: 'today',
     quickQueryKey: 'today',
     quickTimeOptions: [
       { key: 'today', label: '今日' },
@@ -69,11 +68,6 @@ Page({
 
     await storage.syncTransactionsFromCloud(user.id)
     this.loadTransactions()
-    if (this.data.mode === 'today') {
-      this.calculateTodayStats()
-    } else if (this.data.mode === 'range') {
-      this.calculateRangeStats()
-    }
   },
 
   loadTransactions() {
@@ -104,6 +98,14 @@ Page({
     this.applyRecordFilters()
   },
 
+  refreshQueryStats() {
+    if (this.data.quickQueryKey === 'customRange') {
+      this.calculateRangeStats()
+      return
+    }
+    this.calculateTodayStats()
+  },
+
   getPlatformOptions(transactions) {
     return [...storage.PLATFORMS]
   },
@@ -121,32 +123,8 @@ Page({
     const selectedPlatform = platformFilters[platformFilterIndex]
     const selectedType = typeFilters[typeFilterIndex]
 
-    const transactions = (allTransactions || [])
-      .filter(tx => selectedPlatform === '全部' || tx.platform === selectedPlatform)
-      .filter(tx => selectedType === '全部' || (selectedType === '买入' ? tx.type === 'buy' : tx.type === 'sell'))
-      .map(tx => ({
-        ...tx,
-        selected: selectedSet.has(tx.id)
+    this.refreshQueryStats()
       }))
-
-    const selectedTxIds = transactions.filter(tx => tx.selected).map(tx => tx.id)
-
-    this.setData({
-      transactions,
-      selectedTxIds,
-      selectedCount: selectedTxIds.length,
-      customStats: null
-    })
-  },
-
-  selectToday() {
-    this.setData({
-      mode: 'today',
-      showStats: true,
-      customStats: null
-    })
-    this.calculateTodayStats()
-  },
 
   selectCustom() {
     this.setData({
@@ -290,11 +268,6 @@ Page({
       platformFilterIndex: parseInt(e.detail.value, 10)
     })
     this.applyRecordFilters()
-    if (this.data.mode === 'today') {
-      this.calculateTodayStats()
-    } else if (this.data.mode === 'range') {
-      this.calculateRangeStats()
-    }
   },
 
   onTypeFilterChange(e) {
@@ -302,11 +275,6 @@ Page({
       typeFilterIndex: parseInt(e.detail.value, 10)
     })
     this.applyRecordFilters()
-    if (this.data.mode === 'today') {
-      this.calculateTodayStats()
-    } else if (this.data.mode === 'range') {
-      this.calculateRangeStats()
-    }
   },
 
   onPlatformFilterTap(e) {
@@ -314,11 +282,6 @@ Page({
     if (Number.isNaN(platformFilterIndex)) return
     this.setData({ platformFilterIndex })
     this.applyRecordFilters()
-    if (this.data.mode === 'today') {
-      this.calculateTodayStats()
-    } else if (this.data.mode === 'range') {
-      this.calculateRangeStats()
-    }
   },
 
   onTypeFilterTap(e) {
@@ -326,11 +289,6 @@ Page({
     if (Number.isNaN(typeFilterIndex)) return
     this.setData({ typeFilterIndex })
     this.applyRecordFilters()
-    if (this.data.mode === 'today') {
-      this.calculateTodayStats()
-    } else if (this.data.mode === 'range') {
-      this.calculateRangeStats()
-    }
   },
 
   toggleSelection(e) {
@@ -355,12 +313,6 @@ Page({
       selectedCount: selectedTxIds.length,
       customStats: null
     })
-
-    if (this.data.mode === 'today') {
-      this.calculateTodayStats()
-    } else if (this.data.mode === 'range') {
-      this.calculateRangeStats()
-    }
   },
 
   clearSelection() {
