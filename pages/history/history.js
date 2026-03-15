@@ -5,12 +5,24 @@ Page({
   data: {
     user: null,
     mode: 'today',
+    quickQueryKey: 'today',
+    quickQueryOptions: [
+      { key: 'today', label: '今日' },
+      { key: 'yesterday', label: '昨日' },
+      { key: 'thisWeek', label: '本周' },
+      { key: 'lastWeek', label: '上周' },
+      { key: 'thisMonth', label: '本月' },
+      { key: 'last10Buy', label: '最近10次买入' },
+      { key: 'last10Tx', label: '最近10次交易' }
+    ],
     today: '',
     startDate: '',
     endDate: '',
     showStats: false,
     buyStats: null,
     sellStats: null,
+    queryResultTransactions: [],
+    querySummary: '',
     allTransactions: [],
     transactions: [],
     selectedTxIds: [],
@@ -146,8 +158,17 @@ Page({
     this.setData({
       mode: 'custom',
       showStats: false,
+      queryResultTransactions: [],
+      querySummary: '',
       customStats: null
     })
+  },
+
+  onQuickQueryTap(e) {
+    const quickQueryKey = String(e.currentTarget.dataset.key || '')
+    if (!quickQueryKey) return
+    this.setData({ quickQueryKey })
+    this.calculateTodayStats()
   },
 
   onStartDateChange(e) {
@@ -161,17 +182,24 @@ Page({
   },
 
   calculateTodayStats() {
-    const today = new Date().toISOString().split('T')[0]
-    const filteredTransactions = storage.filterByDateRange(this.data.transactions, today, today)
+    const key = this.data.quickQueryKey || 'today'
+    const source = Array.isArray(this.data.transactions) ? this.data.transactions : []
+    let filteredTransactions = []
+    let querySummary = ''
 
-    const buyStats = storage.calculateAveragePrice(filteredTransactions, 'buy')
-    const sellStats = storage.calculateAveragePrice(filteredTransactions, 'sell')
+    if (key === 'last10Buy') {
+      filteredTransactions = source.filter(tx => tx.type === 'buy').slice(0, 10)
+      querySummary = '快速查询：最近10次买入'
+    } else if (key === 'last10Tx') {
+      filteredTransactions = source.slice(0, 10)
+      querySummary = '快速查询：最近10次交易'
+    } else {
+      const range = this.getQuickDateRange(key)
+      filteredTransactions = storage.filterByDateRange(source, range.startDate, range.endDate)
+      querySummary = `快速查询：${range.label}（${range.startDate} ~ ${range.endDate}）`
+    }
 
-    this.setData({
-      showStats: true,
-      buyStats,
-      sellStats
-    })
+    this.applyStatsResult(filteredTransactions, querySummary)
   },
 
   calculateRangeStats() {
@@ -179,14 +207,75 @@ Page({
     if (!startDate || !endDate) return
 
     const filteredTransactions = storage.filterByDateRange(transactions, startDate, endDate)
-    const buyStats = storage.calculateAveragePrice(filteredTransactions, 'buy')
-    const sellStats = storage.calculateAveragePrice(filteredTransactions, 'sell')
+    const querySummary = `时段统计：${startDate} ~ ${endDate}`
+    this.applyStatsResult(filteredTransactions, querySummary)
+  },
+
+  applyStatsResult(filteredTransactions, querySummary) {
+    const list = Array.isArray(filteredTransactions) ? filteredTransactions : []
+    const buyStats = storage.calculateAveragePrice(list, 'buy')
+    const sellStats = storage.calculateAveragePrice(list, 'sell')
 
     this.setData({
       showStats: true,
       buyStats,
-      sellStats
+      sellStats,
+      queryResultTransactions: list,
+      querySummary: querySummary || ''
     })
+  },
+
+  getQuickDateRange(key) {
+    const now = new Date()
+    const today = this.formatDate(now)
+
+    if (key === 'yesterday') {
+      const d = new Date(now)
+      d.setDate(d.getDate() - 1)
+      const day = this.formatDate(d)
+      return { label: '昨日', startDate: day, endDate: day }
+    }
+
+    if (key === 'thisWeek') {
+      const start = this.getWeekStart(now)
+      return { label: '本周', startDate: this.formatDate(start), endDate: today }
+    }
+
+    if (key === 'lastWeek') {
+      const thisWeekStart = this.getWeekStart(now)
+      const lastWeekStart = new Date(thisWeekStart)
+      lastWeekStart.setDate(lastWeekStart.getDate() - 7)
+      const lastWeekEnd = new Date(thisWeekStart)
+      lastWeekEnd.setDate(lastWeekEnd.getDate() - 1)
+      return {
+        label: '上周',
+        startDate: this.formatDate(lastWeekStart),
+        endDate: this.formatDate(lastWeekEnd)
+      }
+    }
+
+    if (key === 'thisMonth') {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      return { label: '本月', startDate: this.formatDate(monthStart), endDate: today }
+    }
+
+    return { label: '今日', startDate: today, endDate: today }
+  },
+
+  getWeekStart(dateObj) {
+    const date = new Date(dateObj)
+    const day = date.getDay()
+    const diff = day === 0 ? -6 : (1 - day)
+    date.setDate(date.getDate() + diff)
+    date.setHours(0, 0, 0, 0)
+    return date
+  },
+
+  formatDate(dateObj) {
+    const year = dateObj.getFullYear()
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+    const day = String(dateObj.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   },
 
   onPlatformFilterChange(e) {
@@ -259,6 +348,12 @@ Page({
       selectedCount: selectedTxIds.length,
       customStats: null
     })
+
+    if (this.data.mode === 'today') {
+      this.calculateTodayStats()
+    } else if (this.data.mode === 'range') {
+      this.calculateRangeStats()
+    }
   },
 
   clearSelection() {

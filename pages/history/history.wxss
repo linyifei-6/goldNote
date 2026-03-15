@@ -161,6 +161,10 @@
   gap: 8rpx;
 }
 
+.quick-query-group {
+  gap: 10rpx;
+}
+
 .chip-btn {
   padding: 8rpx 14rpx;
   border-radius: 10rpx;
@@ -251,6 +255,29 @@
   padding: 30rpx 0;
   color: #999;
   font-size: 26rpx;
+}
+
+.query-summary {
+  font-size: 22rpx;
+  color: #8b6f43;
+  background: #fbf5ea;
+  border: 1rpx solid #efdeb8;
+  border-radius: 10rpx;
+  padding: 10rpx 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.query-record-wrap {
+  margin-top: 10rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx dashed #ececec;
+}
+
+.query-record-title {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 10rpx;
 }
 
 .record-list {

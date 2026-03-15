@@ -21,13 +21,28 @@
     <view class="card-title">统计模式</view>
     <view class="mode-selector">
       <view class="mode-item {{mode === 'today' ? 'active' : ''}}" bindtap="selectToday">
-        <text class="mode-text">今日统计</text>
+        <text class="mode-text">快速查询</text>
       </view>
       <view class="mode-item {{mode === 'range' ? 'active' : ''}}" bindtap="selectRange">
         <text class="mode-text">时段统计</text>
       </view>
       <view class="mode-item {{mode === 'custom' ? 'active' : ''}}" bindtap="selectCustom">
         <text class="mode-text">自选记录</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{mode === 'today'}}">
+    <view class="card-title">快速查询窗口</view>
+    <view class="chip-group quick-query-group">
+      <view
+        class="chip-btn {{quickQueryKey === item.key ? 'active' : ''}}"
+        wx:for="{{quickQueryOptions}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="onQuickQueryTap"
+      >
+        <text class="chip-btn-text">{{item.label}}</text>
       </view>
     </view>
   </view>
@@ -84,6 +99,7 @@
 
   <view class="card" wx:if="{{showStats}}">
     <view class="card-title">统计结果</view>
+    <view class="query-summary" wx:if="{{querySummary}}">{{querySummary}}</view>
 
     <view class="stat-section" wx:if="{{buyStats}}">
       <view class="stat-header">买入</view>
@@ -127,6 +143,48 @@
 
     <view class="no-data" wx:if="{{!buyStats && !sellStats}}">
       <text>该时段暂无交易记录</text>
+    </view>
+
+    <view class="query-record-wrap" wx:if="{{queryResultTransactions.length > 0}}">
+      <view class="query-record-title">本次查询交易（{{queryResultTransactions.length}}笔）</view>
+      <view class="record-list">
+        <view class="record-item" wx:for="{{queryResultTransactions}}" wx:key="id">
+          <view class="record-header">
+            <view class="record-left">
+              <text class="record-no">#{{item.displayNo}}</text>
+              <text class="record-type {{item.type === 'buy' ? 'buy' : 'sell'}}">{{item.type === 'buy' ? '买入' : '卖出'}}</text>
+            </view>
+            <text class="record-date">{{item.displayTime}}</text>
+          </view>
+
+          <view class="record-body">
+            <view class="record-info">
+              <text class="info-label">交易号</text>
+              <text class="info-value">{{item.id}}</text>
+            </view>
+            <view class="record-info">
+              <text class="info-label">平台</text>
+              <text class="info-value">{{item.platform}}</text>
+            </view>
+            <view class="record-info">
+              <text class="info-label">价格</text>
+              <text class="info-value">¥{{fmt.toFixed(item.price, 2)}}</text>
+            </view>
+            <view class="record-info">
+              <text class="info-label">克数</text>
+              <text class="info-value">{{fmt.toFixed(item.weight, 2)}}g</text>
+            </view>
+            <view class="record-info">
+              <text class="info-label">金额</text>
+              <text class="info-value">¥{{fmt.toFixed(item.net_amount, 2)}}</text>
+            </view>
+            <view class="record-info" wx:if="{{item.fee_amount > 0}}">
+              <text class="info-label">手续费</text>
+              <text class="info-value">¥{{fmt.toFixed(item.fee_amount, 2)}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 
