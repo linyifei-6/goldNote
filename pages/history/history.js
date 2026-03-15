@@ -123,17 +123,26 @@ Page({
     const selectedPlatform = platformFilters[platformFilterIndex]
     const selectedType = typeFilters[typeFilterIndex]
 
-    this.refreshQueryStats()
+    const transactions = (allTransactions || [])
+      .filter(tx => selectedPlatform === '全部' || tx.platform === selectedPlatform)
+      .filter(tx => selectedType === '全部' || (selectedType === '买入' ? tx.type === 'buy' : tx.type === 'sell'))
+      .map(tx => ({
+        ...tx,
+        selected: selectedSet.has(tx.id)
       }))
 
-  selectCustom() {
+    const selectedTxIds = transactions
+      .filter(tx => tx.selected)
+      .map(tx => tx.id)
+
     this.setData({
-      mode: 'custom',
-      showStats: false,
-      queryResultTransactions: [],
-      querySummary: '',
+      transactions,
+      selectedTxIds,
+      selectedCount: selectedTxIds.length,
       customStats: null
     })
+
+    this.refreshQueryStats()
   },
 
   onQuickQueryTap(e) {
