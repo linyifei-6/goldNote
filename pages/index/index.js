@@ -33,6 +33,8 @@ Page({
     curveRanges: ['最近一个月', '最近三个月', '最近半年', '最近一年', '最近三年'],
     curveRangeIndex: 3,
     showTrendDetail: false,
+    trendDetailRangeOptions: ['30天', '90天', '180天', '全部'],
+    trendDetailRangeIndex: 1,
     cumulativeCurvePoints: [],
     platformHoldings: [],
     platformProfits: [],
@@ -117,6 +119,44 @@ Page({
 
   onCloseTrendDetail() {
     this.setData({ showTrendDetail: false })
+  },
+
+  onTrendDetailRangeTap(e) {
+    const trendDetailRangeIndex = parseInt(e.currentTarget.dataset.index, 10)
+    if (Number.isNaN(trendDetailRangeIndex)) return
+    this.setData({ trendDetailRangeIndex })
+    wx.nextTick(() => {
+      this.drawTrendDetailCurve()
+    })
+  },
+
+  getTrendDetailPoints() {
+    const list = Array.isArray(this.data.cumulativeCurvePoints)
+      ? this.data.cumulativeCurvePoints
+      : []
+    if (list.length === 0) {
+      return []
+    }
+
+    const dayMap = [30, 90, 180, 0]
+    const days = dayMap[this.data.trendDetailRangeIndex] || 0
+    if (!days) {
+      return list
+    }
+
+    const latestDate = this.parseCurvePointDate(list[list.length - 1].label)
+    if (!latestDate) {
+      return list
+    }
+
+    const start = new Date(latestDate)
+    start.setDate(start.getDate() - days)
+    const startTime = start.getTime()
+
+    return list.filter((item) => {
+      const pointDate = this.parseCurvePointDate(item.label)
+      return pointDate && pointDate.getTime() >= startTime
+    })
   },
 
   noop() {},
@@ -413,11 +453,6 @@ Page({
     ctx.lineTo(paddingLeft, axisBottomY)
     ctx.stroke()
 
-    ctx.setFillStyle('#9a9a9a')
-    ctx.setFontSize(10)
-    ctx.fillText('收益(元)', 6, 16)
-    ctx.fillText('日期', width - 28, height - 4)
-
     if (points.length === 0) {
       ctx.setFillStyle('#999999')
       ctx.setFontSize(12)
@@ -552,7 +587,7 @@ Page({
   },
 
   drawTrendDetailCurve() {
-    const points = this.data.cumulativeCurvePoints || []
+    const points = this.getTrendDetailPoints()
     const ctx = wx.createCanvasContext('trendDetailCanvas', this)
 
     const width = 360
@@ -578,11 +613,6 @@ Page({
     ctx.moveTo(paddingLeft, paddingTop)
     ctx.lineTo(paddingLeft, axisBottomY)
     ctx.stroke()
-
-    ctx.setFillStyle('#8f8f8f')
-    ctx.setFontSize(11)
-    ctx.fillText('收益(元)', 8, 16)
-    ctx.fillText('日期(MM-DD)', width - 74, height - 10)
 
     if (!points.length) {
       ctx.setFillStyle('#999999')
@@ -659,15 +689,21 @@ Page({
       : [0, Math.floor((points.length - 1) / 3), Math.floor((points.length - 1) * 2 / 3), points.length - 1]
     const formatDate = (raw) => String(raw || '').slice(5, 10)
 
+    let prevX = -999
     labelIndices.forEach((idx, order) => {
       const x = paddingLeft + xStep * idx
       const label = formatDate(points[idx].label)
       let textX = x - 16
       if (order === 0) textX = paddingLeft - 14
       if (order === labelIndices.length - 1) textX = Math.min(width - paddingRight - 34, x - 20)
+
+       if (textX - prevX < 46) {
+        return
+      }
       ctx.setFillStyle('#999999')
       ctx.setFontSize(10)
       ctx.fillText(label, textX, height - 14)
+      prevX = textX
     })
 
     ctx.draw()

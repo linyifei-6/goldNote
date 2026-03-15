@@ -284,6 +284,30 @@
   margin-bottom: 8rpx;
 }
 
+.trend-detail-ranges {
+  display: flex;
+  gap: 8rpx;
+  margin-bottom: 10rpx;
+  flex-wrap: wrap;
+}
+
+.trend-range-chip {
+  padding: 6rpx 14rpx;
+  border-radius: 10rpx;
+  background: #f3f3f3;
+  border: 1rpx solid #e2e2e2;
+}
+
+.trend-range-chip.active {
+  background: #f6ead5;
+  border-color: #e8c48c;
+}
+
+.trend-range-text {
+  font-size: 22rpx;
+  color: #7c5e2f;
+}
+
 .trend-detail-title {
   font-size: 28rpx;
   font-weight: 700;

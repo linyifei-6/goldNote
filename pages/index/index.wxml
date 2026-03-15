@@ -170,6 +170,17 @@
         <text class="trend-detail-title">趋势视图（详细）</text>
         <text class="trend-detail-close" bindtap="onCloseTrendDetail">关闭</text>
       </view>
+      <view class="trend-detail-ranges">
+        <view
+          class="trend-range-chip {{trendDetailRangeIndex === index ? 'active' : ''}}"
+          wx:for="{{trendDetailRangeOptions}}"
+          wx:key="*this"
+          data-index="{{index}}"
+          bindtap="onTrendDetailRangeTap"
+        >
+          <text class="trend-range-text">{{item}}</text>
+        </view>
+      </view>
       <canvas canvas-id="trendDetailCanvas" class="trend-detail-canvas" style="width: 720rpx; height: 520rpx;" />
     </view>
   </view>
