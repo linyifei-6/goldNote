@@ -124,7 +124,7 @@
 .platform-mini-item {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   padding: 10rpx 0;
   border-bottom: 1rpx dashed #eadbc3;
 }
@@ -142,12 +142,17 @@
 .mini-platform-left {
   display: flex;
   flex-direction: column;
-  gap: 2rpx;
+  gap: 1rpx;
 }
 
 .mini-platform-hold {
   font-size: 23rpx;
   color: #8b6f43;
+}
+
+.mini-platform-avg {
+  font-size: 21rpx;
+  color: #9a8056;
 }
 
 .mini-platform-right {
@@ -244,6 +249,58 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.curve-hint {
+  font-size: 24rpx;
+  color: #9b9b9b;
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+}
+
+.trend-detail-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 24rpx;
+}
+
+.trend-detail-panel {
+  width: 720rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.2);
+  padding: 18rpx 16rpx 12rpx;
+}
+
+.trend-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.trend-detail-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #2d2d2d;
+}
+
+.trend-detail-close {
+  font-size: 24rpx;
+  color: #8b6f43;
+  background: #f6efe3;
+  border-radius: 10rpx;
+  padding: 6rpx 14rpx;
+}
+
+.trend-detail-canvas {
+  border-radius: 12rpx;
+  background: #fff;
 }
 
 .card-title {

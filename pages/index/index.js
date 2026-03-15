@@ -32,6 +32,7 @@ Page({
     curvePlatformIndex: 0,
     curveRanges: ['最近一个月', '最近三个月', '最近半年', '最近一年', '最近三年'],
     curveRangeIndex: 3,
+    showTrendDetail: false,
     cumulativeCurvePoints: [],
     platformHoldings: [],
     platformProfits: [],
@@ -101,8 +102,24 @@ Page({
     this.calculateProfits()
     wx.nextTick(() => {
       this.drawCumulativeCurve()
+      if (this.data.showTrendDetail) {
+        this.drawTrendDetailCurve()
+      }
     })
   },
+
+  onOpenTrendDetail() {
+    this.setData({ showTrendDetail: true })
+    wx.nextTick(() => {
+      this.drawTrendDetailCurve()
+    })
+  },
+
+  onCloseTrendDetail() {
+    this.setData({ showTrendDetail: false })
+  },
+
+  noop() {},
 
   buildDailyCumulativeCurve(points) {
     const list = Array.isArray(points) ? points : []
@@ -472,13 +489,9 @@ Page({
     const latestIndex = points.length - 1
     const markerMap = {}
 
-    markerMap[maxIndex] = `最高 ${maxVal.toFixed(2)}`
-    markerMap[minIndex] = markerMap[minIndex]
-      ? `${markerMap[minIndex]} / 最低 ${minVal.toFixed(2)}`
-      : `最低 ${minVal.toFixed(2)}`
-    markerMap[latestIndex] = markerMap[latestIndex]
-      ? `${markerMap[latestIndex]} / 最新 ${(Number(points[latestIndex].value) || 0).toFixed(2)}`
-      : `最新 ${(Number(points[latestIndex].value) || 0).toFixed(2)}`
+    markerMap[maxIndex] = `${maxVal.toFixed(2)}`
+    markerMap[minIndex] = `${minVal.toFixed(2)}`
+    markerMap[latestIndex] = `${(Number(points[latestIndex].value) || 0).toFixed(2)}`
 
     Object.keys(markerMap).forEach((key) => {
       const idx = Number(key)
@@ -489,7 +502,7 @@ Page({
       const x = paddingLeft + xStep * idx
       const y = axisBottomY - ((point.value - plotMin) / plotSpan) * chartHeight
       const label = markerMap[idx]
-      const textX = Math.max(paddingLeft + 2, Math.min(width - paddingRight - 120, x + 4))
+      const textX = Math.max(paddingLeft + 2, Math.min(width - paddingRight - 64, x + 4))
       const textY = Math.max(paddingTop + 10, y - 8)
 
       ctx.setFillStyle('#d93025')
@@ -508,24 +521,14 @@ Page({
     ctx.setFillStyle('#999999')
     ctx.setFontSize(10)
 
-    const minSpacing = 42
-    const labelY = height - 4
-    const rightLimit = width - paddingRight - 28
-    const candidateIndices = [0]
+    const labelY = height - 12
+    const rightLimit = width - paddingRight - 30
+    const candidateIndices = points.length <= 2
+      ? points.map((_, index) => index)
+      : [0, Math.floor((points.length - 1) / 2), points.length - 1]
 
-    if (points.length > 1) {
-      const step = Math.max(1, Math.ceil(points.length / 4))
-      for (let i = step; i < points.length - 1; i += step) {
-        candidateIndices.push(i)
-      }
-      candidateIndices.push(points.length - 1)
-    }
+    const uniqueIndices = [...new Set(candidateIndices)].sort((a, b) => a - b)
 
-    const uniqueIndices = [...new Set(candidateIndices)]
-      .filter(index => index >= 0 && index < points.length)
-      .sort((a, b) => a - b)
-
-    let lastTextX = -999
     uniqueIndices.forEach((pointIndex, order) => {
       const label = formatAxisDate(points[pointIndex].label)
       if (!label) {
@@ -542,12 +545,129 @@ Page({
       }
 
       textX = Math.max(paddingLeft - 14, Math.min(rightLimit, textX))
-      if (textX - lastTextX < minSpacing) {
-        return
-      }
-
       ctx.fillText(label, textX, labelY)
-      lastTextX = textX
+    })
+
+    ctx.draw()
+  },
+
+  drawTrendDetailCurve() {
+    const points = this.data.cumulativeCurvePoints || []
+    const ctx = wx.createCanvasContext('trendDetailCanvas', this)
+
+    const width = 360
+    const height = 260
+    const paddingLeft = 64
+    const paddingRight = 18
+    const paddingTop = 24
+    const paddingBottom = 42
+    const chartWidth = width - paddingLeft - paddingRight
+    const chartHeight = height - paddingTop - paddingBottom
+    const axisBottomY = height - paddingBottom
+
+    ctx.clearRect(0, 0, width, height)
+    ctx.setStrokeStyle('#e8e8e8')
+    ctx.setLineWidth(1)
+
+    ctx.beginPath()
+    ctx.moveTo(paddingLeft, axisBottomY)
+    ctx.lineTo(width - paddingRight, axisBottomY)
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.moveTo(paddingLeft, paddingTop)
+    ctx.lineTo(paddingLeft, axisBottomY)
+    ctx.stroke()
+
+    ctx.setFillStyle('#8f8f8f')
+    ctx.setFontSize(11)
+    ctx.fillText('收益(元)', 8, 16)
+    ctx.fillText('日期(MM-DD)', width - 74, height - 10)
+
+    if (!points.length) {
+      ctx.setFillStyle('#999999')
+      ctx.setFontSize(13)
+      ctx.fillText('暂无收益曲线数据', 130, 130)
+      ctx.draw()
+      return
+    }
+
+    const values = points.map(item => Number(item.value) || 0)
+    const maxVal = Math.max(...values)
+    const minVal = Math.min(...values)
+    const span = maxVal === minVal ? Math.max(1, Math.abs(maxVal) * 0.2) : (maxVal - minVal)
+    const plotMin = maxVal === minVal ? minVal - span / 2 : minVal
+    const plotMax = maxVal === minVal ? maxVal + span / 2 : maxVal
+    const plotSpan = plotMax - plotMin
+
+    const yTickCount = 5
+    for (let i = 0; i < yTickCount; i++) {
+      const ratio = i / (yTickCount - 1)
+      const tick = plotMin + (plotSpan * ratio)
+      const y = axisBottomY - ratio * chartHeight
+
+      ctx.setStrokeStyle('#f1f1f1')
+      ctx.beginPath()
+      ctx.moveTo(paddingLeft, y)
+      ctx.lineTo(width - paddingRight, y)
+      ctx.stroke()
+
+      ctx.setFillStyle('#8d8d8d')
+      ctx.setFontSize(10)
+      ctx.fillText(tick.toFixed(0), 10, y + 4)
+    }
+
+    const xStep = points.length > 1 ? chartWidth / (points.length - 1) : 0
+
+    ctx.setStrokeStyle('#f6b73c')
+    ctx.setLineWidth(2)
+    ctx.beginPath()
+    points.forEach((point, index) => {
+      const x = paddingLeft + xStep * index
+      const y = axisBottomY - ((Number(point.value) - plotMin) / plotSpan) * chartHeight
+      if (index === 0) {
+        ctx.moveTo(x, y)
+      } else {
+        ctx.lineTo(x, y)
+      }
+    })
+    ctx.stroke()
+
+    points.forEach((point, index) => {
+      const x = paddingLeft + xStep * index
+      const y = axisBottomY - ((Number(point.value) - plotMin) / plotSpan) * chartHeight
+      ctx.setFillStyle('#f6b73c')
+      ctx.beginPath()
+      ctx.arc(x, y, 3, 0, Math.PI * 2)
+      ctx.fill()
+    })
+
+    const keyIndices = [...new Set([values.indexOf(maxVal), values.indexOf(minVal), points.length - 1])]
+    keyIndices.forEach((idx) => {
+      const value = Number(points[idx].value) || 0
+      const x = paddingLeft + xStep * idx
+      const y = axisBottomY - ((value - plotMin) / plotSpan) * chartHeight
+      const textX = Math.max(paddingLeft + 2, Math.min(width - paddingRight - 50, x + 4))
+      const textY = Math.max(paddingTop + 10, y - 8)
+      ctx.setFillStyle('#d93025')
+      ctx.setFontSize(11)
+      ctx.fillText(value.toFixed(2), textX, textY)
+    })
+
+    const labelIndices = points.length <= 4
+      ? points.map((_, index) => index)
+      : [0, Math.floor((points.length - 1) / 3), Math.floor((points.length - 1) * 2 / 3), points.length - 1]
+    const formatDate = (raw) => String(raw || '').slice(5, 10)
+
+    labelIndices.forEach((idx, order) => {
+      const x = paddingLeft + xStep * idx
+      const label = formatDate(points[idx].label)
+      let textX = x - 16
+      if (order === 0) textX = paddingLeft - 14
+      if (order === labelIndices.length - 1) textX = Math.min(width - paddingRight - 34, x - 20)
+      ctx.setFillStyle('#999999')
+      ctx.setFontSize(10)
+      ctx.fillText(label, textX, height - 14)
     })
 
     ctx.draw()

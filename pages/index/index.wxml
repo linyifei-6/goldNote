@@ -124,7 +124,7 @@
   <view class="card">
     <view class="card-title-row">
       <view class="card-title">累计收益曲线</view>
-      <view class="curve-hint">趋势视图</view>
+      <view class="curve-hint" bindtap="onOpenTrendDetail">趋势视图</view>
     </view>
     <view class="curve-metrics">
       <text class="metric-item">持仓收益：¥{{fmt.toFixed(unrealizedProfit, 2)}}</text>
@@ -161,6 +161,16 @@
           </view>
         </view>
       </view>
+    </view>
+  </view>
+
+  <view class="trend-detail-mask" wx:if="{{showTrendDetail}}" bindtap="onCloseTrendDetail">
+    <view class="trend-detail-panel" catchtap="noop">
+      <view class="trend-detail-head">
+        <text class="trend-detail-title">趋势视图（详细）</text>
+        <text class="trend-detail-close" bindtap="onCloseTrendDetail">关闭</text>
+      </view>
+      <canvas canvas-id="trendDetailCanvas" class="trend-detail-canvas" style="width: 720rpx; height: 520rpx;" />
     </view>
   </view>
 </view>
