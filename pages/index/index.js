@@ -467,11 +467,6 @@ Page({
       ctx.fill()
     })
 
-    const last = points[points.length - 1]
-    ctx.setFillStyle('#666666')
-    ctx.setFontSize(12)
-    ctx.fillText(`最新累计收益 ¥${last.value.toFixed(2)}`, 12, 30)
-
     const formatAxisDate = (rawLabel) => {
       const datePart = String(rawLabel || '').split(' ')[0]
       if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
@@ -483,45 +478,47 @@ Page({
     ctx.setFillStyle('#999999')
     ctx.setFontSize(10)
 
-    const availableWidth = chartWidth
-    const minSpacing = 54
-    const firstLabel = formatAxisDate(points[0].label)
-    const lastLabel = formatAxisDate(points[points.length - 1].label)
+    const minSpacing = 46
+    const labelY = height - 10
+    const rightLimit = width - paddingRight - 28
+    const candidateIndices = [0]
 
-    ctx.fillText(firstLabel, paddingLeft - 12, height - 10)
     if (points.length > 1) {
-      const lastTextX = Math.max(paddingLeft + minSpacing, width - paddingRight - 36)
-      ctx.fillText(lastLabel, lastTextX, height - 10)
+      const step = Math.max(1, Math.ceil(points.length / 4))
+      for (let i = step; i < points.length - 1; i += step) {
+        candidateIndices.push(i)
+      }
+      candidateIndices.push(points.length - 1)
     }
 
-    if (points.length > 2) {
-      const maxMiddle = Math.max(0, Math.floor(availableWidth / minSpacing) - 1)
-      const middleCount = Math.min(points.length - 2, maxMiddle)
-      const middleIndices = []
+    const uniqueIndices = [...new Set(candidateIndices)]
+      .filter(index => index >= 0 && index < points.length)
+      .sort((a, b) => a - b)
 
-      if (middleCount > 0) {
-        for (let i = 1; i <= middleCount; i++) {
-          middleIndices.push(Math.round((i * (points.length - 1)) / (middleCount + 1)))
-        }
+    let lastTextX = -999
+    uniqueIndices.forEach((pointIndex, order) => {
+      const label = formatAxisDate(points[pointIndex].label)
+      if (!label) {
+        return
       }
 
-      const uniqueMiddle = [...new Set(middleIndices)].filter(index => index > 0 && index < points.length - 1)
-      let lastMiddleX = paddingLeft
+      const pointX = paddingLeft + xStep * pointIndex
+      let textX = pointX - 14
+      if (order === 0) {
+        textX = paddingLeft - 12
+      }
+      if (order === uniqueIndices.length - 1) {
+        textX = Math.min(rightLimit, pointX - 18)
+      }
 
-      uniqueMiddle.forEach(pointIndex => {
-        const label = formatAxisDate(points[pointIndex].label)
-        const x = paddingLeft + xStep * pointIndex
-        const rightLimit = width - paddingRight - minSpacing
+      textX = Math.max(paddingLeft - 12, Math.min(rightLimit, textX))
+      if (textX - lastTextX < minSpacing) {
+        return
+      }
 
-        if (!label || x <= paddingLeft + minSpacing || x >= rightLimit || x - lastMiddleX < minSpacing) {
-          return
-        }
-
-        const textX = Math.max(paddingLeft + minSpacing, Math.min(rightLimit, x - 13))
-        ctx.fillText(label, textX, height - 10)
-        lastMiddleX = x
-      })
-    }
+      ctx.fillText(label, textX, labelY)
+      lastTextX = textX
+    })
 
     ctx.draw()
   },
