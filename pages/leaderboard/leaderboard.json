@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "黄金排行榜",
+  "usingComponents": {
+    "top-user-card": "/components/top-user-card/top-user-card"
+  }
+}

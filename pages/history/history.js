@@ -1,5 +1,6 @@
 const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
+const social = require('../../utils/social')
 
 Page({
   data: {
@@ -46,7 +47,12 @@ Page({
       weight: '',
       date: '',
       platformIndex: 0
-    }
+    },
+    goldViewUsers: [],
+    goldViewIndex: 0,
+    goldViewUserId: '',
+    goldViewTargetName: '',
+    isGoldReadOnly: false
   },
 
   onLoad() {
@@ -67,14 +73,40 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
-    this.setData({ user })
+    const viewState = social.getGoldViewState(user.id)
+    const targetUserId = viewState.targetUserId || user.id
 
-    await storage.syncTransactionsFromCloud(user.id)
+    this.setData({
+      user,
+      goldViewUsers: viewState.readableUsers || [],
+      goldViewIndex: Math.max(0, (viewState.readableUsers || []).findIndex((item) => item && item.id === targetUserId)),
+      goldViewUserId: targetUserId,
+      goldViewTargetName: (viewState.targetUser && viewState.targetUser.nickname) || user.nickname,
+      isGoldReadOnly: !!viewState.readOnly
+    })
+
+    await storage.syncTransactionsFromCloud(targetUserId)
     this.loadTransactions()
   },
 
+  onGoldViewChange(e) {
+    const index = parseInt(e.detail.value, 10)
+    const users = this.data.goldViewUsers || []
+    const target = users[index]
+    const targetUserId = target && target.id ? target.id : ''
+
+    const result = social.setGoldViewTarget(targetUserId, this.data.user && this.data.user.id)
+    if (!result.success) {
+      wx.showToast({ title: result.message || '切换失败', icon: 'none' })
+      return
+    }
+
+    this.refreshPage()
+  },
+
   loadTransactions() {
-    const allTransactions = storage.getTransactions()
+    const viewUserId = this.data.goldViewUserId || (this.data.user && this.data.user.id)
+    const allTransactions = storage.getTransactions(viewUserId)
       .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
       .map((tx, index) => ({
         ...tx,
@@ -318,6 +350,9 @@ Page({
   },
 
   toggleSelection(e) {
+    if (this.data.isGoldReadOnly) {
+      return
+    }
     const targetId = e.currentTarget.dataset.id
     const transactions = this.data.transactions.map(tx => {
       if (tx.id !== targetId) {
@@ -352,6 +387,9 @@ Page({
   },
 
   toggleQuerySelection(e) {
+    if (this.data.isGoldReadOnly) {
+      return
+    }
     const targetId = e.currentTarget.dataset.id
     const queryResultTransactions = this.data.queryResultTransactions.map(tx => {
       if (tx.id !== targetId) {
@@ -386,6 +424,10 @@ Page({
   },
 
   calculateCustom() {
+    if (this.data.isGoldReadOnly) {
+      wx.showToast({ title: '好友视图不可操作', icon: 'none' })
+      return
+    }
     const { allTransactions, selectedTxIds } = this.data
 
     if (selectedTxIds.length === 0) {
@@ -402,6 +444,10 @@ Page({
   },
 
   calculateQueryCustom() {
+    if (this.data.isGoldReadOnly) {
+      wx.showToast({ title: '好友视图不可操作', icon: 'none' })
+      return
+    }
     const { queryResultTransactions, querySelectedTxIds } = this.data
 
     if (querySelectedTxIds.length === 0) {
@@ -418,6 +464,10 @@ Page({
   },
 
   editTransaction(e) {
+    if (this.data.isGoldReadOnly) {
+      wx.showToast({ title: '好友视图不可修改', icon: 'none' })
+      return
+    }
     const txId = e.currentTarget.dataset.id
     const tx = this.data.allTransactions.find(item => item.id === txId)
     if (!tx) {
@@ -493,6 +543,10 @@ Page({
   },
 
   deleteTransaction(e) {
+    if (this.data.isGoldReadOnly) {
+      wx.showToast({ title: '好友视图不可删除', icon: 'none' })
+      return
+    }
     const transactionId = e.currentTarget.dataset.id
 
     wx.showModal({
@@ -528,5 +582,9 @@ Page({
 
   onGoSelector() {
     wx.navigateTo({ url: '/pages/portal/portal' })
+  },
+
+  onGoSocial() {
+    wx.navigateTo({ url: '/pages/social/social?scene=gold' })
   }
 })

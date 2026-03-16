@@ -1,5 +1,6 @@
 const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
+const social = require('../../utils/social')
 
 const INVITEE_STATUS = ['未确认', '已确认']
 const TASK_TYPES = ['婚纱摄影', '婚宴酒店', '婚礼策划', '婚礼服务', '婚礼节点', '婚品物料', '婚房装修', '其他']
@@ -116,6 +117,25 @@ Page({
     dueSoonModalVisible: false,
     dueSoonList: [],
     dueSoonMoreCount: 0,
+    weddingWorkspaceOwnerId: '',
+    weddingWorkspaceRole: 'self',
+    coupleSummary: {
+      hasCouple: false,
+      relationId: '',
+      partnerName: '',
+      sharedWeddingOwnerId: ''
+    },
+    coupleTargetUserId: '',
+    coupleInviteUsers: [],
+    coupleIncomingPending: [],
+    coupleOutgoingPending: [],
+    coupleModalVisible: false,
+    profileModalVisible: false,
+    profileNicknameDraft: '',
+    profileSaving: false,
+    messageModalVisible: false,
+    unreadMessageCount: 0,
+    pendingMessageList: [],
     expenseCategory: '',
     expenseAmount: '',
     expenseDate: '',
@@ -150,10 +170,102 @@ Page({
     if (!user) return
 
     const preserveBasicInfoDraft = this.data.showBasicInfoEditor && this.data.basicInfoDirty
+    const weddingWorkspaceOwnerId = social.getWeddingWorkspaceOwnerId(user.id)
+    const weddingWorkspaceRole = social.getWeddingWorkspaceRole(user.id)
+    const coupleSummary = this.buildCoupleSummary(user.id)
+    const coupleCenter = this.buildCoupleCenter(user.id)
+    const messageCenter = this.buildPendingMessageCenter(user.id)
 
-    this.setData({ user })
-    await storage.syncWeddingDataFromCloud(user.id)
+    this.setData({
+      user,
+      weddingWorkspaceOwnerId,
+      weddingWorkspaceRole,
+      coupleSummary,
+      coupleInviteUsers: coupleCenter.inviteUsers,
+      coupleIncomingPending: coupleCenter.incomingPending,
+      coupleOutgoingPending: coupleCenter.outgoingPending,
+      unreadMessageCount: messageCenter.count,
+      pendingMessageList: messageCenter.list
+    })
+
+    await storage.syncWeddingDataFromCloud(weddingWorkspaceOwnerId)
     this.loadAllData({ preserveBasicInfoDraft })
+  },
+
+  getWeddingOwnerId() {
+    return this.data.weddingWorkspaceOwnerId || (this.data.user && this.data.user.id) || ''
+  },
+
+  buildCoupleSummary(userId) {
+    const uid = String(userId || '')
+    if (!uid) {
+      return {
+        hasCouple: false,
+        relationId: '',
+        partnerName: '',
+        sharedWeddingOwnerId: ''
+      }
+    }
+
+    const overview = social.getRelationOverview(uid, { scene: 'wedding' })
+    const current = (overview.couple || [])[0]
+    if (!current) {
+      return {
+        hasCouple: false,
+        relationId: '',
+        partnerName: '',
+        sharedWeddingOwnerId: ''
+      }
+    }
+
+    return {
+      hasCouple: true,
+      relationId: String(current.id || ''),
+      partnerName: (current.partner && current.partner.nickname) || '未命名用户',
+      sharedWeddingOwnerId: String(current.sharedWeddingOwnerId || '')
+    }
+  },
+
+  buildCoupleCenter(userId) {
+    const uid = String(userId || '')
+    if (!uid) {
+      return {
+        inviteUsers: [],
+        incomingPending: [],
+        outgoingPending: []
+      }
+    }
+
+    const overview = social.getRelationOverview(uid, { scene: 'wedding' })
+    return {
+      inviteUsers: social.listInvitableUsers(),
+      incomingPending: (overview.incomingPending || []).filter((item) => item.type === 'couple'),
+      outgoingPending: (overview.outgoingPending || []).filter((item) => item.type === 'couple')
+    }
+  },
+
+  relationTypeLabel(type) {
+    if (type === 'couple') return '情侣关系'
+    if (type === 'kin') return '亲友关系'
+    return '关注'
+  },
+
+  buildPendingMessageCenter(userId) {
+    const uid = String(userId || '')
+    if (!uid) {
+      return { count: 0, list: [] }
+    }
+
+    const overview = social.getRelationOverview(uid, { scene: 'wedding' })
+    const list = (overview.incomingPending || []).map((item) => ({
+      ...item,
+      typeLabel: this.relationTypeLabel(item.type)
+    }))
+
+    return {
+      count: list.length,
+      list
+    }
   },
 
   onUnload() {
@@ -218,7 +330,7 @@ Page({
       return
     }
 
-    const profile = storage.getWeddingProfile()
+    const profile = storage.getWeddingProfile(this.getWeddingOwnerId())
     const fallbackSaved = !!(profile.weddingDate || profile.location || (profile.totalBudget > 0))
     const hasSaved = profile.hasSaved || fallbackSaved
     this.setData({
@@ -234,7 +346,7 @@ Page({
 
   loadTasks() {
     const today = this.data.today
-    const tasks = storage.getWeddingTasks().map(item => {
+    const tasks = storage.getWeddingTasks(this.getWeddingOwnerId()).map(item => {
       const statusMeta = this.buildTaskStatus(item, today)
       return {
         ...item,
@@ -455,7 +567,7 @@ Page({
     }
 
     ids.forEach(id => {
-      storage.toggleWeddingTask(id, true)
+      storage.toggleWeddingTask(id, true, this.getWeddingOwnerId())
     })
 
     wx.showToast({ title: `已完成${ids.length}项`, icon: 'success' })
@@ -476,7 +588,7 @@ Page({
       success: (res) => {
         if (!res.confirm) return
         ids.forEach(id => {
-          storage.deleteWeddingTask(id)
+          storage.deleteWeddingTask(id, this.getWeddingOwnerId())
         })
         this.setData({ selectedTaskIds: [] })
         this.loadTasks()
@@ -501,7 +613,7 @@ Page({
   },
 
   loadExpenses() {
-    const expenses = storage.getWeddingExpenses().map(item => ({
+    const expenses = storage.getWeddingExpenses(this.getWeddingOwnerId()).map(item => ({
       ...item,
       amountText: (Number(item.amount) || 0).toFixed(2)
     }))
@@ -515,7 +627,7 @@ Page({
   },
 
   loadInviteData() {
-    const invite = storage.getWeddingInvite()
+    const invite = storage.getWeddingInvite(this.getWeddingOwnerId())
     const inviteLink = `/pages/weddingGuest/weddingGuest?code=${invite.linkCode}`
     const confirmed = invite.invitees.filter(item => item.status === '已确认').length
     const unconfirmed = invite.invitees.length - confirmed
@@ -772,7 +884,7 @@ Page({
       weddingDate: this.data.weddingDate,
       location: this.data.weddingLocation,
       totalBudget: this.data.totalBudgetInput
-    })
+    }, this.getWeddingOwnerId())
 
     this.setData({
       weddingDate: profile.weddingDate,
@@ -800,6 +912,139 @@ Page({
     this.setData({ activeSection: section })
   },
 
+  onOpenProfileModal() {
+    const user = this.data.user || {}
+    this.setData({
+      profileModalVisible: true,
+      profileNicknameDraft: user.nickname || ''
+    })
+  },
+
+  onCloseProfileModal() {
+    if (this.data.profileSaving) return
+    this.setData({ profileModalVisible: false })
+  },
+
+  onProfileNicknameInput(e) {
+    this.setData({ profileNicknameDraft: e.detail.value })
+  },
+
+  onSaveProfileNickname() {
+    if (this.data.profileSaving) return
+    const nickname = String(this.data.profileNicknameDraft || '').trim()
+    if (!nickname) {
+      wx.showToast({ title: '昵称不能为空', icon: 'none' })
+      return
+    }
+
+    this.setData({ profileSaving: true })
+    auth.updateNickname(nickname)
+      .then((user) => {
+        const app = getApp()
+        if (app && typeof app.refreshGlobalState === 'function') {
+          app.refreshGlobalState()
+        }
+        this.setData({ user, profileNicknameDraft: user.nickname || '' })
+        wx.showToast({ title: '昵称已更新', icon: 'success' })
+      })
+      .catch((error) => {
+        wx.showToast({ title: (error && error.message) || '昵称更新失败', icon: 'none' })
+      })
+      .finally(() => {
+        this.setData({ profileSaving: false })
+      })
+  },
+
+  onChangeAvatar() {
+    const user = this.data.user || {}
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const filePath = res && res.tempFilePaths && res.tempFilePaths[0]
+        if (!filePath) return
+
+        if (!(wx && wx.cloud && typeof wx.cloud.uploadFile === 'function')) {
+          wx.showToast({ title: '当前环境不支持头像上传', icon: 'none' })
+          return
+        }
+
+        wx.showLoading({ title: '上传头像中' })
+        const cloudPath = `avatars/${user.id || 'user'}/${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`
+        wx.cloud.uploadFile({ cloudPath, filePath })
+          .then((uploadRes) => {
+            const fileID = uploadRes && uploadRes.fileID
+            if (!fileID) {
+              throw new Error('头像上传失败')
+            }
+            return auth.updateWechatProfile({
+              nickname: user.nickname,
+              avatarUrl: fileID
+            })
+          })
+          .then((nextUser) => {
+            const app = getApp()
+            if (app && typeof app.refreshGlobalState === 'function') {
+              app.refreshGlobalState()
+            }
+            this.setData({ user: nextUser })
+            wx.showToast({ title: '头像已更新', icon: 'success' })
+          })
+          .catch((error) => {
+            wx.showToast({ title: (error && error.message) || '头像更新失败', icon: 'none' })
+          })
+          .finally(() => {
+            wx.hideLoading()
+          })
+      }
+    })
+  },
+
+  onCopyUserId() {
+    const user = this.data.user || {}
+    const userId = String(user.id || '')
+    if (!userId) {
+      wx.showToast({ title: '用户ID为空', icon: 'none' })
+      return
+    }
+
+    wx.setClipboardData({
+      data: userId,
+      success: () => wx.showToast({ title: '用户ID已复制', icon: 'success' })
+    })
+  },
+
+  onOpenMessageCenter() {
+    this.setData({ messageModalVisible: true })
+  },
+
+  onCloseMessageCenter() {
+    this.setData({ messageModalVisible: false })
+  },
+
+  onAcceptMessage(e) {
+    const relationId = e.currentTarget.dataset.id
+    const result = social.acceptRelationRequest(relationId)
+    if (!result.success) {
+      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
+      return
+    }
+    wx.showToast({ title: '已同意', icon: 'success' })
+    this.onShow()
+  },
+
+  onRejectMessage(e) {
+    const relationId = e.currentTarget.dataset.id
+    const result = social.rejectRelationRequest(relationId)
+    if (!result.success) {
+      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
+      return
+    }
+    wx.showToast({ title: '已拒绝', icon: 'none' })
+    this.onShow()
+  },
+
   onUserActions() {
     wx.showActionSheet({
       itemList: ['退出登录', '清除全部备婚数据'],
@@ -825,7 +1070,7 @@ Page({
           return
         }
 
-        const result = storage.clearWeddingAllData()
+        const result = storage.clearWeddingAllData(this.getWeddingOwnerId())
         if (!result.success) {
           wx.showToast({ title: result.message || '清空失败', icon: 'none' })
           return
@@ -903,7 +1148,7 @@ Page({
       dueDate: this.data.taskDueDate,
       budgetAmount: this.data.taskBudgetInput,
       actualAmount: this.data.taskActualInput
-    })
+    }, this.getWeddingOwnerId())
 
     if (!result.success) {
       wx.showToast({ title: result.message || '新增任务失败', icon: 'none' })
@@ -1030,7 +1275,7 @@ Page({
       note: form.note,
       budgetAmount: form.budgetAmount,
       actualAmount: form.actualAmount
-    })
+    }, this.getWeddingOwnerId())
 
     if (!result.success) {
       wx.showToast({ title: result.message || '保存失败', icon: 'none' })
@@ -1044,7 +1289,7 @@ Page({
 
   onToggleTask(e) {
     const { id, checked } = e.currentTarget.dataset
-    const result = storage.toggleWeddingTask(id, !checked)
+    const result = storage.toggleWeddingTask(id, !checked, this.getWeddingOwnerId())
     if (!result.success) {
       wx.showToast({ title: result.message || '更新失败', icon: 'none' })
       return
@@ -1059,7 +1304,7 @@ Page({
       return
     }
 
-    storage.deleteWeddingTask(id)
+    storage.deleteWeddingTask(id, this.getWeddingOwnerId())
     this.loadTasks()
 
     if (this.undoDeleteTimer) {
@@ -1086,7 +1331,7 @@ Page({
       return
     }
 
-    const result = storage.restoreWeddingTask(this.recentDeletedTask)
+    const result = storage.restoreWeddingTask(this.recentDeletedTask, this.getWeddingOwnerId())
     if (!result.success) {
       wx.showToast({ title: result.message || '撤销失败', icon: 'none' })
       return
@@ -1142,7 +1387,7 @@ Page({
       note: this.data.taskDetailNote,
       budgetAmount: detail.budgetAmount,
       actualAmount: detail.actualAmount
-    })
+    }, this.getWeddingOwnerId())
 
     if (!result.success) {
       wx.showToast({ title: result.message || '保存失败', icon: 'none' })
@@ -1187,7 +1432,7 @@ Page({
       category: this.data.expenseCategory,
       amount: this.data.expenseAmount,
       date: this.data.expenseDate
-    })
+    }, this.getWeddingOwnerId())
 
     if (!result.success) {
       wx.showToast({ title: result.message || '新增支出失败', icon: 'none' })
@@ -1204,7 +1449,7 @@ Page({
 
   onDeleteExpense(e) {
     const id = e.currentTarget.dataset.id
-    storage.deleteWeddingExpense(id)
+    storage.deleteWeddingExpense(id, this.getWeddingOwnerId())
     this.loadExpenses()
     wx.showToast({ title: '支出已删除', icon: 'success' })
   },
@@ -1214,13 +1459,13 @@ Page({
   },
 
   onSaveInviteMessage() {
-    storage.updateWeddingInviteMessage(this.data.inviteMessage)
+    storage.updateWeddingInviteMessage(this.data.inviteMessage, this.getWeddingOwnerId())
     this.loadInviteData()
     wx.showToast({ title: '邀请语已保存', icon: 'success' })
   },
 
   onRegenerateInviteLink() {
-    storage.regenerateWeddingInviteLink()
+    storage.regenerateWeddingInviteLink(this.getWeddingOwnerId())
     this.loadInviteData()
     wx.showToast({ title: '链接已更新', icon: 'success' })
   },
@@ -1245,14 +1490,14 @@ Page({
   },
 
   onAddInvitee() {
-    const result = storage.addWeddingInvitee(this.data.inviteeName)
+    const result = storage.addWeddingInvitee(this.data.inviteeName, this.getWeddingOwnerId())
     if (!result.success) {
       wx.showToast({ title: result.message || '新增失败', icon: 'none' })
       return
     }
 
     if (this.data.inviteeStatusOptions[this.data.inviteeStatusIndex] === '已确认') {
-      storage.updateWeddingInviteeStatus(result.invitee.id, '已确认')
+      storage.updateWeddingInviteeStatus(result.invitee.id, '已确认', this.getWeddingOwnerId())
     }
 
     this.setData({
@@ -1266,13 +1511,13 @@ Page({
   onToggleInviteeStatus(e) {
     const { id, status } = e.currentTarget.dataset
     const nextStatus = status === '已确认' ? '未确认' : '已确认'
-    storage.updateWeddingInviteeStatus(id, nextStatus)
+    storage.updateWeddingInviteeStatus(id, nextStatus, this.getWeddingOwnerId())
     this.loadInviteData()
   },
 
   onDeleteInvitee(e) {
     const id = e.currentTarget.dataset.id
-    storage.deleteWeddingInvitee(id)
+    storage.deleteWeddingInvitee(id, this.getWeddingOwnerId())
     this.loadInviteData()
   },
 
@@ -1295,5 +1540,114 @@ Page({
 
   onGoGold() {
     wx.switchTab({ url: '/pages/index/index' })
+  },
+
+  onGoSocial() {
+    wx.navigateTo({ url: '/pages/social/social?scene=wedding' })
+  },
+
+  onCoupleTargetInput(e) {
+    this.setData({ coupleTargetUserId: e.detail.value })
+  },
+
+  onWorkspaceCardTap() {
+    if (this.data.coupleSummary && this.data.coupleSummary.hasCouple) {
+      this.onEndCoupleRelation()
+      return
+    }
+    this.setData({ coupleModalVisible: true })
+  },
+
+  onCloseCoupleModal() {
+    this.setData({ coupleModalVisible: false })
+  },
+
+  onPickCoupleTarget(e) {
+    const userId = e.currentTarget.dataset.userId
+    if (!userId) return
+    this.setData({ coupleTargetUserId: userId })
+  },
+
+  onInviteCouple() {
+    const targetUserId = String(this.data.coupleTargetUserId || '').trim()
+    const result = social.createRelationRequest('couple', targetUserId, { scene: 'wedding' })
+    if (!result.success) {
+      wx.showToast({ title: result.message || '申请失败', icon: 'none' })
+      return
+    }
+
+    wx.showToast({ title: '情侣申请已发送', icon: 'success' })
+    this.setData({
+      coupleTargetUserId: '',
+      coupleModalVisible: false
+    })
+    this.onShow()
+  },
+
+  onAcceptCoupleRequest(e) {
+    const relationId = e.currentTarget.dataset.id
+    const result = social.acceptRelationRequest(relationId, { scene: 'wedding' })
+    if (!result.success) {
+      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
+      return
+    }
+
+    wx.showToast({ title: '已同意情侣申请', icon: 'success' })
+    this.setData({ coupleModalVisible: false })
+    this.onShow()
+  },
+
+  onRejectCoupleRequest(e) {
+    const relationId = e.currentTarget.dataset.id
+    const result = social.rejectRelationRequest(relationId, { scene: 'wedding' })
+    if (!result.success) {
+      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
+      return
+    }
+
+    wx.showToast({ title: '已拒绝情侣申请', icon: 'none' })
+    this.setData({ coupleModalVisible: false })
+    this.onShow()
+  },
+
+  onCancelCoupleRequest(e) {
+    const relationId = e.currentTarget.dataset.id
+    const result = social.cancelRelationRequest(relationId, { scene: 'wedding' })
+    if (!result.success) {
+      wx.showToast({ title: result.message || '撤回失败', icon: 'none' })
+      return
+    }
+
+    wx.showToast({ title: '已撤回申请', icon: 'success' })
+    this.setData({ coupleModalVisible: false })
+    this.onShow()
+  },
+
+  onEndCoupleRelation() {
+    const summary = this.data.coupleSummary || {}
+    if (!summary.hasCouple || !summary.relationId) {
+      wx.showToast({ title: '当前无情侣关系', icon: 'none' })
+      return
+    }
+
+    wx.showModal({
+      title: '解除情侣关系',
+      content: '解除后将恢复个人模式，双方不再共享婚礼任务与预算。',
+      success: (res) => {
+        if (!res.confirm) {
+          return
+        }
+
+        const result = social.endRelation(summary.relationId, { scene: 'wedding' })
+        if (!result.success) {
+          wx.showToast({ title: result.message || '解除失败', icon: 'none' })
+          return
+        }
+
+        wx.showToast({ title: '已解除情侣关系', icon: 'success' })
+        this.setData({ coupleModalVisible: false })
+        this.onShow()
+      }
+    })
   }
 })

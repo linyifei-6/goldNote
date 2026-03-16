@@ -1,5 +1,6 @@
 const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
+const social = require('../../utils/social')
 
 Page({
   data: {
@@ -18,7 +19,12 @@ Page({
     netAmount: 0,
     transactionAmount: 0,
     displayAmount: 0,
-    recentTransactions: []
+    recentTransactions: [],
+    goldViewUsers: [],
+    goldViewIndex: 0,
+    goldViewUserId: '',
+    goldViewTargetName: '',
+    isGoldReadOnly: false
   },
 
   onLoad() {
@@ -38,11 +44,36 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
-    this.setData({ user })
+    const viewState = social.getGoldViewState(user.id)
+    const targetUserId = viewState.targetUserId || user.id
 
-    await storage.syncTransactionsFromCloud(user.id)
+    this.setData({
+      user,
+      goldViewUsers: viewState.readableUsers || [],
+      goldViewIndex: Math.max(0, (viewState.readableUsers || []).findIndex((item) => item && item.id === targetUserId)),
+      goldViewUserId: targetUserId,
+      goldViewTargetName: (viewState.targetUser && viewState.targetUser.nickname) || user.nickname,
+      isGoldReadOnly: !!viewState.readOnly
+    })
+
+    await storage.syncTransactionsFromCloud(targetUserId)
     this.loadCurrentHolding()
     this.loadRecentTransactions()
+  },
+
+  onGoldViewChange(e) {
+    const index = parseInt(e.detail.value, 10)
+    const users = this.data.goldViewUsers || []
+    const target = users[index]
+    const targetUserId = target && target.id ? target.id : ''
+
+    const result = social.setGoldViewTarget(targetUserId, this.data.user && this.data.user.id)
+    if (!result.success) {
+      wx.showToast({ title: result.message || '切换失败', icon: 'none' })
+      return
+    }
+
+    this.refreshPage()
   },
 
   getSelectedPlatformName() {
@@ -54,7 +85,8 @@ Page({
   },
 
   loadCurrentHolding() {
-    const transactions = storage.getTransactions()
+    const viewUserId = this.data.goldViewUserId || (this.data.user && this.data.user.id)
+    const transactions = storage.getTransactions(viewUserId)
     const platformOptions = this.getPlatformOptions(transactions)
     let platformIndex = this.data.platformIndex
     if (platformIndex >= platformOptions.length) {
@@ -76,7 +108,8 @@ Page({
   },
 
   loadRecentTransactions() {
-    const transactions = storage.getTransactions()
+    const viewUserId = this.data.goldViewUserId || (this.data.user && this.data.user.id)
+    const transactions = storage.getTransactions(viewUserId)
       .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
       .slice(0, 8)
       .map(item => ({
@@ -173,6 +206,11 @@ Page({
   },
 
   async submitTransaction() {
+    if (this.data.isGoldReadOnly) {
+      wx.showToast({ title: '好友视图不可操作', icon: 'none' })
+      return
+    }
+
     const {
       transactionType,
       price,
@@ -251,5 +289,9 @@ Page({
 
   onGoSelector() {
     wx.navigateTo({ url: '/pages/portal/portal' })
+  },
+
+  onGoSocial() {
+    wx.navigateTo({ url: '/pages/social/social?scene=gold' })
   }
 })

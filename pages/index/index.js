@@ -1,6 +1,7 @@
 const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
 const goldPrice = require('../../utils/goldPrice')
+const social = require('../../utils/social')
 
 Page({
   data: {
@@ -16,8 +17,6 @@ Page({
     usingSimulator: false,
     countdown: 2,
     internationalPrice: '',
-    exchangeRate: '',
-    fxMeta: '',
     holdings: {
       currentHolding: 0,
       avgCost: 0,
@@ -38,7 +37,15 @@ Page({
     cumulativeCurvePoints: [],
     platformHoldings: [],
     platformProfits: [],
-    summaryPlatforms: []
+    summaryPlatforms: [],
+    goldViewUserId: '',
+    isGoldReadOnly: false,
+    profileModalVisible: false,
+    profileNicknameDraft: '',
+    profileSaving: false,
+    messageModalVisible: false,
+    unreadMessageCount: 0,
+    pendingMessageList: []
   },
 
   onLoad() {
@@ -64,13 +71,28 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
-    this.setData({ user })
-    await storage.syncTransactionsFromCloud(user.id)
+    const viewState = social.getGoldViewState(user.id)
+    const targetUserId = viewState.targetUserId || user.id
+
+    this.setData({
+      user,
+      goldViewUserId: targetUserId,
+      isGoldReadOnly: !!viewState.readOnly
+    })
+
+    const messageCenter = this.buildPendingMessageCenter(user.id)
+    this.setData({
+      unreadMessageCount: messageCenter.count,
+      pendingMessageList: messageCenter.list
+    })
+
+    await storage.syncTransactionsFromCloud(targetUserId)
     this.loadHoldings()
   },
 
   loadHoldings() {
-    const transactions = storage.getTransactions()
+    const viewUserId = this.data.goldViewUserId || (this.data.user && this.data.user.id)
+    const transactions = storage.getTransactions(viewUserId)
     const currentPriceNum = parseFloat(this.data.currentPrice) || 0
     const platformOptions = this.getPlatformOptions(transactions)
     let curvePlatformIndex = this.data.curvePlatformIndex
@@ -231,20 +253,6 @@ Page({
     this.setData({ simulatorPaused: true })
     this.stopAutoUpdate()
     wx.showToast({ title: '模拟已暂停', icon: 'none' })
-  },
-
-  onCurvePlatformChange(e) {
-    this.setData({
-      curvePlatformIndex: parseInt(e.detail.value, 10)
-    })
-    this.loadHoldings()
-  },
-
-  onCurveRangeChange(e) {
-    this.setData({
-      curveRangeIndex: parseInt(e.detail.value, 10)
-    })
-    this.loadHoldings()
   },
 
   onCurvePlatformTap(e) {
@@ -709,21 +717,6 @@ Page({
     ctx.draw()
   },
 
-  onUserActions() {
-    wx.showActionSheet({
-      itemList: ['退出登录', '清除当前用户数据'],
-      success: (res) => {
-        if (res.tapIndex === 0) {
-          this.onLogout()
-          return
-        }
-        if (res.tapIndex === 1) {
-          this.onClearData()
-        }
-      }
-    })
-  },
-
   onClearData() {
     wx.showModal({
       title: '警示',
@@ -761,6 +754,163 @@ Page({
 
   onGoSelector() {
     wx.navigateTo({ url: '/pages/portal/portal' })
+  },
+
+  onGoSocial() {
+    wx.navigateTo({ url: '/pages/social/social?scene=gold' })
+  },
+
+  relationTypeLabel(type) {
+    if (type === 'couple') return '情侣关系'
+    if (type === 'kin') return '亲友关系'
+    return '关注'
+  },
+
+  buildPendingMessageCenter(userId) {
+    const uid = String(userId || '')
+    if (!uid) {
+      return { count: 0, list: [] }
+    }
+
+    const overview = social.getRelationOverview(uid, { scene: 'gold' })
+    const list = (overview.incomingPending || []).map((item) => ({
+      ...item,
+      typeLabel: this.relationTypeLabel(item.type)
+    }))
+    return { count: list.length, list }
+  },
+
+  onOpenProfileModal() {
+    const user = this.data.user || {}
+    this.setData({
+      profileModalVisible: true,
+      profileNicknameDraft: user.nickname || ''
+    })
+  },
+
+  onCloseProfileModal() {
+    if (this.data.profileSaving) return
+    this.setData({ profileModalVisible: false })
+  },
+
+  onProfileNicknameInput(e) {
+    this.setData({ profileNicknameDraft: e.detail.value })
+  },
+
+  onSaveProfileNickname() {
+    if (this.data.profileSaving) return
+    const nickname = String(this.data.profileNicknameDraft || '').trim()
+    if (!nickname) {
+      wx.showToast({ title: '昵称不能为空', icon: 'none' })
+      return
+    }
+
+    this.setData({ profileSaving: true })
+    auth.updateNickname(nickname)
+      .then((user) => {
+        const app = getApp()
+        if (app && typeof app.refreshGlobalState === 'function') {
+          app.refreshGlobalState()
+        }
+        this.setData({ user, profileNicknameDraft: user.nickname || '' })
+        wx.showToast({ title: '昵称已更新', icon: 'success' })
+      })
+      .catch((error) => {
+        wx.showToast({ title: (error && error.message) || '昵称更新失败', icon: 'none' })
+      })
+      .finally(() => {
+        this.setData({ profileSaving: false })
+      })
+  },
+
+  onChangeAvatar() {
+    const user = this.data.user || {}
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const filePath = res && res.tempFilePaths && res.tempFilePaths[0]
+        if (!filePath) return
+
+        if (!(wx && wx.cloud && typeof wx.cloud.uploadFile === 'function')) {
+          wx.showToast({ title: '当前环境不支持头像上传', icon: 'none' })
+          return
+        }
+
+        wx.showLoading({ title: '上传头像中' })
+        const cloudPath = `avatars/${user.id || 'user'}/${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`
+        wx.cloud.uploadFile({ cloudPath, filePath })
+          .then((uploadRes) => {
+            const fileID = uploadRes && uploadRes.fileID
+            if (!fileID) {
+              throw new Error('头像上传失败')
+            }
+            return auth.updateWechatProfile({
+              nickname: user.nickname,
+              avatarUrl: fileID
+            })
+          })
+          .then((nextUser) => {
+            const app = getApp()
+            if (app && typeof app.refreshGlobalState === 'function') {
+              app.refreshGlobalState()
+            }
+            this.setData({ user: nextUser })
+            wx.showToast({ title: '头像已更新', icon: 'success' })
+          })
+          .catch((error) => {
+            wx.showToast({ title: (error && error.message) || '头像更新失败', icon: 'none' })
+          })
+          .finally(() => {
+            wx.hideLoading()
+          })
+      }
+    })
+  },
+
+  onCopyUserId() {
+    const user = this.data.user || {}
+    const userId = String(user.id || '')
+    if (!userId) {
+      wx.showToast({ title: '用户ID为空', icon: 'none' })
+      return
+    }
+
+    wx.setClipboardData({
+      data: userId,
+      success: () => wx.showToast({ title: '用户ID已复制', icon: 'success' })
+    })
+  },
+
+  onOpenMessageCenter() {
+    this.setData({ messageModalVisible: true })
+  },
+
+  onCloseMessageCenter() {
+    this.setData({ messageModalVisible: false })
+  },
+
+  onAcceptMessage(e) {
+    const relationId = e.currentTarget.dataset.id
+    const result = social.acceptRelationRequest(relationId, { scene: 'gold' })
+    if (!result.success) {
+      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
+      return
+    }
+    wx.showToast({ title: '已同意', icon: 'success' })
+    this.refreshPage()
+  },
+
+  onRejectMessage(e) {
+    const relationId = e.currentTarget.dataset.id
+    const result = social.rejectRelationRequest(relationId, { scene: 'gold' })
+    if (!result.success) {
+      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
+      return
+    }
+    wx.showToast({ title: '已拒绝', icon: 'none' })
+    this.refreshPage()
   },
 
   /**
@@ -845,11 +995,6 @@ Page({
         
         // 优先使用数据层返回的动态国际金价与汇率
         const internationalPrice = result.internationalPrice || ''
-        const exchangeRate = (typeof result.fxRate === 'number' && result.fxRate > 0)
-          ? `汇率 ${result.fxRate.toFixed(6)}`
-          : ''
-        const fxMeta = this.buildFxMetaText(result.fxSource, result.fxTimestamp)
-        
         this.setData({
           currentPrice: result.price.toFixed(2),
           lastUpdateTime: timeStr,
@@ -857,9 +1002,7 @@ Page({
           usingSimulator: isSimulator,
           isUpdating: false,
           countdown: 2,
-          internationalPrice,
-          exchangeRate,
-          fxMeta
+          internationalPrice
         })
 
         if (result.fallbackFrom === 'qveris' && !isAutoRefresh) {
@@ -905,31 +1048,6 @@ Page({
       'simulator': '智能模拟'
     }
     return sourceMap[source] || source
-  },
-
-  buildFxMetaText(fxSource, fxTimestamp) {
-    if (!fxSource && !fxTimestamp) {
-      return ''
-    }
-
-    const sourceTextMap = {
-      realtime: '实时汇率',
-      cache: '缓存汇率',
-      fallback: '默认汇率'
-    }
-
-    const sourceText = sourceTextMap[fxSource] || '汇率'
-    if (!fxTimestamp) {
-      return sourceText
-    }
-
-    const date = new Date(fxTimestamp)
-    if (Number.isNaN(date.getTime())) {
-      return sourceText
-    }
-
-    const timeText = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
-    return `${sourceText} ${timeText}`
   },
 
   /**

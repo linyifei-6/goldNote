@@ -9,22 +9,26 @@
 
   <view class="card">
     <view class="label">婚礼信息</view>
-    <view class="info-row">
+    <view class="empty" wx:if="{{!canViewDetails}}">成为亲友后可查看婚期与地点，当前仍可留言送祝福。</view>
+    <view class="info-row" wx:if="{{canViewDetails}}">
       <view class="value inline">日期：{{weddingDate || '待定'}}</view>
       <view class="value inline">地点：{{weddingLocation || '待定'}}</view>
     </view>
   </view>
 
   <view class="card">
-    <view class="label">任务进度条</view>
-    <view class="value">{{taskProgressText}}</view>
-    <view class="track"><view class="fill" style="width: {{taskProgressPercent}}%;"></view></view>
+    <view class="label">祝福留言墙</view>
+    <view class="empty" wx:if="{{blessings.length === 0}}">还没有祝福，快来写第一条</view>
+    <view class="blessing-item" wx:for="{{blessings}}" wx:key="id">
+      <view class="blessing-head">{{item.authorName}}</view>
+      <view class="blessing-body">{{item.content}}</view>
+    </view>
   </view>
 
   <view class="card">
-    <view class="label">亲友确认出席</view>
-    <input class="input" maxlength="30" placeholder="请输入你的姓名" value="{{guestName}}" bindinput="onGuestNameInput" />
-    <button class="btn" bindtap="onConfirmAttendance">我已确认出席</button>
+    <view class="label">留言祝福</view>
+    <input class="input" maxlength="120" placeholder="写下你的祝福吧" value="{{blessingInput}}" bindinput="onBlessingInput" />
+    <button class="btn" bindtap="onSubmitBlessing">发送祝福</button>
   </view>
 </view>
 

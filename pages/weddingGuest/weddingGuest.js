@@ -1,62 +1,107 @@
 const storage = require('../../utils/storage')
+const auth = require('../../utils/auth')
+const social = require('../../utils/social')
 
 Page({
   data: {
     notFound: false,
+    ownerId: '',
     inviteCode: '',
     ownerName: '',
     weddingDate: '',
     weddingLocation: '',
+    canViewDetails: false,
     inviteMessage: '',
-    taskProgressText: '已完成 0/0 项',
-    taskProgressPercent: 0,
     countdownText: '',
-    guestName: ''
+    blessingInput: '',
+    blessings: []
   },
 
   async onLoad(options) {
+    const ownerId = options && options.ownerId ? String(options.ownerId) : ''
     const code = options && options.code ? String(options.code) : ''
-    if (!code) {
+
+    if (!ownerId && !code) {
       this.setData({ notFound: true })
       return
     }
 
+    if (ownerId) {
+      await this.loadByOwnerId(ownerId)
+      return
+    }
+
+    await this.loadByInviteCode(code)
+  },
+
+  async loadByOwnerId(ownerId) {
+    const user = auth.ensureLogin('/pages/login/login')
+    if (!user) return
+
+    const viewData = await social.getWeddingGuestViewByOwnerAsync(ownerId, user.id)
+    if (!viewData) {
+      this.setData({ notFound: true })
+      return
+    }
+
+    this.setData({
+      notFound: false,
+      ownerId: viewData.ownerId,
+      inviteCode: viewData.inviteCode,
+      ownerName: viewData.ownerName,
+      weddingDate: viewData.weddingDate,
+      weddingLocation: viewData.weddingLocation,
+      canViewDetails: !!viewData.canViewDetails,
+      inviteMessage: viewData.inviteMessage,
+      countdownText: this.buildCountdownText(viewData.weddingDate),
+      blessings: Array.isArray(viewData.blessings) ? viewData.blessings : []
+    })
+  },
+
+  async loadByInviteCode(code) {
     const viewData = await storage.getWeddingGuestViewByCodeAsync(code)
     if (!viewData) {
       this.setData({ notFound: true })
       return
     }
 
-    const total = Number(viewData.totalTasks) || 0
-    const completed = Number(viewData.completedTasks) || 0
-    const percent = total > 0 ? Math.round((completed / total) * 100) : 0
-
     this.setData({
       notFound: false,
+      ownerId: viewData.ownerId || '',
       inviteCode: viewData.inviteCode,
       ownerName: viewData.ownerName,
       weddingDate: viewData.weddingDate,
       weddingLocation: viewData.weddingLocation,
+      canViewDetails: !!viewData.canViewDetails,
       inviteMessage: viewData.inviteMessage,
-      taskProgressText: `备婚进度 ${completed}/${total}`,
-      taskProgressPercent: percent,
-      countdownText: this.buildCountdownText(viewData.weddingDate)
+      countdownText: this.buildCountdownText(viewData.weddingDate),
+      blessings: []
     })
   },
 
-  onGuestNameInput(e) {
-    this.setData({ guestName: e.detail.value })
+  onBlessingInput(e) {
+    this.setData({ blessingInput: e.detail.value })
   },
 
-  async onConfirmAttendance() {
-    const result = await storage.confirmWeddingGuestAttendanceByCodeAsync(this.data.inviteCode, this.data.guestName)
-    if (!result.success) {
-      wx.showToast({ title: result.message || '提交失败', icon: 'none' })
+  async onSubmitBlessing() {
+    const ownerId = this.data.ownerId
+    if (!ownerId) {
+      wx.showToast({ title: '该页面不支持留言', icon: 'none' })
       return
     }
 
-    wx.showToast({ title: '已确认出席', icon: 'success' })
-    this.setData({ guestName: '' })
+    const user = auth.ensureLogin('/pages/login/login')
+    if (!user) return
+
+    const result = social.addWeddingBlessing(ownerId, this.data.blessingInput, user.id)
+    if (!result.success) {
+      wx.showToast({ title: result.message || '留言失败', icon: 'none' })
+      return
+    }
+
+    wx.showToast({ title: '祝福已发送', icon: 'success' })
+    this.setData({ blessingInput: '' })
+    this.loadByOwnerId(ownerId)
   },
 
   buildCountdownText(weddingDate) {

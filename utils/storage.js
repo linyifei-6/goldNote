@@ -1734,6 +1734,7 @@ function getWeddingGuestViewByCode(code) {
       const completedTasks = tasks.filter(item => item.checked).length
 
       return {
+        ownerId: user.id,
         inviteCode,
         ownerName: sanitizeWeddingText(user.nickname, 20) || '新人',
         weddingDate: profile.weddingDate,

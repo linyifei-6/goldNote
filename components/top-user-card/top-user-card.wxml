@@ -1,0 +1,26 @@
+<view class="user-card" wx:if="{{user}}">
+  <view class="user-avatar" wx:if="{{user.avatarUrl}}" bindtap="onAvatarTap">
+    <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
+  </view>
+  <view class="user-avatar default" wx:else bindtap="onAvatarTap">
+    <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
+  </view>
+
+  <view class="user-info">
+    <text class="user-nickname" bindtap="onAvatarTap">{{user.nickname}}</text>
+    <view class="user-actions">
+      <text class="scene-btn" bindtap="onSelectorTap">场景</text>
+      <text class="scene-btn" bindtap="onWeddingTap">结婚笔记</text>
+    </view>
+  </view>
+
+  <view class="user-quick-group">
+    <view class="user-quick-entry" bindtap="onMessageTap">
+      <view class="message-badge" wx:if="{{showMessageBadge && unreadMessageCount > 0}}">{{unreadMessageCount > 99 ? '99+' : unreadMessageCount}}</view>
+      <image class="user-quick-icon" src="/images/消息.png" mode="aspectFit" />
+    </view>
+    <view class="user-quick-entry" bindtap="onSocialTap">
+      <image class="user-quick-icon" src="/images/好友.png" mode="aspectFit" />
+    </view>
+  </view>
+</view>

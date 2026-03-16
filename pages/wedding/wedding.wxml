@@ -1,18 +1,35 @@
 <view class="container">
-  <view class="user-card" wx:if="{{user}}" bindtap="onUserActions">
-    <view class="user-avatar" wx:if="{{user.avatarUrl}}">
+  <view class="user-card" wx:if="{{user}}">
+    <view class="user-avatar" wx:if="{{user.avatarUrl}}" catchtap="onOpenProfileModal">
       <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
     </view>
-    <view class="user-avatar default" wx:else>
+    <view class="user-avatar default" wx:else catchtap="onOpenProfileModal">
       <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
     </view>
     <view class="user-info">
-      <text class="user-nickname">{{user.nickname}}</text>
-      <text class="user-tip">点击可退出登录</text>
+      <text class="user-nickname" catchtap="onOpenProfileModal">{{user.nickname}}</text>
       <view class="user-actions">
         <text class="scene-btn" catchtap="onGoSelector">场景</text>
         <text class="scene-btn" catchtap="onGoGold">黄金笔记</text>
       </view>
+    </view>
+    <view class="user-quick-group">
+      <view class="user-quick-entry" catchtap="onOpenMessageCenter">
+        <view class="message-badge" wx:if="{{unreadMessageCount > 0}}">{{unreadMessageCount > 99 ? '99+' : unreadMessageCount}}</view>
+        <image class="user-quick-icon" src="/images/消息.png" mode="aspectFit" />
+      </view>
+      <view class="user-quick-entry" catchtap="onGoSocial">
+        <image class="user-quick-icon" src="/images/好友.png" mode="aspectFit" />
+      </view>
+    </view>
+  </view>
+
+  <view class="workspace-card clickable {{coupleSummary.hasCouple ? 'coupled' : 'unbound'}}" wx:if="{{user}}" bindtap="onWorkspaceCardTap">
+    <view class="workspace-main">
+      <text class="workspace-text">当前模式：{{weddingWorkspaceRole === 'couple' ? '情侣共管（共享任务与预算）' : '个人模式'}}</text>
+      <text class="workspace-couple" wx:if="{{coupleSummary.hasCouple}}">情侣：{{coupleSummary.partnerName}}</text>
+      <text class="workspace-couple muted" wx:else>情侣：未绑定</text>
+      <text class="workspace-tap-tag {{coupleSummary.hasCouple ? 'danger' : 'primary'}}">{{coupleSummary.hasCouple ? '点击解除绑定' : '点击发起绑定'}}</text>
     </view>
   </view>
 
@@ -276,6 +293,62 @@
 
   <view class="bottom-nav-spacer"></view>
 
+  <view class="modal-mask" wx:if="{{profileModalVisible}}" bindtap="onCloseProfileModal"></view>
+  <view class="modal-card profile-modal-card" wx:if="{{profileModalVisible}}">
+    <view class="profile-modal-head">
+      <text class="section-title">个人信息</text>
+      <text class="profile-close" bindtap="onCloseProfileModal">关闭</text>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">头像</text>
+      <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <text class="profile-op">修改</text>
+      </view>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">ID</text>
+      <view class="profile-value-wrap">
+        <text class="profile-value id">{{user.id}}</text>
+        <view class="profile-copy-btn" bindtap="onCopyUserId">
+          <image class="profile-copy-icon" src="/images/复制.png" mode="aspectFit" />
+        </view>
+      </view>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">昵称</text>
+      <view class="profile-value-wrap">
+        <input class="input profile-input" maxlength="20" value="{{profileNicknameDraft}}" bindinput="onProfileNicknameInput" placeholder="请输入昵称" />
+        <text class="profile-op save" bindtap="onSaveProfileNickname">保存</text>
+      </view>
+    </view>
+    <view class="profile-action-grid">
+      <view class="profile-action-row">
+        <button class="profile-action-btn danger" bindtap="onLogout">退出登录</button>
+        <button class="profile-action-btn warn" bindtap="onClearWeddingAllData">清除数据</button>
+      </view>
+      <view class="profile-action-row single">
+        <button class="profile-action-btn neutral" bindtap="onCloseProfileModal">关闭</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{messageModalVisible}}" bindtap="onCloseMessageCenter"></view>
+  <view class="modal-card profile-modal-card" wx:if="{{messageModalVisible}}">
+    <view class="section-title">未读消息</view>
+    <view class="empty" wx:if="{{pendingMessageList.length === 0}}">暂无待处理申请</view>
+    <view class="couple-item" wx:for="{{pendingMessageList}}" wx:key="id">
+      <view class="couple-item-title">{{item.user.nickname}} 申请 {{item.typeLabel}}</view>
+      <view class="btn-row">
+        <button class="mini-btn" data-id="{{item.id}}" bindtap="onRejectMessage">拒绝</button>
+        <button class="mini-btn confirm" data-id="{{item.id}}" bindtap="onAcceptMessage">同意</button>
+      </view>
+    </view>
+    <view class="btn-row">
+      <button class="mini-btn" bindtap="onCloseMessageCenter">关闭</button>
+    </view>
+  </view>
+
   <view class="modal-mask" wx:if="{{taskEditVisible}}" bindtap="onCancelTaskEdit"></view>
   <view class="modal-card" wx:if="{{taskEditVisible}}">
     <view class="section-title">编辑任务花费</view>
@@ -338,5 +411,39 @@
     </view>
     <view class="due-soon-more" wx:if="{{dueSoonMoreCount > 0}}">还有 {{dueSoonMoreCount}} 项未展示，请前往任务页查看</view>
     <button class="submit-btn" bindtap="onCloseDueSoonModal">立即查看</button>
+  </view>
+
+  <view class="modal-mask" wx:if="{{coupleModalVisible}}" bindtap="onCloseCoupleModal"></view>
+  <view class="modal-card" wx:if="{{coupleModalVisible}}">
+    <view class="section-title">申请情侣关系</view>
+    <view class="sub">填写对方用户ID，或点击下方用户快捷选择</view>
+    <input class="input" placeholder="输入对方用户ID" value="{{coupleTargetUserId}}" bindinput="onCoupleTargetInput" />
+    <view class="selector-chip-row compact-row" wx:if="{{coupleInviteUsers.length > 0}}">
+      <text class="selector-chip" wx:for="{{coupleInviteUsers}}" wx:key="id" data-user-id="{{item.id}}" bindtap="onPickCoupleTarget">{{item.nickname}}</text>
+    </view>
+    <button class="mini-btn confirm" bindtap="onInviteCouple">发起情侣申请</button>
+
+    <view class="couple-list" wx:if="{{coupleIncomingPending.length > 0}}">
+      <view class="picker-label">待我处理</view>
+      <view class="couple-item" wx:for="{{coupleIncomingPending}}" wx:key="id">
+        <view class="couple-item-title">{{item.user.nickname}} 申请成为情侣</view>
+        <view class="btn-row">
+          <button class="mini-btn" data-id="{{item.id}}" bindtap="onRejectCoupleRequest">拒绝</button>
+          <button class="mini-btn confirm" data-id="{{item.id}}" bindtap="onAcceptCoupleRequest">同意</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="couple-list" wx:if="{{coupleOutgoingPending.length > 0}}">
+      <view class="picker-label">我发起的申请</view>
+      <view class="couple-item" wx:for="{{coupleOutgoingPending}}" wx:key="id">
+        <view class="couple-item-title">已申请 {{item.user.nickname}}</view>
+        <button class="mini-btn" data-id="{{item.id}}" bindtap="onCancelCoupleRequest">撤回申请</button>
+      </view>
+    </view>
+
+    <view class="btn-row">
+      <button class="mini-btn" bindtap="onCloseCoupleModal">关闭</button>
+    </view>
   </view>
 </view>

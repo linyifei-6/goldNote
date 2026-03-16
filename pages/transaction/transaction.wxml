@@ -1,24 +1,20 @@
 <wxs src="../../utils/fmt.wxs" module="fmt" />
 <view class="container">
-  <view class="user-card" wx:if="{{user}}">
-    <view class="user-avatar" wx:if="{{user.avatarUrl}}">
-      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
-    </view>
-    <view class="user-avatar default" wx:else>
-      <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
-    </view>
-    <view class="user-info">
-      <text class="user-nickname">{{user.nickname}}</text>
-      <text class="user-tip">黄金笔记 · 交易页</text>
-      <view class="user-actions">
-        <text class="scene-btn" bindtap="onGoSelector">场景</text>
-        <text class="scene-btn" bindtap="onGoWedding">结婚笔记</text>
-      </view>
-    </view>
+  <top-user-card
+    user="{{user}}"
+    bindselector="onGoSelector"
+    bindwedding="onGoWedding"
+    bindmessage="onGoSelector"
+    bindsocial="onGoSocial"
+  />
+
+  <view class="card" wx:if="{{isGoldReadOnly}}">
+    <view class="card-title">当前为只读模式</view>
+    <view class="empty-text">你正在查看关注对象的黄金数据，交易录入已禁用。</view>
   </view>
 
   <!-- 交易类型选择 -->
-  <view class="card">
+  <view class="card" wx:if="{{!isGoldReadOnly}}">
     <view class="card-title">交易类型</view>
     <view class="type-selector">
       <view class="type-item {{transactionType === 'buy' ? 'active' : ''}}" bindtap="selectBuy">
@@ -33,7 +29,7 @@
   </view>
 
   <!-- 交易表单 -->
-  <view class="card">
+  <view class="card" wx:if="{{!isGoldReadOnly}}">
     <view class="card-title">交易信息</view>
 
     <view class="compact-grid">
@@ -100,14 +96,14 @@
   </view>
 
   <!-- 提交按钮 -->
-  <view class="btn-container">
+  <view class="btn-container" wx:if="{{!isGoldReadOnly}}">
     <button class="btn {{transactionType === 'sell' ? 'btn-sell' : ''}}" bindtap="submitTransaction">
       {{transactionType === 'buy' ? '确认买入' : '确认卖出'}}
     </button>
   </view>
 
   <!-- 持仓提示 -->
-  <view class="holding-info" wx:if="{{transactionType === 'sell' && platformHolding > 0}}">
+  <view class="holding-info" wx:if="{{!isGoldReadOnly && transactionType === 'sell' && platformHolding > 0}}">
     <text class="info-text">当前平台可卖出：{{fmt.toFixed(platformHolding, 2)}} 克</text>
   </view>
 

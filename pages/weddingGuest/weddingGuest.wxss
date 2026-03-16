@@ -73,6 +73,30 @@
   font-size: 22rpx;
 }
 
+.empty {
+  margin-top: 8rpx;
+  color: #94a3b8;
+  font-size: 21rpx;
+}
+
+.blessing-item {
+  margin-top: 8rpx;
+  padding: 10rpx;
+  border-radius: 10rpx;
+  background: #f8fafc;
+}
+
+.blessing-head {
+  font-size: 20rpx;
+  color: #64748b;
+}
+
+.blessing-body {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #1e293b;
+}
+
 .track {
   margin-top: 8rpx;
   height: 12rpx;

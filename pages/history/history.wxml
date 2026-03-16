@@ -1,21 +1,12 @@
 <wxs src="../../utils/fmt.wxs" module="fmt" />
 <view class="container">
-  <view class="user-card" wx:if="{{user}}">
-    <view class="user-avatar" wx:if="{{user.avatarUrl}}">
-      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
-    </view>
-    <view class="user-avatar default" wx:else>
-      <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
-    </view>
-    <view class="user-info">
-      <text class="user-nickname">{{user.nickname}}</text>
-      <text class="user-tip">黄金笔记 · 历史页</text>
-      <view class="user-actions">
-        <text class="scene-btn" bindtap="onGoSelector">场景</text>
-        <text class="scene-btn" bindtap="onGoWedding">结婚笔记</text>
-      </view>
-    </view>
-  </view>
+  <top-user-card
+    user="{{user}}"
+    bindselector="onGoSelector"
+    bindwedding="onGoWedding"
+    bindmessage="onGoSelector"
+    bindsocial="onGoSocial"
+  />
 
   <view class="card">
     <view class="card-title">综合筛选</view>
@@ -163,7 +154,7 @@
     <view class="query-record-wrap" wx:if="{{queryResultTransactions.length > 0}}">
       <view class="query-record-title">本次查询交易（{{queryResultTransactions.length}}笔）</view>
 
-      <view class="btn-row" wx:if="{{querySelectedCount > 0}}">
+      <view class="btn-row" wx:if="{{querySelectedCount > 0 && !isGoldReadOnly}}">
         <button class="btn secondary" bindtap="clearQuerySelection">清空选择</button>
         <button class="btn" bindtap="calculateQueryCustom">计算均价</button>
       </view>
@@ -268,7 +259,7 @@
             </view>
           </view>
 
-          <view class="record-actions">
+          <view class="record-actions" wx:if="{{!isGoldReadOnly}}">
             <button class="action-btn" catchtap="editTransaction" data-id="{{item.id}}">修改</button>
             <button class="action-btn danger" catchtap="deleteTransaction" data-id="{{item.id}}">删除</button>
           </view>
@@ -382,7 +373,7 @@
           </view>
         </view>
 
-        <view class="record-actions">
+        <view class="record-actions" wx:if="{{!isGoldReadOnly}}">
           <button class="action-btn" catchtap="editTransaction" data-id="{{item.id}}">修改</button>
           <button class="action-btn danger" catchtap="deleteTransaction" data-id="{{item.id}}">删除</button>
         </view>
@@ -392,7 +383,7 @@
     </view>
   </view>
 
-  <view class="floating-action-bar" wx:if="{{selectedCount > 0}}">
+  <view class="floating-action-bar" wx:if="{{selectedCount > 0 && !isGoldReadOnly}}">
     <button class="btn secondary" bindtap="clearSelection">清空选择</button>
     <button class="btn" bindtap="calculateCustom">计算均价</button>
   </view>

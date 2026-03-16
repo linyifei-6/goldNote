@@ -1,21 +1,15 @@
 <wxs src="../../utils/fmt.wxs" module="fmt" />
 <view class="container">
-  <view class="user-card" wx:if="{{user}}" bindtap="onUserActions">
-    <view class="user-avatar" wx:if="{{user.avatarUrl}}">
-      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
-    </view>
-    <view class="user-avatar default" wx:else>
-      <text class="avatar-text">{{user.nickname.substring(0,1)}}</text>
-    </view>
-    <view class="user-info">
-      <text class="user-nickname">{{user.nickname}}</text>
-      <text class="user-tip">点击可退出登录或清除数据</text>
-      <view class="user-actions">
-        <text class="scene-btn" catchtap="onGoSelector">场景</text>
-        <text class="scene-btn" catchtap="onGoWedding">结婚笔记</text>
-      </view>
-    </view>
-  </view>
+  <top-user-card
+    user="{{user}}"
+    show-message-badge="{{true}}"
+    unread-message-count="{{unreadMessageCount}}"
+    bindavatar="onOpenProfileModal"
+    bindselector="onGoSelector"
+    bindwedding="onGoWedding"
+    bindmessage="onOpenMessageCenter"
+    bindsocial="onGoSocial"
+  />
 
   <view class="summary-card">
     <view class="summary-title">持仓总览</view>
@@ -184,4 +178,64 @@
       <canvas canvas-id="trendDetailCanvas" class="trend-detail-canvas" style="width: 720rpx; height: 520rpx;" />
     </view>
   </view>
+
+  <view class="modal-mask" wx:if="{{profileModalVisible}}" bindtap="onCloseProfileModal"></view>
+  <view class="modal-card profile-modal-card" wx:if="{{profileModalVisible}}">
+    <view class="profile-modal-head">
+      <text class="section-title">个人信息</text>
+      <text class="profile-close" bindtap="onCloseProfileModal">关闭</text>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">头像</text>
+      <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <text class="profile-op">修改</text>
+      </view>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">ID</text>
+      <view class="profile-value-wrap">
+        <text class="profile-value id">{{user.id}}</text>
+        <view class="profile-copy-btn" bindtap="onCopyUserId">
+          <image class="profile-copy-icon" src="/images/复制.png" mode="aspectFit" />
+        </view>
+      </view>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">昵称</text>
+      <view class="profile-value-wrap">
+        <input class="form-input profile-input" maxlength="20" value="{{profileNicknameDraft}}" bindinput="onProfileNicknameInput" placeholder="请输入昵称" />
+        <text class="profile-op save" bindtap="onSaveProfileNickname">保存</text>
+      </view>
+    </view>
+    <view class="profile-action-grid">
+      <view class="profile-action-row">
+        <button class="profile-action-btn danger" bindtap="onLogout">退出登录</button>
+        <button class="profile-action-btn warn" bindtap="onClearData">清除数据</button>
+      </view>
+      <view class="profile-action-row single">
+        <button class="profile-action-btn neutral" bindtap="onCloseProfileModal">关闭</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{messageModalVisible}}" bindtap="onCloseMessageCenter"></view>
+  <view class="modal-card profile-modal-card" wx:if="{{messageModalVisible}}">
+    <view class="section-title">未读消息</view>
+    <view class="profile-close-row">
+      <text class="profile-close" bindtap="onCloseMessageCenter">关闭</text>
+    </view>
+    <view class="platform-mini-empty" wx:if="{{pendingMessageList.length === 0}}">暂无待处理申请</view>
+    <view class="platform-mini-item" wx:for="{{pendingMessageList}}" wx:key="id">
+      <view class="mini-platform-left">
+        <text class="mini-platform-name">{{item.user.nickname}}</text>
+        <text class="mini-platform-avg">申请 {{item.typeLabel}}</text>
+      </view>
+      <view class="mini-platform-right profile-btn-row">
+        <button class="profile-mini-btn" data-id="{{item.id}}" bindtap="onRejectMessage">拒绝</button>
+        <button class="profile-mini-btn confirm" data-id="{{item.id}}" bindtap="onAcceptMessage">同意</button>
+      </view>
+    </view>
+  </view>
+
 </view>

@@ -1,5 +1,6 @@
 const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
+const social = require('../../utils/social')
 
 Page({
   data: {
@@ -7,6 +8,7 @@ Page({
     taskTitle: '',
     taskDueDate: '',
     tasks: [],
+    weddingWorkspaceOwnerId: '',
     draggingId: '',
     draggingHint: ''
   },
@@ -23,12 +25,18 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
-    await storage.syncWeddingDataFromCloud(user.id)
+    const weddingWorkspaceOwnerId = social.getWeddingWorkspaceOwnerId(user.id)
+    this.setData({ weddingWorkspaceOwnerId })
+    await storage.syncWeddingDataFromCloud(weddingWorkspaceOwnerId)
     this.loadTasks()
   },
 
+  getWeddingOwnerId() {
+    return this.data.weddingWorkspaceOwnerId || ''
+  },
+
   loadTasks() {
-    const tasks = storage.getWeddingTasks()
+    const tasks = storage.getWeddingTasks(this.getWeddingOwnerId())
     this.setData({ tasks })
   },
 
@@ -44,7 +52,7 @@ Page({
     const result = storage.createWeddingTask({
       title: this.data.taskTitle,
       dueDate: this.data.taskDueDate
-    })
+    }, this.getWeddingOwnerId())
 
     if (!result.success) {
       wx.showToast({ title: result.message || '新增任务失败', icon: 'none' })
@@ -61,7 +69,8 @@ Page({
     if (this.data.draggingId) {
       return
     }
-    const result = storage.toggleWeddingTask(id, !checked)
+    const ownerId = this.getWeddingOwnerId()
+    const result = storage.toggleWeddingTask(id, !checked, ownerId)
     if (!result.success) {
       wx.showToast({ title: result.message || '更新失败', icon: 'none' })
       return
@@ -71,7 +80,7 @@ Page({
 
   onDeleteTask(e) {
     const id = e.currentTarget.dataset.id
-    storage.deleteWeddingTask(id)
+    storage.deleteWeddingTask(id, this.getWeddingOwnerId())
     this.loadTasks()
     wx.showToast({ title: '任务已删除', icon: 'success' })
   },
@@ -106,7 +115,7 @@ Page({
     const [moved] = list.splice(from, 1)
     list.splice(to, 0, moved)
 
-    const result = storage.reorderWeddingTasks(list.map(item => item.id))
+    const result = storage.reorderWeddingTasks(list.map(item => item.id), this.getWeddingOwnerId())
     if (!result.success) {
       wx.showToast({ title: result.message || '排序失败', icon: 'none' })
       return

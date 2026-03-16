@@ -1,1 +1,6 @@
-{"navigationBarTitleText": "历史记录"}
+{
+	"navigationBarTitleText": "历史记录",
+	"usingComponents": {
+		"top-user-card": "/components/top-user-card/top-user-card"
+	}
+}

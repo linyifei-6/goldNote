@@ -75,6 +75,34 @@
   gap: 8rpx;
 }
 
+.user-quick-entry {
+  flex: 0 0 82rpx;
+  width: 82rpx;
+  height: 82rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 16rpx;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1rpx solid #dbe7f3;
+  box-shadow: 0 6rpx 14rpx rgba(15, 23, 42, 0.08);
+  position: relative;
+}
+
+.user-quick-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  width: 172rpx;
+  gap: 8rpx;
+  margin-left: auto;
+}
+
+.user-quick-icon {
+  width: 42rpx;
+  height: 42rpx;
+}
+
 .card {
   background: #ffffff;
   border-radius: 20rpx;
@@ -88,6 +116,42 @@
   font-weight: bold;
   color: #333;
   margin-bottom: 10rpx;
+}
+
+.view-mode-card {
+  border: 1rpx solid #efe2cb;
+}
+
+.view-mode-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.view-mode-title {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #5f471f;
+}
+
+.view-mode-tip {
+  font-size: 20rpx;
+  color: #a66c22;
+  background: #fbf2e3;
+  border-radius: 999rpx;
+  padding: 4rpx 12rpx;
+}
+
+.view-mode-picker {
+  min-height: 56rpx;
+  border-radius: 10rpx;
+  background: #f6f6f6;
+  padding: 0 12rpx;
+  display: flex;
+  align-items: center;
+  font-size: 22rpx;
+  color: #555;
 }
 
 .compact-grid {
