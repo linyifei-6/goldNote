@@ -9,6 +9,25 @@
   gap: 16rpx;
 }
 
+.home-entry {
+  flex: 0 0 82rpx;
+  width: 82rpx;
+  height: 82rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1rpx solid #dbe7f3;
+  box-shadow: 0 6rpx 14rpx rgba(15, 23, 42, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.home-entry-icon {
+  width: 42rpx;
+  height: 42rpx;
+}
+
 .user-avatar {
   width: 60rpx;
   height: 60rpx;
@@ -47,21 +66,6 @@
   font-size: 28rpx;
   font-weight: 600;
   color: #333;
-}
-
-.user-actions {
-  margin-top: 8rpx;
-  display: flex;
-  gap: 8rpx;
-}
-
-.scene-btn {
-  padding: 6rpx 12rpx;
-  border-radius: 10rpx;
-  background: #ffffff;
-  border: 1rpx solid #ead9bf;
-  color: #7d5e2e;
-  font-size: 20rpx;
 }
 
 .user-quick-entry {

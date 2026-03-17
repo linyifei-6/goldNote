@@ -52,7 +52,10 @@ Page({
     goldViewIndex: 0,
     goldViewUserId: '',
     goldViewTargetName: '',
-    isGoldReadOnly: false
+    isGoldReadOnly: false,
+    profileModalVisible: false,
+    profileNicknameDraft: '',
+    profileSaving: false
   },
 
   onLoad() {
@@ -72,6 +75,9 @@ Page({
   async refreshPage() {
     const user = auth.ensureLogin()
     if (!user) return
+
+    // 同步云端关系后再读取视图状态，保证关注列表是最新的
+    await social.syncRelationsFromCloud('gold')
 
     const viewState = social.getGoldViewState(user.id)
     const targetUserId = viewState.targetUserId || user.id
@@ -572,6 +578,141 @@ Page({
             icon: 'none'
           })
         })
+      }
+    })
+  },
+
+  onOpenProfileModal() {
+    const user = this.data.user || {}
+    this.setData({
+      profileModalVisible: true,
+      profileNicknameDraft: user.nickname || ''
+    })
+  },
+
+  onCloseProfileModal() {
+    if (this.data.profileSaving) return
+    this.setData({ profileModalVisible: false })
+  },
+
+  onProfileNicknameInput(e) {
+    this.setData({ profileNicknameDraft: e.detail.value })
+  },
+
+  onSaveProfileNickname() {
+    if (this.data.profileSaving) return
+
+    const nickname = String(this.data.profileNicknameDraft || '').trim()
+    if (!nickname) {
+      wx.showToast({ title: '昵称不能为空', icon: 'none' })
+      return
+    }
+
+    this.setData({ profileSaving: true })
+    auth.updateNickname(nickname)
+      .then((user) => {
+        const app = getApp()
+        if (app && typeof app.refreshGlobalState === 'function') {
+          app.refreshGlobalState()
+        }
+        this.setData({ user, profileNicknameDraft: user.nickname || '' })
+        wx.showToast({ title: '昵称已更新', icon: 'success' })
+      })
+      .catch((error) => {
+        wx.showToast({ title: (error && error.message) || '昵称更新失败', icon: 'none' })
+      })
+      .finally(() => {
+        this.setData({ profileSaving: false })
+      })
+  },
+
+  onChangeAvatar() {
+    const user = this.data.user || {}
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const filePath = res && res.tempFilePaths && res.tempFilePaths[0]
+        if (!filePath) return
+
+        if (!(wx && wx.cloud && typeof wx.cloud.uploadFile === 'function')) {
+          wx.showToast({ title: '当前环境不支持头像上传', icon: 'none' })
+          return
+        }
+
+        wx.showLoading({ title: '上传头像中' })
+        const cloudPath = `avatars/${user.id || 'user'}/${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`
+        wx.cloud.uploadFile({ cloudPath, filePath })
+          .then((uploadRes) => {
+            const fileID = uploadRes && uploadRes.fileID
+            if (!fileID) {
+              throw new Error('头像上传失败')
+            }
+            return auth.updateWechatProfile({
+              nickname: user.nickname,
+              avatarUrl: fileID
+            })
+          })
+          .then((nextUser) => {
+            const app = getApp()
+            if (app && typeof app.refreshGlobalState === 'function') {
+              app.refreshGlobalState()
+            }
+            this.setData({ user: nextUser })
+            wx.showToast({ title: '头像已更新', icon: 'success' })
+          })
+          .catch((error) => {
+            wx.showToast({ title: (error && error.message) || '头像更新失败', icon: 'none' })
+          })
+          .finally(() => {
+            wx.hideLoading()
+          })
+      }
+    })
+  },
+
+  onCopyUserId() {
+    const user = this.data.user || {}
+    const userId = String(user.id || '')
+    if (!userId) {
+      wx.showToast({ title: '用户ID为空', icon: 'none' })
+      return
+    }
+
+    wx.setClipboardData({
+      data: userId,
+      success: () => wx.showToast({ title: '用户ID已复制', icon: 'success' })
+    })
+  },
+
+  onClearData() {
+    wx.showModal({
+      title: '警示',
+      content: '确定要清除当前账号的所有交易数据吗？此操作不可恢复。',
+      success: async (res) => {
+        if (!res.confirm) {
+          return
+        }
+        const result = await storage.clearTransactionsAsync()
+        if (!result.success) {
+          wx.showToast({ title: result.message || '清空失败，请重试', icon: 'none' })
+          return
+        }
+        this.refreshPage()
+        wx.showToast({ title: '数据已清除', icon: 'success' })
+      }
+    })
+  },
+
+  onLogout() {
+    wx.showModal({
+      title: '退出登录',
+      content: '确定要退出当前账号吗？',
+      success: (res) => {
+        if (!res.confirm) return
+        auth.logout()
+        wx.reLaunch({ url: '/pages/login/login' })
       }
     })
   },

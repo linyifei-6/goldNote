@@ -14,7 +14,6 @@
 const ALPHA_VANTAGE_KEY = '2KDL90GOZQ34O6YM'
 
 // 新增数据源API Key（建议不要硬编码，优先从本地存储读取）
-const QVERIS_API_KEY = 'sk-anitqqIjdD8-BjF5IIZite1yCHAzppdWOr66-8Z0Jpg'
 const METALPRICE_API_KEY = 'aec8a6b4f834cff7daaa2ccdc0bf44d1'
 
 // 金价数据源配置
@@ -22,28 +21,24 @@ const API_SOURCES = {
   // 方案1: Alpha Vantage GLD（已验证）
   ALPHA_VANTAGE_GLD: `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=GLD&apikey=${ALPHA_VANTAGE_KEY}`,
 
-  // 方案2: Qveris（工具聚合）
-  QVERIS_SEARCH: 'https://qveris.ai/api/v1/search',
-  QVERIS_EXECUTE_BASE: 'https://qveris.ai/api/v1/tools/execute?tool_id=',
-
-  // 方案3: MetalpriceAPI（外汇+贵金属汇率）
+  // 方案2: MetalpriceAPI（外汇+贵金属汇率）
   METALPRICE_API: `https://api.metalpriceapi.com/v1/latest?api_key=${METALPRICE_API_KEY}&base=USD&currencies=XAU,CNY`,
 
-  // 方案4: Metals Live API（可作为补充）
+  // 方案3: Metals Live API（可作为补充）
   METALS_API: 'https://api.metals.live/v1/spot/gold',
   
-  // 方案5: 新浪财经（常用但不稳定）
+  // 方案4: 新浪财经（常用但不稳定）
   SINA_TD: 'https://hq.sinajs.cn/list=mAUTD',
   SINA_AU9999: 'https://hq.sinajs.cn/list=AU9999',
   SINA_AU9999_MOBILE: 'https://hq.sinajs.cn/list=mAU9999',
   
-  // 方案6: 东方财富
+  // 方案5: 东方财富
   EASTMONEY: 'https://push2.eastmoney.com/api/qt/stock/get?secid=113.au9999&fields=f43,f58,f169,f170,f46,f44,f45,f47,f86',
   
-  // 方案7: 腾讯财经
+  // 方案6: 腾讯财经
   TENCENT: 'https://qt.gtimg.cn/q=nAu9999',
   
-  // 方案8: 金十数据
+  // 方案7: 金十数据
   JIN10: 'https://cdn-rili.jin10.com/data/v4/daily/quote.json',
 
   // 汇率源：USD基准实时汇率（用于动态换算到CNY）
@@ -66,7 +61,6 @@ const DEFAULT_USD_CNY_RATE = 6.92
 const OUNCE_TO_GRAM = 31.1035
 const FX_CACHE_KEY = 'fxToCnyCache'
 const FX_CACHE_TTL_MS = 60 * 1000
-const QVERIS_COOLDOWN_MS = 60 * 1000
 
 const FX_TO_CNY = {
   CNY: 1,
@@ -83,15 +77,6 @@ const FX_TO_CNY = {
 }
 
 let fxCache = null
-let qverisDisabledUntil = 0
-
-function isQverisInCooldown() {
-  return Date.now() < qverisDisabledUntil
-}
-
-function markQverisCooldown() {
-  qverisDisabledUntil = Date.now() + QVERIS_COOLDOWN_MS
-}
 
 function buildDynamicFxToCnyMap(usdRates) {
   const cnyPerUsd = parseFloat(usdRates && usdRates.CNY)
@@ -205,44 +190,6 @@ function getDynamicFxToCnyMap() {
   return getDynamicFxContext().then((fxContext) => fxContext.rates)
 }
 
-function convertToCnyPerGram(price, currency, unit) {
-  const normalizedCurrency = String(currency || '').toUpperCase()
-  const normalizedUnit = String(unit || '').toLowerCase()
-
-  return getDynamicFxContext().then((fxContext) => {
-    const fxMap = fxContext.rates
-    const fx = fxMap[normalizedCurrency]
-
-    if (!fx) {
-      throw new Error(`Qveris暂不支持币种: ${normalizedCurrency}`)
-    }
-
-    if (normalizedUnit === 'gram' || normalizedUnit === 'g' || normalizedUnit === '克') {
-      return {
-        priceCnyGram: price * fx,
-        fxRate: fx,
-        fxSource: fxContext.source,
-        fxTimestamp: fxContext.timestamp,
-        currency: normalizedCurrency,
-        unit: normalizedUnit
-      }
-    }
-
-    if (normalizedUnit === 'ounce' || normalizedUnit === 'oz' || normalizedUnit === '盎司') {
-      return {
-        priceCnyGram: (price * fx) / OUNCE_TO_GRAM,
-        fxRate: fx,
-        fxSource: fxContext.source,
-        fxTimestamp: fxContext.timestamp,
-        currency: normalizedCurrency,
-        unit: normalizedUnit
-      }
-    }
-
-    throw new Error(`Qveris暂不支持计量单位: ${normalizedUnit}`)
-  })
-}
-
 /**
  * 注意：由于小程序域名限制，建议：
  * 1. 在项目.config.json中配置urlCheck: false 进行开发测试
@@ -257,15 +204,37 @@ function convertToCnyPerGram(price, currency, unit) {
  */
 class GoldPriceSimulator {
   constructor() {
-    // 基于2026年3月真实市场价格范围
-    this.basePrice = 1143 // 基准价格 1143元/克
-    this.priceRange = { min: 1130, max: 1155 } // 合理波动范围
+    // 默认基准价与波动带宽
+    this.basePrice = 1143
+    this.rangeHalfSpan = 12.5
+    this.priceRange = this.buildPriceRange(this.basePrice)
     this.currentPrice = this.basePrice
     this.lastUpdateTime = Date.now()
     this.trend = 0 // 当前趋势：正数上涨，负数下跌
     
     // 初始化随机价格
     this.initializePrice()
+  }
+
+  setBasePrice(price) {
+    const numericPrice = Number(price)
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+      return this.basePrice
+    }
+
+    this.basePrice = numericPrice
+    this.priceRange = this.buildPriceRange(this.basePrice)
+    this.currentPrice = this.clampPrice(numericPrice)
+    this.trend = 0
+    this.lastUpdateTime = Date.now()
+    return this.basePrice
+  }
+
+  buildPriceRange(basePrice) {
+    const safeBase = Number(basePrice) || 1143
+    const min = Math.max(300, safeBase - this.rangeHalfSpan)
+    const max = Math.min(3000, safeBase + this.rangeHalfSpan)
+    return { min, max }
   }
   
   initializePrice() {
@@ -320,6 +289,17 @@ function getSimulator() {
     simulator = new GoldPriceSimulator()
   }
   return simulator
+}
+
+function setSimulatorBasePrice(price) {
+  const numericPrice = Number(price)
+  if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+    return false
+  }
+
+  const sim = getSimulator()
+  sim.setBasePrice(numericPrice)
+  return true
 }
 
 /**
@@ -465,124 +445,6 @@ function fetchFromAlphaVantageGLD() {
       },
       fail: (error) => {
         reject(new Error(`Alpha Vantage GLD请求失败: ${error.errMsg || '未知错误'}`))
-      }
-    })
-  })
-}
-
-/**
- * 从 Qveris 获取金价（先 search 再 execute）
- */
-function fetchFromQveris() {
-  return new Promise((resolve, reject) => {
-    if (isQverisInCooldown()) {
-      reject(new Error('Qveris 网络暂不可用，稍后重试'))
-      return
-    }
-
-    const apiKey = getRuntimeApiKey('qverisApiKey', QVERIS_API_KEY)
-    if (!apiKey) {
-      reject(new Error('Qveris API Key 未配置，请先设置 qverisApiKey'))
-      return
-    }
-
-    wx.request({
-      url: API_SOURCES.QVERIS_SEARCH,
-      method: 'POST',
-      header: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      data: {
-        query: 'gold price aggregation tool',
-        limit: 1
-      },
-      success: (searchRes) => {
-        try {
-          const searchData = searchRes.data || {}
-          const searchId = searchData.search_id
-          const toolId = searchData.results && searchData.results[0] && searchData.results[0].tool_id
-
-          if (!searchId || !toolId) {
-            throw new Error('Qveris search 未返回 search_id 或 tool_id')
-          }
-
-          wx.request({
-            url: `${API_SOURCES.QVERIS_EXECUTE_BASE}${encodeURIComponent(toolId)}`,
-            method: 'POST',
-            header: {
-              Authorization: `Bearer ${apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            data: {
-              search_id: searchId,
-              parameters: {
-                symbol: 'XAUUSD',
-                limit: 1
-              },
-              max_response_size: 4096
-            },
-            success: (execRes) => {
-              try {
-                const execData = execRes.data || {}
-                const item = execData.result && execData.result.data && execData.result.data.results && execData.result.data.results[0]
-
-                if (!item) {
-                  throw new Error('Qveris execute 未返回结果数据')
-                }
-
-                let price = parseFloat(item.price)
-                const sourceName = String(item.source || '').toLowerCase()
-                const currency = String(item._currency || '').toUpperCase()
-                const unit = String(item._unit || '').toLowerCase()
-
-                if (isNaN(price) || price <= 0) {
-                  throw new Error('Qveris 价格字段无效')
-                }
-
-                // 统一转换到 CNY/gram（动态汇率）
-                convertToCnyPerGram(price, currency, unit)
-                  .then((converted) => {
-                    const convertedPrice = converted.priceCnyGram
-                    const fxRate = converted.fxRate
-                    const fxSource = converted.fxSource
-                    const fxTimestamp = converted.fxTimestamp
-
-                    console.log(`Qveris 转换: ${item.price} ${currency}/${unit} -> ${convertedPrice.toFixed(2)} CNY/g (来源: ${sourceName}, 汇率: ${fxRate.toFixed(6)})`)
-
-                    if (convertedPrice < 300 || convertedPrice > 1500) {
-                      throw new Error(`Qveris价格超出范围: ${convertedPrice}元/克`)
-                    }
-
-                    resolve({
-                      price: parseFloat(convertedPrice.toFixed(2)),
-                      source: 'qveris',
-                      timestamp: Date.now(),
-                      quote: `${item.price} ${currency}/${unit} (${sourceName}) @${fxRate.toFixed(6)}`,
-                      internationalPrice: `${parseFloat(item.price).toFixed(2)} ${currency}/${unit}`,
-                      fxRate: fxRate,
-                      fxSource: fxSource,
-                      fxTimestamp: fxTimestamp
-                    })
-                  })
-                  .catch((error) => {
-                    reject(new Error(`Qveris汇率换算失败: ${error.message}`))
-                  })
-              } catch (error) {
-                reject(new Error(`Qveris执行解析失败: ${error.message}`))
-              }
-            },
-            fail: (error) => {
-              reject(new Error(`Qveris execute 请求失败: ${error.errMsg || '未知错误'}`))
-            }
-          })
-        } catch (error) {
-          reject(new Error(`Qveris search 解析失败: ${error.message}`))
-        }
-      },
-      fail: (error) => {
-        markQverisCooldown()
-        reject(new Error(`Qveris search 请求失败: ${error.errMsg || '未知错误'}`))
       }
     })
   })
@@ -1128,46 +990,17 @@ function fetchFromTencent() {
 }
 
 /**
- * 获取当前黄金价格（简化版，仅支持 Qveris 和模拟器）
+ * 获取当前黄金价格（当前仅使用模拟器）
  * 
  * 逻辑：
- * 1. 如果指定了数据源，直接使用该数据源
- * 2. 如果是自动模式，按顺序尝试：Qveris → 模拟器
- * 3. 所有API失败则使用智能模拟器
+ * 1. 自动模式直接使用模拟器
+ * 2. 手动模式由页面输入控制
  * 
  * @param {boolean} forceSimulator - 强制使用模拟器
- * @param {string} source - 指定数据源: 'qveris'|'simulator'
+ * @param {string} source - 指定数据源（当前仅支持 'simulator'）
  * @returns {Promise<Object>} 包含价格、来源和时间戳的对象
  */
 function getCurrentGoldPrice(forceSimulator = false, source = 'simulator') {
-  // 如果强制使用模拟器或选择了模拟器，直接返回
-  if (forceSimulator || source === 'simulator') {
-    return fetchFromSimulator()
-  }
-  
-  // 根据指定的数据源调用对应函数
-  const sourceMap = {
-    'qveris': { func: fetchFromQveris, name: 'Qveris' }
-  }
-  
-  const sourceDef = sourceMap[source]
-  if (sourceDef && sourceDef.func) {
-    console.log(`使用数据源: ${sourceDef.name}`)
-    return sourceDef.func()
-      .then(result => {
-        console.log(`✓ 成功从${sourceDef.name}获取数据: ${result.price}元/克`)
-        return result
-      })
-      .catch((error) => {
-        console.warn(`✗ ${sourceDef.name}失败，回退模拟器: ${error.message}`)
-        return fetchFromSimulator().then((simResult) => ({
-          ...simResult,
-          fallbackFrom: source,
-          fallbackReason: error.message
-        }))
-      })
-  }
-
   // 默认使用模拟器
   return fetchFromSimulator()
 }
@@ -1238,5 +1071,6 @@ function getConfigSuggestion() {
 
 module.exports = {
   getCurrentGoldPrice,
-  getConfigSuggestion
+  getConfigSuggestion,
+  setSimulatorBasePrice
 }

@@ -2,6 +2,7 @@
 <view class="container">
   <top-user-card
     user="{{user}}"
+    bindavatar="onOpenProfileModal"
     bindselector="onGoSelector"
     bindwedding="onGoWedding"
     bindmessage="onGoSelector"
@@ -426,6 +427,38 @@
         <button class="btn secondary" bindtap="closeEdit">取消</button>
         <button class="btn" bindtap="submitEdit">保存</button>
       </view>
+    </view>
+  </view>
+
+  <view class="profile-modal-mask" wx:if="{{profileModalVisible}}" bindtap="onCloseProfileModal"></view>
+  <view class="profile-modal-card" wx:if="{{profileModalVisible}}">
+    <view class="profile-modal-head">
+      <text class="profile-title">个人信息</text>
+      <text class="profile-close" bindtap="onCloseProfileModal">关闭</text>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">头像</text>
+      <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <text class="profile-op">修改</text>
+      </view>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">ID</text>
+      <view class="profile-value-wrap">
+        <text class="profile-value">{{user.id}}</text>
+        <view class="profile-copy-btn" bindtap="onCopyUserId">
+          <image class="profile-copy-icon" src="/images/复制.png" mode="aspectFit" />
+        </view>
+      </view>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">昵称</text>
+      <input class="profile-input" placeholder="请输入昵称" maxlength="20" value="{{profileNicknameDraft}}" bindinput="onProfileNicknameInput" />
+    </view>
+    <view class="profile-safe-actions">
+      <button class="profile-save-btn" bindtap="onSaveProfileNickname" loading="{{profileSaving}}">保存昵称</button>
+      <button class="profile-action-btn neutral" bindtap="onCloseProfileModal" disabled="{{profileSaving}}">关闭</button>
     </view>
   </view>
 </view>

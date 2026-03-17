@@ -1,15 +1,20 @@
 <view class="container">
-  <view class="header-card" wx:if="{{user}}">
-    <view class="avatar" wx:if="{{user.avatarUrl}}" bindtap="onAvatarTap">
-      <image class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill" />
-    </view>
-    <view class="avatar default" wx:else bindtap="onAvatarTap">{{user.nickname.substring(0,1)}}</view>
-    <view class="meta">
-      <view class="nickname">{{user.nickname}}</view>
-      <view class="tip">请选择要进入的笔记场景</view>
-      <view class="edit-nickname" bindtap="onOpenNicknameEditor">修改昵称</view>
-    </view>
+  <top-user-card
+    user="{{user}}"
+    bindavatar="onOpenProfileModal"
+    bindselector="noop"
+    bindmessage="onGoSocial"
+    bindsocial="onGoSocial"
+  />
+
+  <view class="guest-card" wx:if="{{!user}}">
+    <view class="guest-title">先体验，再登录</view>
+    <view class="guest-desc">可先浏览功能说明，登录后再同步个人数据与云端记录</view>
+    <button class="guest-login-btn" bindtap="onGoLogin">微信登录</button>
   </view>
+
+  <view class="portal-tip" wx:if="{{user}}">请选择要进入的笔记场景</view>
+  <view class="portal-tip" wx:else>请选择要体验的笔记场景</view>
 
   <view class="choice-card gold" bindtap="onGoGold">
     <view class="choice-title">黄金笔记</view>
@@ -23,25 +28,45 @@
     <view class="choice-cta">进入结婚笔记</view>
   </view>
 
-  <button class="logout-btn" bindtap="onLogout">退出登录</button>
-
-  <view class="modal-mask" wx:if="{{showNicknameEditor}}" bindtap="onCloseNicknameEditor"></view>
-  <view class="nickname-modal" wx:if="{{showNicknameEditor}}">
-    <view class="nickname-modal-title">修改昵称</view>
-    <input
-      class="nickname-input"
-      placeholder="请输入新昵称（最多20字）"
-      value="{{nicknameDraft}}"
-      maxlength="20"
-      bindinput="onNicknameInput"
-    />
-      <view class="recent-title" wx:if="{{recentNicknames.length > 0}}">最近常用昵称</view>
-      <view class="recent-list" wx:if="{{recentNicknames.length > 0}}">
-        <view class="recent-item" wx:for="{{recentNicknames}}" wx:key="*this" data-nickname="{{item}}" bindtap="onPickRecentNickname">{{item}}</view>
+  <view class="profile-modal-mask" wx:if="{{profileModalVisible}}" bindtap="onCloseProfileModal"></view>
+  <view class="profile-modal-card" wx:if="{{profileModalVisible}}">
+    <view class="profile-modal-head">
+      <text class="profile-title">个人信息</text>
+      <text class="profile-close" bindtap="onCloseProfileModal">关闭</text>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">头像</text>
+      <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <text class="profile-op">修改</text>
       </view>
-    <view class="nickname-actions">
-      <button class="btn-ghost" bindtap="onCloseNicknameEditor" disabled="{{nicknameSaving}}">取消</button>
-      <button class="btn-solid" bindtap="onSaveNickname" loading="{{nicknameSaving}}">保存</button>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">ID</text>
+      <view class="profile-value-wrap">
+        <text class="profile-value">{{user.id}}</text>
+        <view class="profile-copy-btn" bindtap="onCopyUserId">
+          <image class="profile-copy-icon" src="/images/复制.png" mode="aspectFit" />
+        </view>
+      </view>
+    </view>
+    <view class="profile-row">
+      <text class="profile-label">昵称</text>
+      <input class="profile-input" placeholder="请输入昵称" maxlength="20" value="{{profileNicknameDraft}}" bindinput="onProfileNicknameInput" />
+    </view>
+    <view class="profile-safe-actions">
+      <button class="profile-save-btn" bindtap="onSaveProfileNickname" loading="{{profileSaving}}">保存昵称</button>
+      <button class="profile-action-btn neutral" bindtap="onCloseProfileModal" disabled="{{profileSaving}}">关闭</button>
+    </view>
+    <view class="profile-danger-zone">
+      <text class="profile-danger-title">高风险操作</text>
+      <view class="profile-action-row">
+        <button class="profile-action-btn danger" bindtap="onLogout">退出登录</button>
+      </view>
+      <view class="profile-action-row split">
+        <button class="profile-action-btn warn" bindtap="onClearGoldData">清除黄金笔记数据</button>
+        <button class="profile-action-btn warn" bindtap="onClearWeddingData">清除婚礼笔记数据</button>
+      </view>
     </view>
   </view>
 </view>

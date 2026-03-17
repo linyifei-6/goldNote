@@ -1,20 +1,16 @@
 const auth = require('../../utils/auth')
-const RECENT_NICKNAMES_KEY = 'gold_recent_nicknames'
-const MAX_RECENT_NICKNAMES = 5
+const storage = require('../../utils/storage')
 
 Page({
   data: {
     user: null,
-    showNicknameEditor: false,
-    nicknameDraft: '',
-    nicknameSaving: false,
-    recentNicknames: []
+    profileModalVisible: false,
+    profileNicknameDraft: '',
+    profileSaving: false
   },
 
   onShow() {
-    const user = auth.ensureLogin()
-    if (!user) return
-
+    const user = storage.getCurrentUser()
     this.setData({ user })
   },
 
@@ -26,164 +22,169 @@ Page({
     wx.navigateTo({ url: '/pages/wedding/wedding' })
   },
 
-  onOpenNicknameEditor() {
+  onGoSocial() {
+    wx.navigateTo({ url: '/pages/social/social?scene=gold' })
+  },
+
+  noop() {},
+
+  onOpenProfileModal() {
+    if (!this.data.user) {
+      wx.navigateTo({ url: '/pages/login/login' })
+      return
+    }
     const user = this.data.user || {}
     this.setData({
-      showNicknameEditor: true,
-      nicknameDraft: user.nickname || '',
-      recentNicknames: this.getRecentNicknames(user.nickname)
+      profileModalVisible: true,
+      profileNicknameDraft: user.nickname || ''
     })
   },
 
-  onCloseNicknameEditor() {
-    if (this.data.nicknameSaving) {
+  onGoLogin() {
+    wx.navigateTo({ url: '/pages/login/login' })
+  },
+
+  onCloseProfileModal() {
+    if (this.data.profileSaving) return
+    this.setData({
+      profileModalVisible: false
+    })
+  },
+
+  onProfileNicknameInput(e) {
+    this.setData({
+      profileNicknameDraft: e.detail.value
+    })
+  },
+
+  onCopyUserId() {
+    const user = this.data.user || {}
+    const userId = String(user.id || '')
+    if (!userId) {
+      wx.showToast({ title: '用户ID为空', icon: 'none' })
       return
     }
 
-    this.setData({
-      showNicknameEditor: false
+    wx.setClipboardData({
+      data: userId,
+      success: () => wx.showToast({ title: '用户ID已复制', icon: 'success' })
     })
   },
 
-  onNicknameInput(e) {
-    this.setData({
-      nicknameDraft: e.detail.value
-    })
-  },
-
-  onPickRecentNickname(e) {
-    const nickname = e.currentTarget.dataset.nickname
-    if (!nickname) {
-      return
-    }
-    this.setData({ nicknameDraft: nickname })
-  },
-
-  getRecentNicknames(currentNickname) {
-    try {
-      const list = wx.getStorageSync(RECENT_NICKNAMES_KEY)
-      const safeCurrent = String(currentNickname || '').trim()
-      if (!Array.isArray(list)) {
-        return []
-      }
-
-      return list
-        .map(item => String(item || '').trim())
-        .filter(item => item && item !== safeCurrent)
-        .slice(0, MAX_RECENT_NICKNAMES)
-    } catch (error) {
-      console.error('读取常用昵称失败', error)
-      return []
-    }
-  },
-
-  saveRecentNickname(nickname) {
-    try {
-      const safeNickname = String(nickname || '').trim().slice(0, 20)
-      if (!safeNickname) {
-        return
-      }
-
-      const list = wx.getStorageSync(RECENT_NICKNAMES_KEY)
-      const oldList = Array.isArray(list) ? list.map(item => String(item || '').trim()).filter(Boolean) : []
-      const next = [safeNickname, ...oldList.filter(item => item !== safeNickname)].slice(0, MAX_RECENT_NICKNAMES)
-      wx.setStorageSync(RECENT_NICKNAMES_KEY, next)
-      this.setData({ recentNicknames: next.filter(item => item !== safeNickname) })
-    } catch (error) {
-      console.error('保存常用昵称失败', error)
-    }
-  },
-
-  onAvatarTap() {
-    this.onPickLocalAvatar()
-  },
-
-  onPickLocalAvatar() {
+  onChangeAvatar() {
     wx.chooseImage({
       count: 1,
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       success: (res) => {
         const filePath = res && res.tempFilePaths && res.tempFilePaths[0]
-        if (!filePath) {
+        if (!filePath) return
+
+        if (!(wx && wx.cloud && typeof wx.cloud.uploadFile === 'function')) {
+          wx.showToast({ title: '当前环境不支持头像上传', icon: 'none' })
           return
         }
 
-        this.uploadAndSaveAvatar(filePath)
-      },
-      fail: (error) => {
-        console.error('选择头像失败', error)
+        wx.showLoading({ title: '上传头像中' })
+        const user = this.data.user || {}
+        const cloudPath = `avatars/${user.id || 'user'}/${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`
+        wx.cloud.uploadFile({ cloudPath, filePath })
+          .then((uploadRes) => {
+            const fileID = uploadRes && uploadRes.fileID
+            if (!fileID) {
+              throw new Error('头像上传失败')
+            }
+            return auth.updateWechatProfile({
+              nickname: user.nickname,
+              avatarUrl: fileID
+            })
+          })
+          .then((nextUser) => {
+            const app = getApp()
+            if (app && typeof app.refreshGlobalState === 'function') {
+              app.refreshGlobalState()
+            }
+            this.setData({ user: nextUser })
+            wx.showToast({ title: '头像已更新', icon: 'success' })
+          })
+          .catch((error) => {
+            wx.showToast({ title: (error && error.message) || '头像更新失败', icon: 'none' })
+          })
+          .finally(() => {
+            wx.hideLoading()
+          })
       }
     })
   },
 
-  uploadAndSaveAvatar(localFilePath) {
-    const user = this.data.user || {}
-    if (!(wx && wx.cloud && typeof wx.cloud.uploadFile === 'function')) {
-      wx.showToast({ title: '当前环境不支持头像上传', icon: 'none' })
-      return
-    }
+  onSaveProfileNickname() {
+    if (this.data.profileSaving) return
 
-    wx.showLoading({ title: '上传头像中' })
-    const cloudPath = `avatars/${user.id || 'user'}/${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`
-
-    wx.cloud.uploadFile({
-      cloudPath,
-      filePath: localFilePath
-    }).then((uploadRes) => {
-      const fileID = uploadRes && uploadRes.fileID
-      if (!fileID) {
-        throw new Error('头像上传失败')
-      }
-
-      return auth.updateWechatProfile({
-        nickname: user.nickname,
-        avatarUrl: fileID
-      })
-    }).then((nextUser) => {
-      const app = getApp()
-      app.refreshGlobalState()
-      this.setData({ user: nextUser })
-      wx.showToast({ title: '头像已更新', icon: 'success' })
-    }).catch((error) => {
-      console.error('更新头像失败', error)
-      wx.showToast({ title: error.message || '头像更新失败', icon: 'none' })
-    }).finally(() => {
-      wx.hideLoading()
-    })
-  },
-
-  onSaveNickname() {
-    if (this.data.nicknameSaving) {
-      return
-    }
-
-    const nickname = String(this.data.nicknameDraft || '').trim()
+    const nickname = String(this.data.profileNicknameDraft || '').trim()
     if (!nickname) {
       wx.showToast({ title: '昵称不能为空', icon: 'none' })
       return
     }
 
-    this.setData({ nicknameSaving: true })
+    this.setData({ profileSaving: true })
 
     auth.updateNickname(nickname)
       .then((user) => {
         const app = getApp()
-        app.refreshGlobalState()
-        this.saveRecentNickname(nickname)
-        this.setData({
-          user,
-          showNicknameEditor: false
-        })
+        if (app && typeof app.refreshGlobalState === 'function') {
+          app.refreshGlobalState()
+        }
+        this.setData({ user, profileNicknameDraft: user.nickname || '' })
         wx.showToast({ title: '昵称已更新', icon: 'success' })
       })
       .catch((error) => {
-        console.error('修改昵称失败', error)
-        wx.showToast({ title: error.message || '修改昵称失败', icon: 'none' })
+        wx.showToast({ title: (error && error.message) || '昵称更新失败', icon: 'none' })
       })
       .finally(() => {
-        this.setData({ nicknameSaving: false })
+        this.setData({ profileSaving: false })
       })
+  },
+
+  onClearGoldData() {
+    wx.showModal({
+      title: '警示',
+      content: '确定要清除当前账号的黄金笔记数据吗？此操作不可恢复。',
+      success: async (res) => {
+        if (!res.confirm) {
+          return
+        }
+        const result = await storage.clearTransactionsAsync()
+        if (!result.success) {
+          wx.showToast({ title: result.message || '清空失败，请重试', icon: 'none' })
+          return
+        }
+        wx.showToast({ title: '黄金笔记数据已清除', icon: 'success' })
+      }
+    })
+  },
+
+  onClearWeddingData() {
+    wx.showModal({
+      title: '警示',
+      content: '确定要清除当前账号的婚礼笔记数据吗？此操作不可恢复。',
+      success: (res) => {
+        if (!res.confirm) {
+          return
+        }
+
+        const result = storage.clearWeddingAllData()
+        if (!result || !result.success) {
+          wx.showToast({ title: (result && result.message) || '清空失败，请重试', icon: 'none' })
+          return
+        }
+
+        wx.showToast({ title: '婚礼笔记数据已清除', icon: 'success' })
+      }
+    })
+  },
+
+  onClearData() {
+    this.onClearGoldData()
   },
 
   onLogout() {

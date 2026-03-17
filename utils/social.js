@@ -18,6 +18,7 @@ const SCENE_ALLOWED_TYPES = {
   gold: ['follow'],
   wedding: ['follow', 'couple', 'kin']
 }
+const USER_LIST_KEY = 'gold_users'
 
 function nowIso() {
   return new Date().toISOString()
@@ -140,6 +141,96 @@ function saveRelations(scene, relations) {
     : []
   wx.setStorageSync(getSceneRelationKey(scene), next)
 }
+
+// ---------- 云端关系同步 ----------
+
+const _relationsLastSyncAt = {} // scene -> timestamp (ms)，内存防重复同步
+const _relationsSyncPromise = {} // scene -> Promise，防止 onLoad/onShow 并发重复请求
+let relationCloudAvailable = true
+
+function isMissingCloudFunctionError(err) {
+  const message = String(
+    (err && (err.errMsg || err.message)) || err || ''
+  )
+  return message.includes('FunctionName parameter could not be found') || message.includes('errCode: -501000')
+}
+
+function markRelationCloudUnavailable(err) {
+  relationCloudAvailable = false
+  console.warn('manageRelations 云函数不可用，后续将仅使用本地关系缓存', err)
+}
+
+/**
+ * fire-and-forget：把单条关系上传到云端。
+ * 在本地写入成功后调用，不阻塞主流程。
+ */
+function upsertRelationToCloud(relation, scene) {
+  if (!relationCloudAvailable) return
+  if (!(wx && wx.cloud && typeof wx.cloud.callFunction === 'function')) return
+  const payload = { ...relation, scene: normalizeScene(scene), legacyMutual: undefined }
+  wx.cloud.callFunction({
+    name: 'manageRelations',
+    data: { action: 'upsert', relation: payload }
+  }).catch((err) => {
+    if (isMissingCloudFunctionError(err)) {
+      markRelationCloudUnavailable(err)
+      return
+    }
+    console.warn('上传关系到云端失败（不影响本地）', err)
+  })
+}
+
+/**
+ * 从云端拉取当前用户在指定场景下的全量关系，合并写入本地缓存。
+ * 规则：云端记录 > 本地记录（云端是 source of truth）。
+ * 同一场景 30 秒内不重复请求。
+ */
+async function syncRelationsFromCloud(scene) {
+  if (!relationCloudAvailable) return
+  if (!(wx && wx.cloud && typeof wx.cloud.callFunction === 'function')) return
+  const normalizedScene = normalizeScene(scene)
+  const now = Date.now()
+  if (_relationsLastSyncAt[normalizedScene] && now - _relationsLastSyncAt[normalizedScene] < 30000) return
+  if (_relationsSyncPromise[normalizedScene]) {
+    return _relationsSyncPromise[normalizedScene]
+  }
+
+  _relationsSyncPromise[normalizedScene] = (async () => {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'manageRelations',
+        data: { action: 'get', scene: normalizedScene }
+      })
+      const result = (res && res.result) || {}
+      if (!result.success || !Array.isArray(result.data)) return
+
+      _relationsLastSyncAt[normalizedScene] = now
+
+      // 合并：以云端为主，本地独有的记录保留（可能还未上传成功）
+      const local = loadRawRelations(normalizedScene)
+      const cloudById = {}
+      result.data.forEach((item) => {
+        if (item && item.id) cloudById[item.id] = item
+      })
+      // 本地记录中，云端没有的保留（可能是刚创建还未同步的）
+      const localOnly = local.filter((item) => item && item.id && !cloudById[item.id])
+      const merged = [...result.data, ...localOnly]
+      saveRelations(normalizedScene, merged)
+    } catch (err) {
+      if (isMissingCloudFunctionError(err)) {
+        markRelationCloudUnavailable(err)
+        return
+      }
+      console.warn('从云端同步关系失败（将使用本地缓存）', err)
+    } finally {
+      delete _relationsSyncPromise[normalizedScene]
+    }
+  })()
+
+  return _relationsSyncPromise[normalizedScene]
+}
+
+// ----------------------------------
 
 function resolveRelationContext(relationId, scene) {
   const preferredScene = scene ? normalizeScene(scene) : ''
@@ -290,6 +381,7 @@ function createRelationRequest(type, targetUserId, options = {}) {
     }
 
     saveRelations(scene, [follow, ...relations])
+    upsertRelationToCloud(follow, scene)
     return { success: true, relation: follow, immediate: true, scene }
   }
 
@@ -338,6 +430,7 @@ function createRelationRequest(type, targetUserId, options = {}) {
   }
 
   saveRelations(scene, [relation, ...relations])
+  upsertRelationToCloud(relation, scene)
   return { success: true, relation, immediate: relation.status === 'accepted', scene }
 }
 
@@ -371,6 +464,7 @@ function acceptRelationRequest(relationId, options = {}) {
   relation.updatedAt = nowIso()
   relations[index] = relation
   saveRelations(scene, relations)
+  upsertRelationToCloud(relation, scene)
   return { success: true, relation, scene }
 }
 
@@ -395,6 +489,7 @@ function rejectRelationRequest(relationId, options = {}) {
   relation.updatedAt = nowIso()
   relations[index] = relation
   saveRelations(scene, relations)
+  upsertRelationToCloud(relation, scene)
   return { success: true, scene }
 }
 
@@ -419,6 +514,7 @@ function cancelRelationRequest(relationId, options = {}) {
   relation.updatedAt = nowIso()
   relations[index] = relation
   saveRelations(scene, relations)
+  upsertRelationToCloud(relation, scene)
   return { success: true, scene }
 }
 
@@ -450,6 +546,7 @@ function endRelation(relationId, options = {}) {
   relation.updatedAt = nowIso()
   relations[index] = relation
   saveRelations(scene, relations)
+  upsertRelationToCloud(relation, scene)
   return { success: true, scene }
 }
 
@@ -804,8 +901,120 @@ function getGoldLeaderboard(currentPrice) {
   return {
     profit: top10(list, (a, b) => b.totalProfit - a.totalProfit),
     fans: top10(list, (a, b) => b.followerCount - a.followerCount),
-    holding: top10(list, (a, b) => b.currentHolding - a.currentHolding),
-    value: top10(list, (a, b) => b.currentValue - a.currentValue)
+    holding: top10(list, (a, b) => b.currentHolding - a.currentHolding)
+  }
+}
+
+function normalizeLeaderboardItem(item) {
+  const source = item || {}
+  return {
+    user: toUserSummary(source.user) || null,
+    followerCount: Number(source.followerCount) || 0,
+    contentCount: Number(source.contentCount) || 0,
+    currentHolding: Number(source.currentHolding) || 0,
+    totalProfit: Number(source.totalProfit) || 0,
+    currentValue: Number(source.currentValue) || 0,
+    totalInvestment: Number(source.totalInvestment) || 0,
+    latestTransaction: source.latestTransaction || null,
+    rank: Number(source.rank) || 0
+  }
+}
+
+function normalizeLeaderboardData(data) {
+  const safeData = data || {}
+  const normalizeList = (list) => (Array.isArray(list) ? list : []).map(normalizeLeaderboardItem)
+
+  return {
+    profit: normalizeList(safeData.profit),
+    fans: normalizeList(safeData.fans),
+    holding: normalizeList(safeData.holding)
+  }
+}
+
+function cacheLeaderboardUsers(data) {
+  const safeData = data || {}
+  const userMap = {}
+  ;['profit', 'fans', 'holding'].forEach((key) => {
+    const list = Array.isArray(safeData[key]) ? safeData[key] : []
+    list.forEach((item) => {
+      const uid = String(item && item.user && item.user.id || '').trim()
+      if (!uid) {
+        return
+      }
+      const nickname = safeText(item.user.nickname || '用户', 20)
+      const avatarUrl = safeText(item.user.avatarUrl || '', 400)
+      userMap[uid] = {
+        id: uid,
+        nickname,
+        avatarUrl
+      }
+    })
+  })
+
+  const userIds = Object.keys(userMap)
+  if (userIds.length === 0) {
+    return
+  }
+
+  try {
+    const users = storage.getUsers() || []
+    const existingById = {}
+    users.forEach((user) => {
+      if (!user || !user.id) {
+        return
+      }
+      existingById[String(user.id)] = user
+    })
+
+    userIds.forEach((uid) => {
+      const source = userMap[uid]
+      const existed = existingById[uid]
+      if (existed) {
+        existed.nickname = source.nickname || existed.nickname || '用户'
+        existed.avatarUrl = source.avatarUrl || existed.avatarUrl || ''
+        return
+      }
+
+      users.push({
+        id: source.id,
+        nickname: source.nickname || '用户',
+        avatarUrl: source.avatarUrl || '',
+        openId: '',
+        isWechatAuth: false,
+        createdAt: nowIso(),
+        lastLoginAt: ''
+      })
+    })
+
+    wx.setStorageSync(USER_LIST_KEY, users)
+  } catch (error) {
+    console.warn('缓存排行榜用户失败', error)
+  }
+}
+
+async function getGoldLeaderboardAsync(currentPrice) {
+  if (!(wx && wx.cloud && typeof wx.cloud.callFunction === 'function')) {
+    throw new Error('云能力不可用，无法加载排行榜')
+  }
+
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'getGoldLeaderboard',
+      data: {
+        currentPrice: Number(currentPrice) || 0
+      }
+    })
+
+    const result = (res && res.result) || {}
+    if (!result.success || !result.data) {
+      throw new Error(result.message || '云端排行榜返回异常')
+    }
+
+    const normalized = normalizeLeaderboardData(result.data)
+    cacheLeaderboardUsers(normalized)
+    return normalized
+  } catch (error) {
+    throw new Error((error && error.message) || '云端排行榜读取失败')
   }
 }
 
@@ -920,6 +1129,7 @@ function getWeddingGuestViewByOwnerAsync(ownerUserId, guestUserId) {
 module.exports = {
   RELATION_TYPES,
   normalizeScene,
+  syncRelationsFromCloud,
   createRelationRequest,
   acceptRelationRequest,
   rejectRelationRequest,
@@ -938,6 +1148,7 @@ module.exports = {
   getGoldFollowerCount,
   getGoldVisitorProfile,
   getGoldLeaderboard,
+  getGoldLeaderboardAsync,
   canViewWeddingDate,
   getWeddingBlessings,
   addWeddingBlessing,

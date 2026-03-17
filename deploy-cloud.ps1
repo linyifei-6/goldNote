@@ -47,6 +47,98 @@ function Test-CommandExists {
   return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
+function Invoke-CloudFunctionDeploy {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$FunctionName,
+    [Parameter(Mandatory = $true)]
+    [string]$CloudEnvId,
+    [int]$MaxAttempts = 4,
+    [int]$RetryDelaySeconds = 20
+  )
+
+  for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+    $deployOutput = ('y' | cloudbase functions:deploy $FunctionName -e $CloudEnvId --force) 2>&1
+    $deployText = ($deployOutput | Out-String)
+    $exitCode = $LASTEXITCODE
+    $hasErrorText = $deployText -match "Error:|閰嶇疆涓嶅瓨鍦▅閮ㄧ讲澶辫触|\u00d7"
+    $isUpdating = $deployText -match 'Updating'
+
+    if ($exitCode -eq 0 -and -not $hasErrorText) {
+      return @{
+        Success = $true
+        Output = $deployText
+      }
+    }
+
+    if ($attempt -lt $MaxAttempts) {
+      if ($isUpdating) {
+        Write-Host "[WARN] $FunctionName 当前处于 Updating，$RetryDelaySeconds 秒后重试（$attempt/$MaxAttempts）..." -ForegroundColor Yellow
+      } else {
+        Write-Host "[WARN] $FunctionName 部署失败，$RetryDelaySeconds 秒后重试（$attempt/$MaxAttempts）..." -ForegroundColor Yellow
+      }
+      Start-Sleep -Seconds $RetryDelaySeconds
+      continue
+    }
+
+    return @{
+      Success = $false
+      Output = $deployText
+    }
+  }
+
+  return @{
+    Success = $false
+    Output = 'Unknown deployment failure'
+  }
+}
+
+function Invoke-CloudFunctionCodeUpdate {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$FunctionName,
+    [Parameter(Mandatory = $true)]
+    [string]$CloudEnvId,
+    [int]$MaxAttempts = 4,
+    [int]$RetryDelaySeconds = 20
+  )
+
+  for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+    $updateOutput = cloudbase functions:code:update $FunctionName -e $CloudEnvId 2>&1
+    $updateText = ($updateOutput | Out-String)
+    $exitCode = $LASTEXITCODE
+    $hasErrorText = $updateText -match "Error:|閰嶇疆涓嶅瓨鍦▅閮ㄧ讲澶辫触|\u00d7"
+    $isUpdating = $updateText -match 'Updating'
+
+    if ($exitCode -eq 0 -and -not $hasErrorText) {
+      return @{
+        Success = $true
+        Output = $updateText
+      }
+    }
+
+    if ($attempt -lt $MaxAttempts) {
+      if ($isUpdating) {
+        Write-Host "[WARN] $FunctionName 当前处于 Updating，$RetryDelaySeconds 秒后重试代码更新（$attempt/$MaxAttempts）..." -ForegroundColor Yellow
+      } else {
+        Write-Host "[WARN] $FunctionName 代码更新失败，$RetryDelaySeconds 秒后重试（$attempt/$MaxAttempts）..." -ForegroundColor Yellow
+      }
+      Start-Sleep -Seconds $RetryDelaySeconds
+      continue
+    }
+
+    return @{
+      Success = $false
+      Output = $updateText
+    }
+  }
+
+  return @{
+    Success = $false
+    Output = 'Unknown code update failure'
+  }
+}
+
 Write-Host "[1/5] Checking cloudbase-cli..." -ForegroundColor Yellow
 if (Test-CommandExists -Name "cloudbase") {
   $cloudbaseVersion = cloudbase --version 2>&1
@@ -77,7 +169,9 @@ $cloudfunctions = @(
   "getTransactions",
   "saveTransaction",
   "getWeddingData",
-  "saveWeddingData"
+  "saveWeddingData",
+  "manageRelations",
+  "getGoldLeaderboard"
 )
 
 Write-Host ""
@@ -110,22 +204,45 @@ $cloudbaseConfig | ConvertTo-Json -Depth 6 | Set-Content -Path $cloudbaseConfigP
 Write-Host "[OK] Wrote $cloudbaseConfigPath" -ForegroundColor Green
 
 Write-Host ""
+Write-Host "[3.5/5] Installing cloud function dependencies..." -ForegroundColor Yellow
+foreach ($func in $cloudfunctions) {
+  $funcDir = Join-Path $actualFunctionRoot $func
+  $pkgPath = Join-Path $funcDir "package.json"
+  if (-not (Test-Path $pkgPath)) {
+    continue
+  }
+
+  Write-Host "Installing npm deps for $func..." -ForegroundColor Gray
+  npm --prefix $funcDir install --omit=dev
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERR] npm install failed for $func" -ForegroundColor Red
+    exit 1
+  }
+}
+Write-Host "[OK] Dependencies are ready" -ForegroundColor Green
+
+Write-Host ""
 Write-Host "[4/5] Deploying cloud functions..." -ForegroundColor Yellow
+
+$functionListOutput = cloudbase functions:list -e $CLOUD_ENV 2>&1
+$functionListText = ($functionListOutput | Out-String)
 
 $hasDeployError = $false
 
 foreach ($func in $cloudfunctions) {
   Write-Host "Deploying $func..." -ForegroundColor Gray
-  $deployOutput = ('y' | cloudbase functions:deploy $func -e $CLOUD_ENV --force) 2>&1
-  $deployText = ($deployOutput | Out-String)
-  $hasErrorText = $deployText -match "Error:|閰嶇疆涓嶅瓨鍦▅閮ㄧ讲澶辫触|\u00d7"
+  if ($functionListText -match [Regex]::Escape($func)) {
+    $deployResult = Invoke-CloudFunctionCodeUpdate -FunctionName $func -CloudEnvId $CLOUD_ENV
+  } else {
+    $deployResult = Invoke-CloudFunctionDeploy -FunctionName $func -CloudEnvId $CLOUD_ENV
+  }
 
-  if ($LASTEXITCODE -eq 0 -and -not $hasErrorText) {
+  if ($deployResult.Success) {
     Write-Host "[OK] $func deployed" -ForegroundColor Green
   } else {
     $hasDeployError = $true
     Write-Host "[ERR] $func failed to deploy" -ForegroundColor Red
-    Write-Host $deployText -ForegroundColor DarkGray
+    Write-Host $deployResult.Output -ForegroundColor DarkGray
   }
 }
 
@@ -148,6 +265,7 @@ Write-Host "2. Import project: $PROJECT_ROOT" -ForegroundColor White
 Write-Host "3. In Cloud panel, create collections:" -ForegroundColor White
 Write-Host "   - users" -ForegroundColor Gray
 Write-Host "   - transactions" -ForegroundColor Gray
+Write-Host "   - social_relations" -ForegroundColor Gray
 Write-Host "   - wedding_profiles" -ForegroundColor Gray
 Write-Host "   - wedding_tasks" -ForegroundColor Gray
 Write-Host "   - wedding_expenses" -ForegroundColor Gray

@@ -21,7 +21,7 @@ GoldNote 是一个微信小程序，定位为双模块生活记录工具：一�
 	- 平台顺序固定为民生、浙商、招商、其他。
 
 - 实时金价
-	- 支持 Qveris 获取实时价格。
+	- 支持智能模拟与手动输入两种金价模式。
 	- 支持智能模拟金价。
 	- 支持模拟开始 / 暂停。
 	- 支持手动输入价格切换。
@@ -166,6 +166,8 @@ goldnote/
 - `login`
 - `getTransactions`
 - `saveTransaction`
+- `manageRelations`
+- `getGoldLeaderboard`
 - `getWeddingData`
 - `saveWeddingData`
 
@@ -173,6 +175,7 @@ goldnote/
 
 - `users`
 - `transactions`
+- `social_relations`
 - `wedding_profiles`
 - `wedding_tasks`
 - `wedding_expenses`

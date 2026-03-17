@@ -24,20 +24,28 @@
 
         <view class="kpi-row">
           <view class="kpi-item">
-            <text class="kpi-label">成本均价</text>
+            <view class="kpi-head">
+              <text class="kpi-label">成本均价</text>
+            </view>
             <text class="kpi-value">¥{{fmt.toFixed(holdings.avgCost, 2)}}</text>
           </view>
           <view class="kpi-item">
-            <text class="kpi-label">持仓收益</text>
+            <view class="kpi-head">
+              <text class="kpi-label">持仓收益</text>
+            </view>
             <text class="kpi-value {{unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(unrealizedProfit, 2)}}</text>
           </view>
           <view class="kpi-item">
-            <text class="kpi-label">累计收益</text>
-            <text class="kpi-value {{totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(totalProfit, 2)}}</text>
+            <view class="kpi-head">
+              <text class="kpi-label">收益率</text>
+            </view>
+            <text class="kpi-value {{totalReturnRate >= 0 ? 'profit-positive' : 'profit-negative'}}">{{fmt.toFixed(totalReturnRate, 2)}}%</text>
           </view>
           <view class="kpi-item">
-            <text class="kpi-label">收益率</text>
-            <text class="kpi-value {{totalReturnRate >= 0 ? 'profit-positive' : 'profit-negative'}}">{{fmt.toFixed(totalReturnRate, 2)}}%</text>
+            <view class="kpi-head">
+              <text class="kpi-label">累计收益</text>
+            </view>
+            <text class="kpi-value {{totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(totalProfit, 2)}}</text>
           </view>
         </view>
       </view>
@@ -46,14 +54,28 @@
         <view class="platform-mini-title">分平台持仓/收益</view>
         <view class="platform-mini-empty" wx:if="{{summaryPlatforms.length === 0}}">暂无平台数据</view>
         <view class="platform-mini-item" wx:for="{{summaryPlatforms}}" wx:key="platform">
-          <view class="mini-platform-left">
+          <view class="mini-platform-head">
             <text class="mini-platform-name">{{item.platform}}</text>
-            <text class="mini-platform-hold">{{fmt.toFixed(item.currentHolding, 2)}}g</text>
-            <text class="mini-platform-avg">均价 ¥{{fmt.toFixed(item.avgCost, 2)}}</text>
           </view>
-          <view class="mini-platform-right">
-            <text class="mini-platform-profit {{item.realizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">累计 ¥{{fmt.toFixed(item.realizedProfit, 2)}}</text>
-            <text class="mini-platform-profit sub {{item.unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">持有 ¥{{fmt.toFixed(item.unrealizedProfit, 2)}}</text>
+          <view class="mini-platform-line">
+            <view class="mini-line-left">
+              <text class="mini-line-tag">仓</text>
+              <text class="mini-line-meta">{{fmt.toFixed(item.currentHolding, 2)}}g</text>
+            </view>
+            <view class="mini-line-value-wrap">
+              <text class="mini-line-value {{item.unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}} mini-line-value-tight">¥{{fmt.toFixed(item.unrealizedProfit, 2)}}</text>
+              <text class="mini-line-tag">持</text>
+            </view>
+          </view>
+          <view class="mini-platform-line">
+            <view class="mini-line-left">
+              <text class="mini-line-tag">均</text>
+              <text class="mini-line-meta">¥{{fmt.toFixed(item.avgCost, 2)}}</text>
+            </view>
+            <view class="mini-line-value-wrap">
+              <text class="mini-line-value {{item.realizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}} mini-line-value-tight">¥{{fmt.toFixed(item.realizedProfit, 2)}}</text>
+              <text class="mini-line-tag">累</text>
+            </view>
           </view>
         </view>
       </view>
@@ -88,9 +110,6 @@
           </view>
         </view>
         <view class="quote-actions">
-          <view class="quote-btn" bindtap="onFetchPriceTap">
-            <text class="quote-btn-text">Qveris</text>
-          </view>
           <view class="quote-btn" bindtap="onToggleSimulatorUpdate">
             <text class="quote-btn-text">{{simulatorPaused ? '开始' : '暂停'}}</text>
           </view>
@@ -105,13 +124,33 @@
     </view>
 
     <view wx:else>
-      <view class="form-item">
-        <input class="form-input" type="digit" placeholder="请输入当前黄金市价（元/克）" value="{{currentPrice}}" bindinput="onPriceInput" />
+      <view class="manual-strip">
+        <view class="manual-left">
+          <view class="price-main compact-main manual-main">
+            <view class="manual-price-box">
+              <text class="manual-currency">¥</text>
+              <input class="manual-price-input" type="digit" placeholder="--" value="{{currentPrice}}" bindinput="onPriceInput" />
+            </view>
+            <text class="price-unit">/克</text>
+          </view>
+        </view>
+        <view class="manual-actions">
+          <view class="quote-btn" bindtap="onManualPriceConfirm">
+            <text class="quote-btn-text">确认</text>
+          </view>
+          <view class="quote-btn quote-btn-disabled">
+            <text class="quote-btn-text quote-btn-text-disabled">开始</text>
+          </view>
+          <view class="quote-btn quote-btn-active">
+            <text class="quote-btn-text quote-btn-text-active">手动</text>
+          </view>
+          <view class="quote-btn" bindtap="togglePriceMode">
+            <text class="quote-btn-text">自动</text>
+          </view>
+        </view>
       </view>
+      <view class="manual-meta">手动输入</view>
       <view class="tip">持仓收益依赖当前市价，未输入时默认为0</view>
-      <view class="mode-switch" bindtap="togglePriceMode">
-        <text class="switch-text">切换至实时API</text>
-      </view>
     </view>
   </view>
 
@@ -203,19 +242,11 @@
     </view>
     <view class="profile-row">
       <text class="profile-label">昵称</text>
-      <view class="profile-value-wrap">
-        <input class="form-input profile-input" maxlength="20" value="{{profileNicknameDraft}}" bindinput="onProfileNicknameInput" placeholder="请输入昵称" />
-        <text class="profile-op save" bindtap="onSaveProfileNickname">保存</text>
-      </view>
+      <input class="form-input profile-input" maxlength="20" value="{{profileNicknameDraft}}" bindinput="onProfileNicknameInput" placeholder="请输入昵称" />
     </view>
-    <view class="profile-action-grid">
-      <view class="profile-action-row">
-        <button class="profile-action-btn danger" bindtap="onLogout">退出登录</button>
-        <button class="profile-action-btn warn" bindtap="onClearData">清除数据</button>
-      </view>
-      <view class="profile-action-row single">
-        <button class="profile-action-btn neutral" bindtap="onCloseProfileModal">关闭</button>
-      </view>
+    <view class="profile-safe-actions">
+      <button class="profile-save-btn" bindtap="onSaveProfileNickname" loading="{{profileSaving}}" disabled="{{profileSaving}}">保存昵称</button>
+      <button class="profile-action-btn neutral" bindtap="onCloseProfileModal" disabled="{{profileSaving}}">关闭</button>
     </view>
   </view>
 

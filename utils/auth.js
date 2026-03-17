@@ -275,6 +275,75 @@ function isWechatAuthUser(user) {
   return user && user.isWechatAuth === true
 }
 
+// 内存缓存：cloud:// fileID → 临时 HTTPS URL
+const _cloudUrlCache = {}
+
+/**
+ * 将单个 cloud:// 文件 ID 解析为临时 HTTPS URL，非 cloud:// 链接原样返回
+ */
+function resolveCloudUrl(fileId) {
+  const url = String(fileId || '').trim()
+  if (!url.startsWith('cloud://')) return Promise.resolve(url)
+  if (_cloudUrlCache[url]) return Promise.resolve(_cloudUrlCache[url])
+  if (!(wx && wx.cloud && typeof wx.cloud.getTempFileURL === 'function')) return Promise.resolve('')
+  return wx.cloud.getTempFileURL({ fileList: [url] })
+    .then((res) => {
+      const item = res && res.fileList && res.fileList[0]
+      const tempUrl = item && item.tempFileURL
+      if (tempUrl && !String(item.errMsg || '').includes('fail')) {
+        _cloudUrlCache[url] = tempUrl
+        return tempUrl
+      }
+      return ''
+    })
+    .catch(() => '')
+}
+
+/**
+ * 批量解析用户对象数组中的 cloud:// 头像 URL
+ * @param {Array} users 用户对象数组，每个含 avatarUrl 字段（或通过 getUrl 取得）
+ * @param {Function} [getUrl] 从用户对象取 avatarUrl 的函数，默认 u => u.avatarUrl
+ * @param {Function} [setUrl] 将解析后的 URL 写回新对象，默认 (u, url) => ({...u, avatarUrl: url})
+ * @returns {Promise<Array>}
+ */
+async function resolveUsersAvatarUrls(users, getUrl, setUrl) {
+  if (!Array.isArray(users) || users.length === 0) return users
+  const getU = typeof getUrl === 'function' ? getUrl : (u) => (u && u.avatarUrl) || ''
+  const setU = typeof setUrl === 'function' ? setUrl : (u, url) => ({ ...u, avatarUrl: url })
+
+  const needResolve = users
+    .map((u, idx) => ({ idx, url: String(getU(u) || '') }))
+    .filter(({ url }) => url.startsWith('cloud://') && !_cloudUrlCache[url])
+
+  if (needResolve.length > 0 && wx && wx.cloud && typeof wx.cloud.getTempFileURL === 'function') {
+    // 每次最多 50 个
+    const chunks = []
+    for (let i = 0; i < needResolve.length; i += 50) {
+      chunks.push(needResolve.slice(i, i + 50))
+    }
+    await Promise.all(chunks.map(async (chunk) => {
+      try {
+        const res = await wx.cloud.getTempFileURL({ fileList: chunk.map((c) => c.url) })
+        ;(res && res.fileList || []).forEach((item) => {
+          if (item && item.fileID && item.tempFileURL && !String(item.errMsg || '').includes('fail')) {
+            _cloudUrlCache[item.fileID] = item.tempFileURL
+          }
+        })
+      } catch (e) { /* 解析失败时 fallback 到原始 URL */ }
+    }))
+  }
+
+  return users.map((u) => {
+    if (!u) return u
+    const url = String(getU(u) || '')
+    if (!url.startsWith('cloud://')) {
+      return u
+    }
+    const resolved = _cloudUrlCache[url] || ''
+    return setU(u, resolved)
+  })
+}
+
 module.exports = {
   ensureLogin,
   logout,
@@ -286,5 +355,7 @@ module.exports = {
   updateWechatProfile,
   updateNickname,
   getUserAvatarUrl,
-  isWechatAuthUser
+  isWechatAuthUser,
+  resolveCloudUrl,
+  resolveUsersAvatarUrls
 }

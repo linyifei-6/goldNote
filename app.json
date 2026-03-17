@@ -1,7 +1,7 @@
 {
 	"pages": [
-		"pages/login/login",
 		"pages/portal/portal",
+		"pages/login/login",
 		"pages/social/social",
 		"pages/wedding/wedding",
 		"pages/weddingTasks/weddingTasks",
@@ -23,7 +23,6 @@
 		}
 	},
 	"requiredPrivateInfos": [
-		"getLocation",
 		"chooseLocation"
 	],
 	"cloud": true,
@@ -41,8 +40,8 @@
 			},
 			{
 				"pagePath": "pages/index/index",
-				"iconPath": "images/home.png",
-				"selectedIconPath": "images/home-active.png",
+				"iconPath": "images/持仓.png",
+				"selectedIconPath": "images/持仓-active.png",
 				"text": "持仓"
 			},
 			{

@@ -38,6 +38,9 @@ Page({
     const user = auth.ensureLogin('/pages/login/login')
     if (!user) return
 
+    // 同步云端关系，保证 canViewWeddingDate 判断使用最新亲友数据
+    await social.syncRelationsFromCloud('wedding')
+
     const viewData = await social.getWeddingGuestViewByOwnerAsync(ownerId, user.id)
     if (!viewData) {
       this.setData({ notFound: true })

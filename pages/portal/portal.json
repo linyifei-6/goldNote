@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "选择笔记"
+  "navigationBarTitleText": "选择笔记",
+  "usingComponents": {
+    "top-user-card": "/components/top-user-card/top-user-card"
+  }
 }

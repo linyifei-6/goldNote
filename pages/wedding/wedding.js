@@ -6,21 +6,6 @@ const INVITEE_STATUS = ['未确认', '已确认']
 const TASK_TYPES = ['婚纱摄影', '婚宴酒店', '婚礼策划', '婚礼服务', '婚礼节点', '婚品物料', '婚房装修', '其他']
 const TASK_STATUS_FILTERS = ['全部', '未完成', '已完成', '已逾期', '今日截止', '3天内截止']
 const TASK_SORT_OPTIONS = ['自定义排序', '截止日期', '任务类型', '创建时间', '优先级']
-const TENCENT_MAP_KEY = '请替换为你的腾讯地图Key'
-const TENCENT_GEOCODER_URL = 'https://apis.map.qq.com/ws/geocoder/v1/'
-
-function getTencentMapKey() {
-  try {
-    const key = wx.getStorageSync('tencentMapKey')
-    if (key && typeof key === 'string' && key.trim()) {
-      return key.trim()
-    }
-  } catch (error) {
-    console.warn('读取腾讯地图Key失败', error)
-  }
-
-  return (TENCENT_MAP_KEY || '').trim()
-}
 
 function normalizeCityName(city) {
   const text = String(city || '').trim()
@@ -170,6 +155,10 @@ Page({
     if (!user) return
 
     const preserveBasicInfoDraft = this.data.showBasicInfoEditor && this.data.basicInfoDirty
+
+    // 先同步云端关系，保证情侣/亲友数据是最新的
+    await social.syncRelationsFromCloud('wedding')
+
     const weddingWorkspaceOwnerId = social.getWeddingWorkspaceOwnerId(user.id)
     const weddingWorkspaceRole = social.getWeddingWorkspaceRole(user.id)
     const coupleSummary = this.buildCoupleSummary(user.id)
@@ -695,16 +684,7 @@ Page({
   onUseCurrentLocation() {
     wx.showLoading({ title: '定位中' })
 
-    let locationCache = null
-    this.ensureLocationPermission()
-      .then(() => this.getCurrentLocation())
-      .then((loc) => {
-        locationCache = loc
-        const latitude = Number(loc.latitude || 0)
-        const longitude = Number(loc.longitude || 0)
-        return this.reverseGeocodeByTencent(latitude, longitude)
-      })
-      .catch(() => this.chooseLocationCity(locationCache))
+    this.chooseLocationCity(null)
       .then((locationText) => {
         this.setData({
           weddingLocation: locationText,
@@ -719,111 +699,6 @@ Page({
       .finally(() => {
         wx.hideLoading()
       })
-  },
-
-  ensureLocationPermission() {
-    return new Promise((resolve, reject) => {
-      wx.getSetting({
-        success: (res) => {
-          const state = res.authSetting && res.authSetting['scope.userLocation']
-
-          if (state === true) {
-            resolve()
-            return
-          }
-
-          if (state === undefined) {
-            wx.authorize({
-              scope: 'scope.userLocation',
-              success: () => resolve(),
-              fail: () => reject(new Error('未授权定位权限'))
-            })
-            return
-          }
-
-          wx.showModal({
-            title: '需要定位权限',
-            content: '请开启定位权限以获取当前位置作为婚礼地点',
-            success: (modalRes) => {
-              if (!modalRes.confirm) {
-                reject(new Error('已取消授权'))
-                return
-              }
-
-              wx.openSetting({
-                success: (settingRes) => {
-                  const granted = settingRes.authSetting && settingRes.authSetting['scope.userLocation']
-                  if (granted) {
-                    resolve()
-                    return
-                  }
-                  reject(new Error('未开启定位权限'))
-                },
-                fail: () => reject(new Error('打开设置失败'))
-              })
-            },
-            fail: () => reject(new Error('授权流程失败'))
-          })
-        },
-        fail: () => reject(new Error('读取授权状态失败'))
-      })
-    })
-  },
-
-  getCurrentLocation() {
-    return new Promise((resolve, reject) => {
-      wx.getLocation({
-        type: 'gcj02',
-        success: (res) => resolve(res),
-        fail: () => reject(new Error('获取当前位置失败'))
-      })
-    })
-  },
-
-  reverseGeocodeByTencent(latitude, longitude) {
-    return new Promise((resolve, reject) => {
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        reject(new Error('定位坐标异常'))
-        return
-      }
-
-      const mapKey = getTencentMapKey()
-      if (!mapKey || mapKey.includes('请替换')) {
-        reject(new Error('请先配置腾讯地图Key'))
-        return
-      }
-
-      wx.request({
-        url: TENCENT_GEOCODER_URL,
-        method: 'GET',
-        data: {
-          location: `${latitude},${longitude}`,
-          key: mapKey,
-          get_poi: 1
-        },
-        success: (res) => {
-          const payload = res.data || {}
-          if (payload.status !== 0) {
-            reject(new Error(payload.message || '地址解析失败'))
-            return
-          }
-
-          const result = payload.result || {}
-          const adInfo = result.ad_info || {}
-          const city = normalizeCityName(adInfo.city)
-          const district = String(adInfo.district || '').trim()
-          const locationText = city || district || normalizeCityName(result.address_component && result.address_component.city)
-
-          if (!locationText) {
-            reject(new Error('未获取到可读地址'))
-            return
-          }
-
-          resolve(locationText)
-        },
-        fail: () => reject(new Error('腾讯地图服务请求失败'))
-      })
-    })
   },
 
   chooseLocationCity(loc) {

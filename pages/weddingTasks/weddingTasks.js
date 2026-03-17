@@ -25,6 +25,9 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
+    // 先同步云端关系，确保情侣共享空间归属正确
+    await social.syncRelationsFromCloud('wedding')
+
     const weddingWorkspaceOwnerId = social.getWeddingWorkspaceOwnerId(user.id)
     this.setData({ weddingWorkspaceOwnerId })
     await storage.syncWeddingDataFromCloud(weddingWorkspaceOwnerId)

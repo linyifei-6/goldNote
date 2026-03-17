@@ -1,5 +1,6 @@
 const auth = require('../../utils/auth')
 const social = require('../../utils/social')
+const storage = require('../../utils/storage')
 
 Page({
   data: {
@@ -45,12 +46,15 @@ Page({
     this.loadSocialData()
   },
 
-  loadSocialData() {
+  async loadSocialData() {
     const user = this.data.user
     const scene = this.data.scene
     if (!user || !user.id) {
       return
     }
+
+    // 先从云端同步关系，保证本地缓存是最新的
+    await social.syncRelationsFromCloud(scene)
 
     const overview = social.getRelationOverview(user.id, { scene })
     const goldViewState = scene === 'gold'
@@ -230,20 +234,30 @@ Page({
     return `${date} ${typeText}${weight}g（${price}元/g）`
   },
 
-  openVisitorProfileById(targetUserId) {
+  async openVisitorProfileById(targetUserId) {
     const user = this.data.user
     const targetId = String(targetUserId || '').trim()
     if (!user || !user.id || !targetId) {
       wx.showToast({ title: '用户ID无效', icon: 'none' })
       return
     }
-    const visitorProfile = social.getGoldVisitorProfile(targetId, '', user.id)
-    if (!visitorProfile) {
+    const existingProfile = social.getGoldVisitorProfile(targetId, '', user.id)
+    if (!existingProfile) {
       wx.showToast({ title: '用户不存在', icon: 'none' })
       return
     }
-    visitorProfile.latestTradeText = this.formatLatestTradeText(visitorProfile.latestTransaction)
-    this.setData({ visitorModalVisible: true, visitorProfile })
+    existingProfile.latestTradeText = this.formatLatestTradeText(existingProfile.latestTransaction)
+    this.setData({ visitorModalVisible: true, visitorProfile: existingProfile })
+
+    if (targetId !== user.id) {
+      await storage.syncTransactionsFromCloud(targetId)
+    }
+
+    const freshProfile = social.getGoldVisitorProfile(targetId, '', user.id)
+    if (freshProfile && this.data.visitorModalVisible) {
+      freshProfile.latestTradeText = this.formatLatestTradeText(freshProfile.latestTransaction)
+      this.setData({ visitorProfile: freshProfile })
+    }
   },
 
   onCloseVisitorModal() {

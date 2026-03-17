@@ -71,6 +71,9 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
+    // 同步云端关系后再读取视图状态，保证关注列表是最新的
+    await social.syncRelationsFromCloud('gold')
+
     const viewState = social.getGoldViewState(user.id)
     const targetUserId = viewState.targetUserId || user.id
 
@@ -214,6 +217,21 @@ Page({
     this.loadHoldings()
   },
 
+  onManualPriceConfirm() {
+    const numericPrice = parseFloat(this.data.currentPrice)
+    if (!(numericPrice > 0)) {
+      wx.showToast({ title: '请输入有效金价', icon: 'none' })
+      return
+    }
+
+    this.setData({
+      currentPrice: numericPrice.toFixed(2)
+    })
+    this.syncSimulatorBasePriceFromCurrentInput()
+    this.loadHoldings()
+    wx.showToast({ title: '手动金价已生效', icon: 'none' })
+  },
+
   togglePriceMode() {
     const autoUpdateMode = !this.data.autoUpdateMode
     this.setData({
@@ -232,10 +250,6 @@ Page({
     } else {
       wx.showToast({ title: '已切换至手动输入', icon: 'success' })
     }
-  },
-
-  onFetchPriceTap() {
-    this.fetchGoldPrice(false, 'qveris')
   },
 
   onToggleSimulatorUpdate() {
@@ -920,6 +934,8 @@ Page({
     // 清除可能存在的旧定时器
     this.stopAutoUpdate()
     this.setData({ simulatorPaused: false })
+
+    this.syncSimulatorBasePriceFromCurrentInput()
     
     // 立即执行一次
     this.fetchGoldPrice(true, 'simulator')
@@ -943,6 +959,14 @@ Page({
       priceUpdateTimer: timer,
       countdownTimer: countdownTimer
     })
+  },
+
+  syncSimulatorBasePriceFromCurrentInput() {
+    const manualPrice = parseFloat(this.data.currentPrice)
+    if (!(manualPrice > 0)) {
+      return false
+    }
+    return goldPrice.setSimulatorBasePrice(manualPrice)
   },
 
   /**
@@ -1005,13 +1029,6 @@ Page({
           internationalPrice
         })
 
-        if (result.fallbackFrom === 'qveris' && !isAutoRefresh) {
-          wx.showToast({
-            title: 'Qveris暂不可用，已切到模拟器',
-            icon: 'none'
-          })
-        }
-        
         // 更新收益计算
         this.loadHoldings()
         
@@ -1044,7 +1061,6 @@ Page({
    */
   getSourceText(source) {
     const sourceMap = {
-      'qveris': 'Qveris',
       'simulator': '智能模拟'
     }
     return sourceMap[source] || source

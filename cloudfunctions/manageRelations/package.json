@@ -1,0 +1,9 @@
+{
+  "name": "manageRelations",
+  "version": "1.0.0",
+  "description": "社交关系管理云函数（关注/情侣/亲友）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
