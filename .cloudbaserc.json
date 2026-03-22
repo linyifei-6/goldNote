@@ -2,25 +2,7 @@
     "functionsRoot":  "cloudfunctions",
     "functions":  [
                       {
-                          "name":  "login"
-                      },
-                      {
-                          "name":  "getTransactions"
-                      },
-                      {
-                          "name":  "saveTransaction"
-                      },
-                      {
-                          "name":  "getWeddingData"
-                      },
-                      {
-                          "name":  "saveWeddingData"
-                      },
-                      {
-                          "name":  "manageRelations"
-                      },
-                      {
-                          "name":  "getGoldLeaderboard"
+                          "name":  "manageMessages"
                       }
                   ],
     "functionRoot":  "cloudfunctions",

@@ -1,0 +1,51 @@
+<view class="page">
+  <view class="tabs">
+    <view class="tab {{activeTab === 'requests' ? 'active' : ''}}" data-tab="requests" bindtap="onTabTap">
+      关系申请
+      <text class="tab-badge" wx:if="{{pendingList.length > 0}}">{{pendingList.length > 99 ? '99+' : pendingList.length}}</text>
+    </view>
+    <view class="tab {{activeTab === 'conversations' ? 'active' : ''}}" data-tab="conversations" bindtap="onTabTap">
+      会话
+      <text class="tab-badge" wx:if="{{unreadChatCount > 0}}">{{unreadChatCount > 99 ? '99+' : unreadChatCount}}</text>
+    </view>
+  </view>
+
+  <view class="section" wx:if="{{activeTab === 'requests'}}">
+    <view class="empty" wx:if="{{pendingList.length === 0}}">暂无待处理申请</view>
+    <view class="card" wx:for="{{pendingList}}" wx:key="id">
+      <view class="title-row">
+        <text class="name">{{item.userName}}</text>
+        <text class="type">申请 {{item.typeLabel}}</text>
+      </view>
+      <text class="meta">用户ID: {{item.userId}}</text>
+      <view class="actions">
+        <button class="btn ghost" data-id="{{item.id}}" bindtap="onRejectMessage">拒绝</button>
+        <button class="btn primary" data-id="{{item.id}}" bindtap="onAcceptMessage">同意</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="section" wx:if="{{activeTab === 'conversations'}}">
+    <view class="empty" wx:if="{{conversations.length === 0}}">暂无会话</view>
+    <view
+      class="conversation-item"
+      wx:for="{{conversations}}"
+      wx:key="id"
+      data-thread-id="{{item.id}}"
+      data-user-id="{{item.peer.id}}"
+      data-user-name="{{item.peer.nickname}}"
+      bindtap="onOpenConversation"
+    >
+      <view class="avatar-wrap" wx:if="{{item.peer.avatarUrl}}">
+        <image class="avatar" src="{{item.peer.avatarUrl}}" mode="aspectFill" />
+      </view>
+      <view class="avatar-wrap avatar-fallback" wx:else>
+        <text class="avatar-text">{{item.peerInitial || '聊'}}</text>
+      </view>
+      <view class="conversation-main">
+        <text class="name">{{item.peer.nickname}}</text>
+        <text class="preview">{{item.lastMessagePreview}}</text>
+      </view>
+    </view>
+  </view>
+</view>

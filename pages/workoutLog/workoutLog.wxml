@@ -1,0 +1,70 @@
+<view class="container">
+  <top-user-card
+    user="{{user}}"
+    show-message-badge="{{true}}"
+    unread-message-count="{{unreadMessageCount}}"
+    bindavatar="onGoSelector"
+    bindopenselector="onGoSelector"
+    bindopenmessage="onOpenMessageCenter"
+    bindsocial="onGoSocial"
+  />
+
+  <view class="card">
+    <view class="card-title">{{editingId ? '编辑运动' : '新增运动'}}</view>
+    <view class="edit-tip" wx:if="{{editingId}}">当前正在编辑记录，保存后将覆盖原数据</view>
+    <view class="field">
+      <text class="label">日期</text>
+      <picker mode="date" value="{{form.workoutDate}}" bindchange="onDateChange">
+        <view class="unified-date-picker">
+          <view class="unified-date-inner">
+            <text class="unified-date-tag">日期</text>
+            <text class="unified-date-value">{{form.workoutDate}}</text>
+          </view>
+        </view>
+      </picker>
+    </view>
+    <view class="field">
+      <text class="label">类型</text>
+      <view class="chip-row">
+        <view class="chip {{form.type === item ? 'active' : ''}}" wx:for="{{typeOptions}}" wx:key="*this" data-value="{{item}}" bindtap="onTypeSelect">{{item}}</view>
+      </view>
+    </view>
+    <view class="field">
+      <text class="label">时长(分钟)</text>
+      <input class="input" type="number" value="{{form.durationMin}}" data-field="durationMin" bindinput="onInput" />
+    </view>
+    <view class="field">
+      <text class="label">强度</text>
+      <view class="chip-row">
+        <view class="chip {{form.intensity === item ? 'active' : ''}}" wx:for="{{intensityOptions}}" wx:key="*this" data-value="{{item}}" bindtap="onIntensitySelect">{{item}}</view>
+      </view>
+    </view>
+    <view class="field">
+      <text class="label">消耗(kcal)</text>
+      <input class="input" type="number" value="{{form.calories}}" data-field="calories" bindinput="onInput" />
+    </view>
+    <view class="field">
+      <text class="label">备注</text>
+      <input class="input" type="text" value="{{form.note}}" data-field="note" bindinput="onInput" />
+    </view>
+    <view class="form-actions">
+      <button class="save-btn" bindtap="onSubmit">{{editingId ? '更新运动' : '保存运动'}}</button>
+      <button class="cancel-btn" wx:if="{{editingId}}" bindtap="onCancelEdit">取消编辑</button>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">最近运动</view>
+    <block wx:for="{{records}}" wx:key="id">
+      <view class="record-row" data-id="{{item.id}}" bindtap="onStartEdit">
+        <view class="record-main">
+          <text>{{item.workoutDate}} · {{item.type}} · {{item.intensity}}</text>
+          <text class="record-sub">{{item.durationMin}}分钟 · {{item.calories}}kcal · 点击可编辑</text>
+        </view>
+        <view class="record-del" data-id="{{item.id}}" catchtap="onDeleteRecord">删除</view>
+      </view>
+    </block>
+  </view>
+
+  <note-bottom-nav items="{{workoutSubTabs}}" active-key="{{currentSubTab}}" mode="fixed" bindchange="onSwitchSubTab" />
+</view>

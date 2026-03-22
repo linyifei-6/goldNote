@@ -1,0 +1,59 @@
+.note-bottom-nav {
+  width: 100%;
+}
+
+.note-bottom-nav.mode-fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(124rpx + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #ffffff;
+  border-top: 1rpx solid #e5e7eb;
+  z-index: 99;
+}
+
+.note-bottom-nav.mode-card {
+  background: transparent;
+}
+
+.note-bottom-nav-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.note-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+}
+
+.note-nav-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.note-nav-text {
+  font-size: 20rpx;
+  color: #9ca3af;
+}
+
+.note-nav-item.active .note-nav-text {
+  color: #f6b73c;
+  font-weight: 600;
+}
+
+.note-bottom-nav.mode-card .note-nav-text {
+  font-size: 21rpx;
+  color: #64748b;
+}
+
+.note-bottom-nav.mode-card .note-nav-item.active .note-nav-text {
+  color: #c05892;
+  font-weight: 700;
+}

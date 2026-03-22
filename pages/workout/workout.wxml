@@ -1,0 +1,41 @@
+<view class="container">
+  <view class="title-card">
+    <view class="title">锻炼笔记</view>
+    <view class="sub">阶段1：骨架可用，图标先使用文字占位</view>
+    <view class="status">{{cloudStatusText}}</view>
+  </view>
+
+  <view class="summary-grid">
+    <view class="summary-item">
+      <view class="summary-label">训练次数</view>
+      <view class="summary-value">{{summary.count}}</view>
+    </view>
+    <view class="summary-item">
+      <view class="summary-label">训练总时长</view>
+      <view class="summary-value">{{summary.totalMinutes}} 分钟</view>
+    </view>
+    <view class="summary-item">
+      <view class="summary-label">消耗估算</view>
+      <view class="summary-value">{{summary.totalCalories}} kcal</view>
+    </view>
+    <view class="summary-item">
+      <view class="summary-label">本周达标率</view>
+      <view class="summary-value">{{summary.weeklyRate}}%</view>
+    </view>
+    <view class="summary-item">
+      <view class="summary-label">最新体重</view>
+      <view class="summary-value">{{summary.latestWeight || '--'}} kg</view>
+    </view>
+    <view class="summary-item">
+      <view class="summary-label">体重变化</view>
+      <view class="summary-value">{{summary.weightDelta}} kg</view>
+    </view>
+  </view>
+
+  <view class="nav-list">
+    <view class="nav-btn" bindtap="onGoLog">训练记录</view>
+    <view class="nav-btn" bindtap="onGoPlan">训练计划</view>
+    <view class="nav-btn" bindtap="onGoStats">数据分析</view>
+    <view class="nav-btn" bindtap="onGoWeight">减肥子页</view>
+  </view>
+</view>

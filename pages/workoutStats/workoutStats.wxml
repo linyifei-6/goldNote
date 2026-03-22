@@ -1,0 +1,121 @@
+<view class="container">
+  <top-user-card
+    user="{{user}}"
+    show-message-badge="{{true}}"
+    unread-message-count="{{unreadMessageCount}}"
+    bindavatar="onGoSelector"
+    bindopenselector="onGoSelector"
+    bindopenmessage="onOpenMessageCenter"
+    bindsocial="onGoSocial"
+  />
+
+  <view class="couple-status-card" bindtap="onOpenCoupleManager">
+    <view class="couple-status-main">
+      <text class="couple-status-title">情侣共管状态</text>
+      <text class="couple-status-text" wx:if="{{coupleSummary.hasCouple}}">已绑定：{{coupleSummary.partnerName}}</text>
+      <text class="couple-status-text" wx:else>未绑定情侣，点击进行绑定</text>
+    </view>
+    <text class="couple-status-action" wx:if="{{!coupleSummary.hasCouple}}">立即绑定</text>
+    <text class="couple-status-action" wx:else>管理</text>
+  </view>
+
+  <view class="card overview-card">
+    <view class="card-title">运动笔记总览</view>
+    <view class="overview-status">{{workspaceRoleText}} · {{cloudStatusText}}</view>
+    <view class="overview-grid">
+      <view class="overview-item">
+        <view class="overview-label">运动次数</view>
+        <view class="overview-value">{{overview.count}}</view>
+      </view>
+      <view class="overview-item">
+        <view class="overview-label">运动总时长</view>
+        <view class="overview-value">{{overview.totalMinutes}} 分钟</view>
+      </view>
+      <view class="overview-item">
+        <view class="overview-label">消耗估算</view>
+        <view class="overview-value">{{overview.totalCalories}} kcal</view>
+      </view>
+      <view class="overview-item">
+        <view class="overview-label">本周达标率</view>
+        <view class="overview-value">{{overview.weeklyRate}}%</view>
+      </view>
+      <view class="overview-item">
+        <view class="overview-label">最新体重</view>
+        <view class="overview-value">{{overview.latestWeight || '--'}} kg</view>
+      </view>
+      <view class="overview-item">
+        <view class="overview-label">体重变化</view>
+        <view class="overview-value">{{overview.weightDelta}} kg</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{coupleModalVisible}}" bindtap="onCloseCoupleModal"></view>
+  <view class="modal-card" wx:if="{{coupleModalVisible}}">
+    <view class="section-title">申请情侣关系</view>
+    <view class="sub">填写对方用户ID，或点击下方用户快捷选择</view>
+    <input class="input" placeholder="输入对方用户ID" value="{{coupleTargetUserId}}" bindinput="onCoupleTargetInput" />
+    <view class="selector-chip-row compact-row" wx:if="{{coupleInviteUsers.length > 0}}">
+      <text class="selector-chip" wx:for="{{coupleInviteUsers}}" wx:key="id" data-user-id="{{item.id}}" bindtap="onPickCoupleTarget">{{item.nickname}}</text>
+    </view>
+    <button class="mini-btn confirm" bindtap="onInviteCouple">发起情侣申请</button>
+
+    <view class="couple-list" wx:if="{{coupleIncomingPending.length > 0}}">
+      <view class="picker-label">待我处理</view>
+      <view class="couple-item" wx:for="{{coupleIncomingPending}}" wx:key="id">
+        <view class="couple-item-title">{{item.user.nickname}} 申请成为情侣</view>
+        <view class="btn-row">
+          <button class="mini-btn" data-id="{{item.id}}" bindtap="onRejectCoupleRequest">拒绝</button>
+          <button class="mini-btn confirm" data-id="{{item.id}}" bindtap="onAcceptCoupleRequest">同意</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="couple-list" wx:if="{{coupleOutgoingPending.length > 0}}">
+      <view class="picker-label">我发起的申请</view>
+      <view class="couple-item" wx:for="{{coupleOutgoingPending}}" wx:key="id">
+        <view class="couple-item-title">已申请 {{item.user.nickname}}</view>
+        <button class="mini-btn" data-id="{{item.id}}" bindtap="onCancelCoupleRequest">撤回申请</button>
+      </view>
+    </view>
+
+    <view class="btn-row">
+      <button class="mini-btn" bindtap="onCloseCoupleModal">关闭</button>
+    </view>
+  </view>
+
+  <view class="range-row">
+    <view class="range-chip {{range === item.key ? 'active' : ''}}" wx:for="{{rangeOptions}}" wx:key="key" data-key="{{item.key}}" bindtap="onChangeRange">{{item.label}}</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">运动统计</view>
+    <view class="row"><text>运动次数</text><text>{{sessionsSummary.count}}</text></view>
+    <view class="row"><text>运动总时长</text><text>{{sessionsSummary.totalMinutes}} 分钟</text></view>
+    <view class="row"><text>消耗估算</text><text>{{sessionsSummary.totalCalories}} kcal</text></view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">体重趋势摘要</view>
+    <view class="row"><text>记录天数</text><text>{{weightSummary.count}}</text></view>
+    <view class="row"><text>最新体重</text><text>{{weightSummary.latestWeight}} kg</text></view>
+    <view class="row"><text>阶段变化</text><text>{{weightSummary.delta}} kg</text></view>
+    <view class="chart-wrap">
+      <canvas class="chart-canvas" canvas-id="weightTrendCanvas" style="width: 660rpx; height: 300rpx;" width="660" height="300"></canvas>
+      <view class="chart-hint" wx:if="{{chartHint.line}}">{{chartHint.line}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">运动类型 Top3</view>
+    <block wx:for="{{sessionsSummary.topTypes}}" wx:key="type">
+      <view class="row"><text>{{item.type}}</text><text>{{item.count}} 次</text></view>
+    </block>
+    <view class="chart-wrap">
+      <canvas class="chart-canvas" canvas-id="sessionDurationCanvas" style="width: 660rpx; height: 300rpx;" width="660" height="300"></canvas>
+      <view class="chart-hint" wx:if="{{chartHint.bar}}">{{chartHint.bar}}</view>
+    </view>
+  </view>
+
+  <note-bottom-nav items="{{workoutSubTabs}}" active-key="{{currentSubTab}}" mode="fixed" bindchange="onSwitchSubTab" />
+</view>

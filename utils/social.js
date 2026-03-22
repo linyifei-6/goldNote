@@ -180,6 +180,43 @@ function upsertRelationToCloud(relation, scene) {
   })
 }
 
+function sendFollowSystemNotice(scene, requesterId, targetId, relationId, isMutual) {
+  if (!(wx && wx.cloud && typeof wx.cloud.callFunction === 'function')) return
+  const currentUser = storage.getCurrentUser()
+  if (!currentUser || currentUser.isGuest) return
+
+  const normalizedScene = normalizeScene(scene)
+  wx.cloud.callFunction({
+    name: 'manageMessages',
+    data: {
+      action: 'sendSystemNotice',
+      scene: normalizedScene,
+      leftUserId: String(requesterId || ''),
+      rightUserId: String(targetId || ''),
+      noticeType: 'follow-created',
+      eventKey: `follow_${normalizedScene}_${relationId}`
+    }
+  }).catch((err) => {
+    console.warn('发送关注系统提示失败（不影响主流程）', err)
+  })
+
+  if (!isMutual) return
+
+  wx.cloud.callFunction({
+    name: 'manageMessages',
+    data: {
+      action: 'sendSystemNotice',
+      scene: normalizedScene,
+      leftUserId: String(requesterId || ''),
+      rightUserId: String(targetId || ''),
+      noticeType: 'follow-mutual',
+      eventKey: `mutual_${normalizedScene}_${requesterId}_${targetId}`
+    }
+  }).catch((err) => {
+    console.warn('发送互关系统提示失败（不影响主流程）', err)
+  })
+}
+
 /**
  * 从云端拉取当前用户在指定场景下的全量关系，合并写入本地缓存。
  * 规则：云端记录 > 本地记录（云端是 source of truth）。
@@ -382,6 +419,15 @@ function createRelationRequest(type, targetUserId, options = {}) {
 
     saveRelations(scene, [follow, ...relations])
     upsertRelationToCloud(follow, scene)
+
+    const reverseFollow = relations.find((item) => {
+      if (!item || item.type !== 'follow' || item.status !== 'accepted') {
+        return false
+      }
+      return String(item.requesterId) === targetId && String(item.targetId) === requesterId
+    })
+    sendFollowSystemNotice(scene, requesterId, targetId, follow.id, !!reverseFollow)
+
     return { success: true, relation: follow, immediate: true, scene }
   }
 
@@ -817,6 +863,73 @@ function getLatestGoldTransaction(targetUserId) {
   }
 }
 
+function buildGoldPlatformSummary(targetUserId, currentPrice) {
+  const targetId = String(targetUserId || '').trim()
+  if (!targetId) {
+    return []
+  }
+
+  const price = Number(currentPrice) || 0
+  const transactions = storage.getTransactions(targetId) || []
+  const holdingMap = {}
+  const profitMap = {}
+
+  storage.PLATFORMS.forEach((platform) => {
+    const platformTx = transactions.filter((tx) => tx.platform === platform)
+    if (platformTx.length === 0) {
+      return
+    }
+
+    const result = storage.calculateHoldings(platformTx)
+    holdingMap[platform] = {
+      currentHolding: Number(result.currentHolding) || 0,
+      avgCost: Number(result.avgCost) || 0
+    }
+    profitMap[platform] = {
+      realizedProfit: Number(result.realizedProfit) || 0,
+      unrealizedProfit: price > 0
+        ? (Number(result.currentHolding) || 0) * (price - (Number(result.avgCost) || 0))
+        : 0
+    }
+  })
+
+  const platforms = [...new Set([
+    ...Object.keys(holdingMap),
+    ...Object.keys(profitMap)
+  ])]
+
+  const orderMap = {
+    民生: 0,
+    浙商: 1,
+    招商: 2,
+    其他: 3
+  }
+
+  return platforms
+    .map((platform) => ({
+      platform,
+      currentHolding: Number((holdingMap[platform] || {}).currentHolding) || 0,
+      avgCost: Number((holdingMap[platform] || {}).avgCost) || 0,
+      realizedProfit: Number((profitMap[platform] || {}).realizedProfit) || 0,
+      unrealizedProfit: Number((profitMap[platform] || {}).unrealizedProfit) || 0
+    }))
+    .filter((item) => {
+      return item.currentHolding > 0 || item.realizedProfit !== 0 || item.unrealizedProfit !== 0
+    })
+    .sort((a, b) => {
+      const left = Object.prototype.hasOwnProperty.call(orderMap, a.platform)
+        ? orderMap[a.platform]
+        : 999
+      const right = Object.prototype.hasOwnProperty.call(orderMap, b.platform)
+        ? orderMap[b.platform]
+        : 999
+      if (left !== right) {
+        return left - right
+      }
+      return b.currentHolding - a.currentHolding
+    })
+}
+
 function getGoldVisitorProfile(targetUserId, currentPrice, viewerUserId) {
   const targetId = String(targetUserId || '').trim()
   const viewerId = String(viewerUserId || getCurrentUserId()).trim()
@@ -856,7 +969,8 @@ function getGoldVisitorProfile(targetUserId, currentPrice, viewerUserId) {
     totalInvestment: Number(holdings.totalInvestment) || 0,
     currentValue: Number(summary.currentValue) || 0,
     totalReturnRate,
-    latestTransaction: getLatestGoldTransaction(targetId)
+    latestTransaction: getLatestGoldTransaction(targetId),
+    platformSummary: buildGoldPlatformSummary(targetId, currentPrice)
   }
 }
 

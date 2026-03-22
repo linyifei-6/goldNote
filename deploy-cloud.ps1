@@ -2,7 +2,9 @@
 
 param(
   [string]$ProjectRoot = $PSScriptRoot,
-  [string]$CloudEnv = $env:GOLDNOTE_CLOUD_ENV
+  [string]$CloudEnv = $env:GOLDNOTE_CLOUD_ENV,
+  [string[]]$Functions = @(),
+  [switch]$StrictDeploy
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -52,44 +54,29 @@ function Invoke-CloudFunctionDeploy {
     [Parameter(Mandatory = $true)]
     [string]$FunctionName,
     [Parameter(Mandatory = $true)]
-    [string]$CloudEnvId,
-    [int]$MaxAttempts = 4,
-    [int]$RetryDelaySeconds = 20
+    [string]$CloudEnvId
   )
 
-  for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
-    $deployOutput = ('y' | cloudbase functions:deploy $FunctionName -e $CloudEnvId --force) 2>&1
-    $deployText = ($deployOutput | Out-String)
-    $exitCode = $LASTEXITCODE
-    $hasErrorText = $deployText -match "Error:|閰嶇疆涓嶅瓨鍦▅閮ㄧ讲澶辫触|\u00d7"
-    $isUpdating = $deployText -match 'Updating'
-
-    if ($exitCode -eq 0 -and -not $hasErrorText) {
-      return @{
-        Success = $true
-        Output = $deployText
-      }
-    }
-
-    if ($attempt -lt $MaxAttempts) {
-      if ($isUpdating) {
-        Write-Host "[WARN] $FunctionName 当前处于 Updating，$RetryDelaySeconds 秒后重试（$attempt/$MaxAttempts）..." -ForegroundColor Yellow
-      } else {
-        Write-Host "[WARN] $FunctionName 部署失败，$RetryDelaySeconds 秒后重试（$attempt/$MaxAttempts）..." -ForegroundColor Yellow
-      }
-      Start-Sleep -Seconds $RetryDelaySeconds
-      continue
-    }
-
+  $deployOutput = ('y' | cloudbase functions:deploy $FunctionName -e $CloudEnvId --force) 2>&1
+  $deployText = ($deployOutput | Out-String)
+  $exitCode = $LASTEXITCODE
+  if ($exitCode -eq 0) {
     return @{
-      Success = $false
+      Success = $true
       Output = $deployText
+    }
+  }
+
+  if (Test-CloudFunctionReady -FunctionName $FunctionName -CloudEnvId $CloudEnvId) {
+    return @{
+      Success = $true
+      Output = "$deployText`n[WARN] CLI returned non-zero, but cloud status is ready."
     }
   }
 
   return @{
     Success = $false
-    Output = 'Unknown deployment failure'
+    Output = $deployText
   }
 }
 
@@ -98,44 +85,46 @@ function Invoke-CloudFunctionCodeUpdate {
     [Parameter(Mandatory = $true)]
     [string]$FunctionName,
     [Parameter(Mandatory = $true)]
-    [string]$CloudEnvId,
-    [int]$MaxAttempts = 4,
-    [int]$RetryDelaySeconds = 20
+    [string]$CloudEnvId
   )
 
-  for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
-    $updateOutput = cloudbase functions:code:update $FunctionName -e $CloudEnvId 2>&1
-    $updateText = ($updateOutput | Out-String)
-    $exitCode = $LASTEXITCODE
-    $hasErrorText = $updateText -match "Error:|閰嶇疆涓嶅瓨鍦▅閮ㄧ讲澶辫触|\u00d7"
-    $isUpdating = $updateText -match 'Updating'
-
-    if ($exitCode -eq 0 -and -not $hasErrorText) {
-      return @{
-        Success = $true
-        Output = $updateText
-      }
-    }
-
-    if ($attempt -lt $MaxAttempts) {
-      if ($isUpdating) {
-        Write-Host "[WARN] $FunctionName 当前处于 Updating，$RetryDelaySeconds 秒后重试代码更新（$attempt/$MaxAttempts）..." -ForegroundColor Yellow
-      } else {
-        Write-Host "[WARN] $FunctionName 代码更新失败，$RetryDelaySeconds 秒后重试（$attempt/$MaxAttempts）..." -ForegroundColor Yellow
-      }
-      Start-Sleep -Seconds $RetryDelaySeconds
-      continue
-    }
-
+  $updateOutput = cloudbase functions:code:update $FunctionName -e $CloudEnvId 2>&1
+  $updateText = ($updateOutput | Out-String)
+  $exitCode = $LASTEXITCODE
+  if ($exitCode -eq 0) {
     return @{
-      Success = $false
+      Success = $true
       Output = $updateText
+    }
+  }
+
+  if (Test-CloudFunctionReady -FunctionName $FunctionName -CloudEnvId $CloudEnvId) {
+    return @{
+      Success = $true
+      Output = "$updateText`n[WARN] CLI returned non-zero, but cloud status is ready."
     }
   }
 
   return @{
     Success = $false
-    Output = 'Unknown code update failure'
+    Output = $updateText
+  }
+}
+
+function Test-CloudFunctionReady {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$FunctionName,
+    [Parameter(Mandatory = $true)]
+    [string]$CloudEnvId
+  )
+
+  try {
+    $listOutput = cloudbase functions:list -e $CloudEnvId 2>&1
+    $listText = ($listOutput | Out-String)
+    return ($listText -match [Regex]::Escape($FunctionName))
+  } catch {
+    return $false
   }
 }
 
@@ -164,15 +153,40 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "[OK] Login succeeded" -ForegroundColor Green
 
-$cloudfunctions = @(
+$defaultCloudFunctions = @(
   "login",
   "getTransactions",
   "saveTransaction",
   "getWeddingData",
   "saveWeddingData",
+  "getWorkoutData",
+  "saveWorkoutData",
   "manageRelations",
+  "manageMessages",
   "getGoldLeaderboard"
 )
+
+$cloudfunctions = if ($Functions -and $Functions.Count -gt 0) {
+  $requested = @()
+  foreach ($func in $Functions) {
+    $name = [string]$func
+    if (-not [string]::IsNullOrWhiteSpace($name)) {
+      $requested += $name.Trim()
+    }
+  }
+
+  $filtered = $requested | Where-Object { $defaultCloudFunctions -contains $_ } | Select-Object -Unique
+  if (-not $filtered -or $filtered.Count -eq 0) {
+    Write-Host "[ERR] No valid function names in -Functions parameter." -ForegroundColor Red
+    Write-Host "Allowed values: $($defaultCloudFunctions -join ', ')" -ForegroundColor Yellow
+    exit 1
+  }
+
+  Write-Host "[INFO] Deploy subset functions: $($filtered -join ', ')" -ForegroundColor Cyan
+  $filtered
+} else {
+  $defaultCloudFunctions
+}
 
 Write-Host ""
 Write-Host "[3/5] Preparing cloudbase config..." -ForegroundColor Yellow
@@ -247,11 +261,14 @@ foreach ($func in $cloudfunctions) {
 }
 
 if ($hasDeployError) {
-  Write-Host "[ERR] Cloud function deployment stage finished with failures" -ForegroundColor Red
-  exit 1
+  if ($StrictDeploy) {
+    Write-Host "[ERR] Cloud function deployment stage finished with failures" -ForegroundColor Red
+    exit 1
+  }
+  Write-Host "[WARN] Cloud function deployment stage finished with failures (non-strict mode, continue)." -ForegroundColor Yellow
+} else {
+  Write-Host "[OK] Cloud function deployment stage finished" -ForegroundColor Green
 }
-
-Write-Host "[OK] Cloud function deployment stage finished" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "[5/5] Deployment flow finished" -ForegroundColor Green

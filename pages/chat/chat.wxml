@@ -1,0 +1,39 @@
+<view class="chat-page">
+  <view class="relation-banner" wx:if="{{relationInfo && relationInfo.isStranger}}">
+    <text class="relation-banner-text">当前为陌生人聊天</text>
+  </view>
+
+  <scroll-view class="chat-list" scroll-y="true" scroll-with-animation="true" scroll-into-view="{{scrollToId}}">
+    <view class="history-wrap" wx:if="{{hasMore}}">
+      <text class="history-btn" bindtap="onLoadMoreHistory">加载更多历史消息</text>
+    </view>
+
+    <view class="empty" wx:if="{{messages.length === 0}}">还没有消息，发一句问候吧</view>
+
+    <view
+      class="msg-row {{item.isSelf ? 'self' : 'other'}}"
+      wx:for="{{messages}}"
+      wx:key="id"
+      id="msg_{{item.id}}"
+    >
+      <view class="bubble-wrap">
+        <text class="sender">{{item.isSelf ? '我' : (item.sender.nickname || targetName)}}</text>
+        <view class="bubble {{item.isSelf ? 'self' : 'other'}}">{{item.content}}</view>
+        <text class="time">{{item.timeText}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="input-bar">
+    <input
+      class="msg-input"
+      value="{{inputText}}"
+      maxlength="500"
+      placeholder="输入消息..."
+      bindinput="onInputMessage"
+      confirm-type="send"
+      bindconfirm="onSendMessage"
+    />
+    <button class="send-btn" loading="{{sending}}" disabled="{{sending}}" bindtap="onSendMessage">发送</button>
+  </view>
+</view>

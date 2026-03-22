@@ -1,0 +1,109 @@
+<view class="container">
+  <top-user-card
+    user="{{user}}"
+    show-message-badge="{{true}}"
+    unread-message-count="{{unreadMessageCount}}"
+    bindavatar="onGoSelector"
+    bindopenselector="onGoSelector"
+    bindopenmessage="onOpenMessageCenter"
+    bindsocial="onGoSocial"
+  />
+
+  <view class="card">
+    <view class="card-title">本周计划</view>
+
+    <view class="progress-box">
+      <view class="progress-head">
+        <text>本周达标率</text>
+        <text class="progress-value">{{progress.completionRate}}%</text>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{progress.completionRate}}%;"></view>
+      </view>
+      <view class="progress-desc">已完成 {{progress.actualDays}} 天 / 目标 {{progress.targetDays}} 天</view>
+    </view>
+
+    <view class="field">
+      <text class="label">周起始日期</text>
+      <picker mode="date" value="{{plan.weekStartDate}}" bindchange="onWeekStartDateChange">
+        <view class="unified-date-picker">
+          <view class="unified-date-inner">
+            <text class="unified-date-tag">周起</text>
+            <text class="unified-date-value">{{plan.weekStartDate}}</text>
+          </view>
+        </view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <text class="label">目标运动天数</text>
+      <input class="input" type="number" value="{{plan.weeklyTargetDays}}" data-field="weeklyTargetDays" bindinput="onInput" />
+      <view class="quick-row">
+        <view class="quick-chip {{plan.weeklyTargetDays === item ? 'active' : ''}}" wx:for="{{weeklyTargetOptions}}" wx:key="*this" data-days="{{item}}" bindtap="onTargetQuickSelect">{{item}}天</view>
+      </view>
+    </view>
+
+    <view class="field">
+      <text class="label">计划备注</text>
+      <input class="input" value="{{plan.note}}" data-field="note" bindinput="onInput" />
+    </view>
+
+    <view class="template-panel">
+      <view class="template-head">
+        <text class="template-title">每周模板项</text>
+        <text class="template-summary">已完成 {{templateProgress.done}} / {{templateProgress.total}}（{{templateProgress.completionRate}}%）</text>
+      </view>
+
+      <view class="template-field">
+        <text class="template-label">星期</text>
+        <view class="chip-row">
+          <view
+            class="quick-chip {{draftTemplateWeekday === item.key ? 'active' : ''}}"
+            wx:for="{{weekdayOptions}}"
+            wx:key="key"
+            data-key="{{item.key}}"
+            bindtap="onTemplateWeekdaySelect"
+          >
+            {{item.label}}
+          </view>
+        </view>
+      </view>
+
+      <view class="template-field">
+        <text class="template-label">运动类型</text>
+        <view class="chip-row">
+          <view
+            class="quick-chip {{draftTemplateType === item ? 'active' : ''}}"
+            wx:for="{{templateTypeOptions}}"
+            wx:key="*this"
+            data-value="{{item}}"
+            bindtap="onTemplateTypeSelect"
+          >
+            {{item}}
+          </view>
+        </view>
+      </view>
+
+      <button class="template-add-btn" bindtap="onAddTemplateItem">添加模板项</button>
+
+      <view class="template-list" wx:if="{{plan.items.length > 0}}">
+        <view class="template-item" wx:for="{{plan.items}}" wx:key="id">
+          <view class="template-item-main">
+            <text class="template-item-title">{{item.weekdayLabel}} · {{item.type}}</text>
+            <text class="template-item-sub">{{item.done ? '已完成' : '未完成'}}</text>
+          </view>
+          <view class="template-item-actions">
+            <view class="template-toggle {{item.done ? 'done' : ''}}" data-id="{{item.id}}" bindtap="onToggleTemplateDone">{{item.done ? '撤销' : '完成'}}</view>
+            <view class="template-delete" data-id="{{item.id}}" catchtap="onDeleteTemplateItem">删除</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="template-empty" wx:else>暂无模板项，先添加例如“周一力量、周三跑步”</view>
+    </view>
+
+    <button class="save-btn" bindtap="onSave">保存计划</button>
+  </view>
+
+  <note-bottom-nav items="{{workoutSubTabs}}" active-key="{{currentSubTab}}" mode="fixed" bindchange="onSwitchSubTab" />
+</view>

@@ -13,8 +13,31 @@ var fmt = {
     if (isNaN(num)) return (0).toFixed(d);
     return Math.abs(num).toFixed(d);
   }
+  ,
+  // 格式化为精简显示：当绝对值 >= 10000 时，使用万单位显示，例如 12.34w
+  formatCompact: function(val, digits) {
+    if (val === undefined || val === null) return '0.00';
+    var d = digits === undefined ? 2 : digits;
+    var num = parseFloat(val);
+    if (isNaN(num)) return (0).toFixed(d);
+    var abs = Math.abs(num);
+    if (abs >= 10000) {
+      var v = (num / 10000).toFixed(d);
+      return v + 'w';
+    }
+    return num.toFixed(d);
+  },
+  // 判断是否需要使用小号字体：基于格式化后的字符串长度
+  needSmall: function(val, digits, threshold) {
+    var d = digits === undefined ? 2 : digits;
+    var t = threshold === undefined ? 8 : threshold;
+    var s = fmt.formatCompact(val, d) + '';
+    return s.length > t;
+  }
 };
 module.exports = {
   toFixed: fmt.toFixed,
   absFixed: fmt.absFixed
+  , formatCompact: fmt.formatCompact
+  , needSmall: fmt.needSmall
 };

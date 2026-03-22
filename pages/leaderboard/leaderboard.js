@@ -1,6 +1,8 @@
 const auth = require('../../utils/auth')
 const social = require('../../utils/social')
 const storage = require('../../utils/storage')
+const goldPrice = require('../../utils/goldPrice')
+const chat = require('../../utils/chat')
 
 Page({
   data: {
@@ -22,7 +24,8 @@ Page({
     visitorModalVisible: false,
     visitorProfile: null,
     brokenAvatarUserMap: {},
-    visitorAvatarBroken: false
+    visitorAvatarBroken: false,
+    unreadMessageCount: 0
   },
 
   onLoad(options) {
@@ -44,6 +47,7 @@ Page({
   },
 
   onGoSocial() {
+    // 仅好友图标走该入口，消息图标必须绑定 onOpenMessageCenter。
     wx.navigateTo({ url: '/pages/social/social?scene=gold' })
   },
 
@@ -51,11 +55,29 @@ Page({
     const user = auth.ensureLogin('/pages/login/login')
     if (!user) return
 
+    // 先同步黄金关系，确保粉丝/关注状态与访客可见范围是最新的
+    await social.syncRelationsFromCloud('gold')
+
     // 解析当前用户头像中的 cloud:// URL
     const resolvedUsers = await auth.resolveUsersAvatarUrls([user])
     const resolvedUser = resolvedUsers[0] || user
-    this.setData({ user: resolvedUser })
+    const messageCenter = this.buildPendingMessageCenter(resolvedUser.id)
+    const chatUnreadCount = await chat.getUnreadCount('gold')
+    this.setData({
+      user: resolvedUser,
+      unreadMessageCount: messageCenter.count + chatUnreadCount
+    })
     await this.loadLeaderboard(resolvedUser.id)
+  },
+
+  buildPendingMessageCenter(userId) {
+    const uid = String(userId || '')
+    if (!uid) {
+      return { count: 0 }
+    }
+
+    const overview = social.getRelationOverview(uid, { scene: 'gold' })
+    return { count: (overview.incomingPending || []).length }
   },
 
   safeNumber(value) {
@@ -73,6 +95,32 @@ Page({
     const weight = this.safeNumber(transaction.weight).toFixed(2)
     const price = this.safeNumber(transaction.price).toFixed(2)
     return `${date} ${typeText}${weight}g（${price}元/g）`
+  },
+
+  async ensurePreviewPrice() {
+    const sharedPrice = Number(storage.getGoldPreviewPrice())
+    if (sharedPrice > 0) {
+      this.setData({ currentPrice: sharedPrice.toFixed(2) })
+      return sharedPrice
+    }
+
+    const existingPrice = Number(this.data.currentPrice)
+    if (existingPrice > 0) {
+      return existingPrice
+    }
+
+    try {
+      const result = await goldPrice.getCurrentGoldPrice(false, 'simulator')
+      const price = Number(result && result.price)
+      if (price > 0) {
+        this.setData({ currentPrice: price.toFixed(2) })
+        return price
+      }
+    } catch (error) {
+      // 忽略异常，后续按0处理
+    }
+
+    return 0
   },
 
   withLatestTradeText(list) {
@@ -172,12 +220,18 @@ Page({
       return
     }
 
+    // 访客页打开前再次同步关系，避免刚进入页面时关注状态滞后
+    await social.syncRelationsFromCloud('gold')
+    const previewPrice = await this.ensurePreviewPrice()
+
     // 先检查用户是否存在（本地缓存中）
-    const existingProfile = social.getGoldVisitorProfile(targetId, this.data.currentPrice, user.id)
+    const existingProfile = social.getGoldVisitorProfile(targetId, previewPrice, user.id)
     if (!existingProfile) {
       wx.showToast({ title: '用户不存在', icon: 'none' })
       return
     }
+
+    // 原先强制跳转可能导致页面未展示，改为统一弹窗展示；如需查看历史，可在弹层内点击“查看历史记录”
 
     // 先展示已有数据（即使是 0）让弹窗立即打开
     existingProfile.latestTradeText = this.formatLatestTradeText(existingProfile.latestTransaction)
@@ -195,7 +249,7 @@ Page({
     }
 
     // 重新计算并更新弹窗数据
-    const freshProfile = social.getGoldVisitorProfile(targetId, this.data.currentPrice, user.id)
+    const freshProfile = social.getGoldVisitorProfile(targetId, previewPrice, user.id)
     if (freshProfile && this.data.visitorModalVisible) {
       freshProfile.latestTradeText = this.formatLatestTradeText(freshProfile.latestTransaction)
       const resolved = await auth.resolveUsersAvatarUrls([freshProfile.user])
@@ -222,9 +276,39 @@ Page({
     this.openVisitorProfileById(userId)
   },
 
+  async openVisitorHistoryById(targetUserId) {
+    const user = this.data.user || {}
+    const uid = user && user.id ? String(user.id) : ''
+    const targetId = String(targetUserId || '').trim()
+    if (!uid) {
+      wx.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+    if (!targetId) {
+      wx.showToast({ title: '用户ID无效', icon: 'none' })
+      return
+    }
+
+    const result = social.setGoldViewTarget(targetId === uid ? '' : targetId, uid)
+    if (!result || !result.success) {
+      wx.showToast({ title: result && result.message ? result.message : '无法查看该用户', icon: 'none' })
+      return
+    }
+
+    this.setData({ visitorModalVisible: false, visitorProfile: null, visitorAvatarBroken: false })
+    await storage.syncTransactionsFromCloud(targetId === uid ? uid : targetId)
+    wx.switchTab({ url: '/pages/history/history' })
+  },
+
   onCloseVisitorModal() {
     this.setData({ visitorModalVisible: false, visitorProfile: null, visitorAvatarBroken: false })
   },
+
+  onOpenMessageCenter() {
+    wx.navigateTo({ url: '/pages/messages/messages?scene=gold' })
+  },
+
+  noop() {},
 
   onLeaderboardAvatarError(e) {
     const userId = String((e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.userId) || '').trim()
@@ -238,6 +322,31 @@ Page({
 
   onVisitorAvatarError() {
     this.setData({ visitorAvatarBroken: true })
+  },
+
+  onViewVisitorHistory() {
+    const user = this.data.user || {}
+    const visitor = this.data.visitorProfile || {}
+    const targetUserId = visitor && visitor.user && visitor.user.id
+    if (!user || !user.id || !targetUserId) return
+
+    const result = social.setGoldViewTarget(targetUserId, user && user.id)
+    if (!result || !result.success) {
+      wx.showToast({ title: result && result.message ? result.message : '无法查看历史', icon: 'none' })
+      return
+    }
+
+    this.setData({ visitorModalVisible: false, visitorProfile: null, visitorAvatarBroken: false })
+    wx.switchTab({ url: '/pages/history/history' })
+  },
+
+  onReturnToMyHome() {
+    const user = this.data.user || {}
+    if (!user || !user.id) return
+    // 清除 gold view target（返回自己视图）
+    social.setGoldViewTarget('', user.id)
+    this.setData({ visitorModalVisible: false, visitorProfile: null, visitorAvatarBroken: false })
+    wx.switchTab({ url: '/pages/history/history' })
   },
 
   async onFollowVisitor() {

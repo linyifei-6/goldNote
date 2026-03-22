@@ -1,13 +1,20 @@
 <wxs src="../../utils/fmt.wxs" module="fmt" />
 <view class="container">
   <top-user-card
-    user="{{user}}"
+    user="{{goldViewDisplayUser || user}}"
+    showMessageBadge="{{true}}"
+    unreadMessageCount="{{unreadMessageCount}}"
     bindavatar="onOpenProfileModal"
-    bindselector="onGoSelector"
+    bindopenselector="onGoSelector"
     bindwedding="onGoWedding"
-    bindmessage="onGoSelector"
+    bindopenmessage="onOpenMessageCenter"
     bindsocial="onGoSocial"
   />
+
+  <view class="gold-view-banner" wx:if="{{isGoldReadOnly}}">
+    <text class="gold-view-text">当前浏览用户：{{goldViewTargetName}}</text>
+    <button class="gold-view-btn" bindtap="onReturnToMyHome">返回我的主页</button>
+  </view>
 
   <view class="card">
     <view class="card-title">综合筛选</view>
@@ -112,9 +119,13 @@
             <text class="stat-label">总克数</text>
             <text class="stat-value">{{fmt.toFixed(buyStats.totalWeight, 2)}} 克</text>
           </view>
-          <view class="stat-cell span2">
+          <view class="stat-cell">
             <text class="stat-label">总金额</text>
             <text class="stat-value">¥{{fmt.toFixed(buyStats.totalAmount, 2)}}</text>
+          </view>
+          <view class="stat-cell">
+            <text class="stat-label">操作收益</text>
+            <text class="stat-value {{buyStats.operationProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(buyStats.operationProfit, 2)}}</text>
           </view>
         </view>
       </view>
@@ -142,7 +153,7 @@
           </view>
           <view class="stat-cell" wx:if="{{sellStats.totalFee > 0}}">
             <text class="stat-label">手续费</text>
-            <text class="stat-value">¥{{fmt.toFixed(sellStats.totalFee, 2)}}</text>
+            <text class="stat-value fee-value">¥{{fmt.toFixed(sellStats.totalFee, 2)}}</text>
           </view>
         </view>
       </view>
@@ -180,9 +191,13 @@
                 <text class="stat-label">总克数</text>
                 <text class="stat-value">{{fmt.toFixed(queryCustomStats.buy.totalWeight, 2)}} 克</text>
               </view>
-              <view class="stat-cell span2">
+              <view class="stat-cell">
                 <text class="stat-label">总金额</text>
                 <text class="stat-value">¥{{fmt.toFixed(queryCustomStats.buy.totalAmount, 2)}}</text>
+              </view>
+              <view class="stat-cell">
+                <text class="stat-label">操作收益</text>
+                <text class="stat-value {{queryCustomStats.buy.operationProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(queryCustomStats.buy.operationProfit, 2)}}</text>
               </view>
             </view>
           </view>
@@ -210,7 +225,7 @@
               </view>
               <view class="stat-cell" wx:if="{{queryCustomStats.sell.totalFee > 0}}">
                 <text class="stat-label">手续费</text>
-                <text class="stat-value">¥{{fmt.toFixed(queryCustomStats.sell.totalFee, 2)}}</text>
+                <text class="stat-value fee-value">¥{{fmt.toFixed(queryCustomStats.sell.totalFee, 2)}}</text>
               </view>
             </view>
           </view>
@@ -294,9 +309,13 @@
               <text class="stat-label">总克数</text>
               <text class="stat-value">{{fmt.toFixed(customStats.buy.totalWeight, 2)}} 克</text>
             </view>
-            <view class="stat-cell span2">
+            <view class="stat-cell">
               <text class="stat-label">总金额</text>
               <text class="stat-value">¥{{fmt.toFixed(customStats.buy.totalAmount, 2)}}</text>
+            </view>
+            <view class="stat-cell">
+              <text class="stat-label">操作收益</text>
+              <text class="stat-value {{customStats.buy.operationProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(customStats.buy.operationProfit, 2)}}</text>
             </view>
           </view>
         </view>
@@ -324,7 +343,7 @@
             </view>
             <view class="stat-cell" wx:if="{{customStats.sell.totalFee > 0}}">
               <text class="stat-label">手续费</text>
-              <text class="stat-value">¥{{fmt.toFixed(customStats.sell.totalFee, 2)}}</text>
+              <text class="stat-value fee-value">¥{{fmt.toFixed(customStats.sell.totalFee, 2)}}</text>
             </view>
           </view>
         </view>
@@ -461,4 +480,5 @@
       <button class="profile-action-btn neutral" bindtap="onCloseProfileModal" disabled="{{profileSaving}}">关闭</button>
     </view>
   </view>
+
 </view>

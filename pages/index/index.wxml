@@ -1,15 +1,20 @@
 <wxs src="../../utils/fmt.wxs" module="fmt" />
 <view class="container">
   <top-user-card
-    user="{{user}}"
+    user="{{goldViewDisplayUser || user}}"
     show-message-badge="{{true}}"
     unread-message-count="{{unreadMessageCount}}"
     bindavatar="onOpenProfileModal"
-    bindselector="onGoSelector"
+    bindopenselector="onGoSelector"
     bindwedding="onGoWedding"
-    bindmessage="onOpenMessageCenter"
+    bindopenmessage="onOpenMessageCenter"
     bindsocial="onGoSocial"
   />
+
+  <view class="gold-view-banner" wx:if="{{isGoldReadOnly}}">
+    <text class="gold-view-text">正在查看用户：{{goldViewTargetName}}</text>
+    <button class="gold-view-btn" bindtap="onReturnToMyHome">返回我的主页</button>
+  </view>
 
   <view class="summary-card">
     <view class="summary-title">持仓总览</view>
@@ -33,7 +38,7 @@
             <view class="kpi-head">
               <text class="kpi-label">持仓收益</text>
             </view>
-            <text class="kpi-value {{unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(unrealizedProfit, 2)}}</text>
+            <text class="kpi-value {{fmt.needSmall(unrealizedProfit) ? 'small-number' : ''}} {{unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.formatCompact(unrealizedProfit, 2)}}</text>
           </view>
           <view class="kpi-item">
             <view class="kpi-head">
@@ -89,7 +94,10 @@
 
   <view class="card price-card">
     <view class="card-title-row">
-      <view class="card-title">实时金价</view>
+      <view class="price-title-wrap">
+        <view class="card-title">模拟金价</view>
+        <text class="price-last-manual" wx:if="{{lastManualPrice}}" bindtap="onUseLastManualPrice">上次手动 ¥{{lastManualPrice}}（点击应用）</text>
+      </view>
       <text class="update-status" wx:if="{{lastUpdateTime && autoUpdateMode}}">{{lastUpdateTime}}</text>
     </view>
 
@@ -115,9 +123,6 @@
           </view>
           <view class="quote-btn" bindtap="togglePriceMode">
             <text class="quote-btn-text">手动</text>
-          </view>
-          <view class="quote-btn" wx:if="{{usingSimulator}}" bindtap="showConfigGuide">
-            <text class="quote-btn-text">配置</text>
           </view>
         </view>
       </view>
@@ -247,25 +252,6 @@
     <view class="profile-safe-actions">
       <button class="profile-save-btn" bindtap="onSaveProfileNickname" loading="{{profileSaving}}" disabled="{{profileSaving}}">保存昵称</button>
       <button class="profile-action-btn neutral" bindtap="onCloseProfileModal" disabled="{{profileSaving}}">关闭</button>
-    </view>
-  </view>
-
-  <view class="modal-mask" wx:if="{{messageModalVisible}}" bindtap="onCloseMessageCenter"></view>
-  <view class="modal-card profile-modal-card" wx:if="{{messageModalVisible}}">
-    <view class="section-title">未读消息</view>
-    <view class="profile-close-row">
-      <text class="profile-close" bindtap="onCloseMessageCenter">关闭</text>
-    </view>
-    <view class="platform-mini-empty" wx:if="{{pendingMessageList.length === 0}}">暂无待处理申请</view>
-    <view class="platform-mini-item" wx:for="{{pendingMessageList}}" wx:key="id">
-      <view class="mini-platform-left">
-        <text class="mini-platform-name">{{item.user.nickname}}</text>
-        <text class="mini-platform-avg">申请 {{item.typeLabel}}</text>
-      </view>
-      <view class="mini-platform-right profile-btn-row">
-        <button class="profile-mini-btn" data-id="{{item.id}}" bindtap="onRejectMessage">拒绝</button>
-        <button class="profile-mini-btn confirm" data-id="{{item.id}}" bindtap="onAcceptMessage">同意</button>
-      </view>
     </view>
   </view>
 

@@ -1,10 +1,13 @@
 const auth = require('../../utils/auth')
 const social = require('../../utils/social')
 const storage = require('../../utils/storage')
+const goldPrice = require('../../utils/goldPrice')
+const chat = require('../../utils/chat')
 
 Page({
   data: {
     user: null,
+    currentPrice: '',
     scene: 'gold',
     pageTitle: '好友',
     activeTab: 'following',
@@ -24,6 +27,7 @@ Page({
       hostedKins: [],
       kinOfHosts: []
     },
+    conversationMap: {},
     goldViewState: {
       targetUserId: '',
       readOnly: false,
@@ -57,6 +61,22 @@ Page({
     await social.syncRelationsFromCloud(scene)
 
     const overview = social.getRelationOverview(user.id, { scene })
+    let conversationMap = {}
+    if (!user.isGuest) {
+      const convRes = await chat.listConversations(scene)
+      if (convRes && convRes.success && Array.isArray(convRes.list)) {
+        conversationMap = convRes.list.reduce((acc, item) => {
+          const peerId = String(item && item.peer && item.peer.id || '')
+          if (!peerId) return acc
+          acc[peerId] = {
+            timeText: String(item.timeText || ''),
+            preview: String(item.lastMessagePreview || '').trim() || '还没有聊天记录'
+          }
+          return acc
+        }, {})
+      }
+    }
+
     const goldViewState = scene === 'gold'
       ? social.getGoldViewState(user.id)
       : { targetUserId: '', readOnly: false, targetUser: null }
@@ -74,6 +94,7 @@ Page({
         ...overview,
         couple: []
       },
+      conversationMap,
       followingRelationMap,
       goldViewState
     })
@@ -112,6 +133,7 @@ Page({
     }
     const followingMap = this.data.followingRelationMap || {}
     const allUsers = social.listInvitableUsers() || []
+    const conversationMap = this.data.conversationMap || {}
     const results = allUsers
       .filter((u) => {
         const nick = String(u.nickname || '').toLowerCase()
@@ -121,10 +143,16 @@ Page({
       .map((u) => {
         const userId = String(u.id || '')
         const isFollowing = !!followingMap[userId]
+        const conv = conversationMap[userId] || {}
         return {
           userId,
           nickname: u.nickname || '未命名用户',
           avatarUrl: u.avatarUrl || '',
+          lastChatTime: conv.timeText || '',
+          lastChatPreview: conv.preview || '还没有聊天记录',
+          toggleAction: isFollowing ? 'unfollow' : 'follow',
+          toggleText: isFollowing ? '✓' : '+',
+          toggleClass: isFollowing ? 'followed' : 'unfollowed',
           relationId: followingMap[userId] || '',
           actionType: isFollowing ? 'unfollow' : 'follow',
           actionText: isFollowing ? '已关注' : '关注'
@@ -136,17 +164,24 @@ Page({
   buildTabBaseList(activeTab) {
     const overview = this.data.socialOverview || {}
     const followingMap = this.data.followingRelationMap || {}
+    const conversationMap = this.data.conversationMap || {}
 
     if (activeTab === 'following') {
       return (overview.following || []).map((item) => {
         const user = item.target || {}
         const userId = String(user.id || '')
+        const conv = conversationMap[userId] || {}
         return {
           uid: `following_${userId}`,
           userId,
           relationId: String(item.id || ''),
           nickname: user.nickname || '未命名用户',
           avatarUrl: user.avatarUrl || '',
+          lastChatTime: conv.timeText || '',
+          lastChatPreview: conv.preview || '还没有聊天记录',
+          toggleAction: 'unfollow',
+          toggleText: '✓',
+          toggleClass: 'followed',
           desc: `ID: ${userId}`,
           actionType: 'unfollow',
           actionText: '已关注'
@@ -160,12 +195,18 @@ Page({
         .map((item) => {
           const user = item.follower || {}
           const userId = String(user.id || '')
+          const conv = conversationMap[userId] || {}
           return {
             uid: `mutual_${userId}`,
             userId,
             relationId: String(followingMap[userId] || ''),
             nickname: user.nickname || '未命名用户',
             avatarUrl: user.avatarUrl || '',
+            lastChatTime: conv.timeText || '',
+            lastChatPreview: conv.preview || '还没有聊天记录',
+            toggleAction: 'unfollow',
+            toggleText: '✓',
+            toggleClass: 'followed',
             desc: `ID: ${userId}`,
             actionType: 'unfollow',
             actionText: '已关注'
@@ -176,6 +217,7 @@ Page({
     return (overview.followers || []).map((item) => {
       const user = item.follower || {}
       const userId = String(user.id || '')
+      const conv = conversationMap[userId] || {}
       const isFollowingBack = !!item.isFollowingBack
       return {
         uid: `followers_${userId}`,
@@ -183,6 +225,11 @@ Page({
         relationId: String(item.id || ''),
         nickname: user.nickname || '未命名用户',
         avatarUrl: user.avatarUrl || '',
+        lastChatTime: conv.timeText || '',
+        lastChatPreview: conv.preview || '还没有聊天记录',
+        toggleAction: isFollowingBack ? 'unfollow' : 'follow',
+        toggleText: isFollowingBack ? '✓' : '+',
+        toggleClass: isFollowingBack ? 'followed' : 'unfollowed',
         desc: `ID: ${userId}`,
         actionType: isFollowingBack ? 'none' : 'followBack',
         actionText: isFollowingBack ? '已关注' : '回关'
@@ -220,6 +267,30 @@ Page({
     this.openVisitorProfileById(userId)
   },
 
+  async openVisitorHistoryById(targetUserId) {
+    const user = this.data.user || {}
+    const uid = user && user.id ? String(user.id) : ''
+    const targetId = String(targetUserId || '').trim()
+    if (!uid) {
+      wx.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+    if (!targetId) {
+      wx.showToast({ title: '用户ID无效', icon: 'none' })
+      return
+    }
+
+    const result = social.setGoldViewTarget(targetId === uid ? '' : targetId, uid)
+    if (!result || !result.success) {
+      wx.showToast({ title: result && result.message ? result.message : '无法查看该用户', icon: 'none' })
+      return
+    }
+
+    this.setData({ visitorModalVisible: false, visitorProfile: null })
+    await storage.syncTransactionsFromCloud(targetId === uid ? uid : targetId)
+    wx.navigateTo({ url: '/pages/history/history' })
+  },
+
   safeNumber(value) {
     const num = Number(value)
     return Number.isFinite(num) ? num : 0
@@ -234,6 +305,32 @@ Page({
     return `${date} ${typeText}${weight}g（${price}元/g）`
   },
 
+  async ensurePreviewPrice() {
+    const sharedPrice = Number(storage.getGoldPreviewPrice())
+    if (sharedPrice > 0) {
+      this.setData({ currentPrice: sharedPrice.toFixed(2) })
+      return sharedPrice
+    }
+
+    const existingPrice = Number(this.data.currentPrice)
+    if (existingPrice > 0) {
+      return existingPrice
+    }
+
+    try {
+      const result = await goldPrice.getCurrentGoldPrice(false, 'simulator')
+      const price = Number(result && result.price)
+      if (price > 0) {
+        this.setData({ currentPrice: price.toFixed(2) })
+        return price
+      }
+    } catch (error) {
+      // 忽略异常，后续按0处理
+    }
+
+    return 0
+  },
+
   async openVisitorProfileById(targetUserId) {
     const user = this.data.user
     const targetId = String(targetUserId || '').trim()
@@ -241,7 +338,8 @@ Page({
       wx.showToast({ title: '用户ID无效', icon: 'none' })
       return
     }
-    const existingProfile = social.getGoldVisitorProfile(targetId, '', user.id)
+    const previewPrice = await this.ensurePreviewPrice()
+    const existingProfile = social.getGoldVisitorProfile(targetId, previewPrice, user.id)
     if (!existingProfile) {
       wx.showToast({ title: '用户不存在', icon: 'none' })
       return
@@ -253,7 +351,7 @@ Page({
       await storage.syncTransactionsFromCloud(targetId)
     }
 
-    const freshProfile = social.getGoldVisitorProfile(targetId, '', user.id)
+    const freshProfile = social.getGoldVisitorProfile(targetId, previewPrice, user.id)
     if (freshProfile && this.data.visitorModalVisible) {
       freshProfile.latestTradeText = this.formatLatestTradeText(freshProfile.latestTransaction)
       this.setData({ visitorProfile: freshProfile })
@@ -263,6 +361,8 @@ Page({
   onCloseVisitorModal() {
     this.setData({ visitorModalVisible: false, visitorProfile: null })
   },
+
+  noop() {},
 
   onFollowVisitor() {
     const user = this.data.user
@@ -303,6 +403,35 @@ Page({
     wx.showToast({ title: '已关注', icon: 'success' })
     this.loadSocialData()
     this.openVisitorProfileById(targetUserId)
+  },
+
+  onViewVisitorHistory() {
+    const user = this.data.user || {}
+    const visitor = this.data.visitorProfile || {}
+    const targetUserId = visitor && visitor.user && visitor.user.id
+    if (!user || !user.id || !targetUserId) return
+
+    const result = social.setGoldViewTarget(targetUserId, user && user.id)
+    if (!result || !result.success) {
+      wx.showToast({ title: result && result.message ? result.message : '无法查看历史', icon: 'none' })
+      return
+    }
+
+    // 关闭弹层并切换到历史页（历史页将以当前 gold view 显示目标用户数据）
+    this.setData({ visitorModalVisible: false, visitorProfile: null })
+    wx.switchTab({ url: '/pages/history/history' })
+  },
+
+  onReturnToMyHome() {
+    const user = this.data.user || {}
+    if (!user || !user.id) return
+    const result = social.setGoldViewTarget('', user.id)
+    if (!result || !result.success) {
+      wx.showToast({ title: result && result.message ? result.message : '无法返回', icon: 'none' })
+      return
+    }
+    this.setData({ visitorModalVisible: false, visitorProfile: null })
+    wx.switchTab({ url: '/pages/history/history' })
   },
 
   onListAction(e) {
@@ -359,6 +488,30 @@ Page({
       wx.showToast({ title: '已回关', icon: 'success' })
       this.loadSocialData()
     }
+  },
+
+  onStartChat(e) {
+    const user = this.data.user
+    if (!user || user.isGuest) {
+      wx.showToast({ title: '请先微信登录后使用聊天', icon: 'none' })
+      return
+    }
+
+    const targetUserId = String(e.currentTarget.dataset.userId || '').trim()
+    const targetName = String(e.currentTarget.dataset.userName || '聊天').trim() || '聊天'
+    if (!targetUserId || (user && String(user.id) === targetUserId)) {
+      wx.showToast({ title: '聊天对象无效', icon: 'none' })
+      return
+    }
+
+    const scene = this.data.scene || 'gold'
+    wx.navigateTo({
+      url: `/pages/chat/chat?scene=${encodeURIComponent(scene)}&targetUserId=${encodeURIComponent(targetUserId)}&targetName=${encodeURIComponent(targetName)}`
+    })
+  },
+
+  onToggleFollow(e) {
+    this.onListAction(e)
   },
 
   onSetGoldView(e) {

@@ -1,6 +1,7 @@
 const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
 const social = require('../../utils/social')
+const chat = require('../../utils/chat')
 
 Page({
   data: {
@@ -52,14 +53,16 @@ Page({
     goldViewIndex: 0,
     goldViewUserId: '',
     goldViewTargetName: '',
+    goldViewDisplayUser: null,
     isGoldReadOnly: false,
     profileModalVisible: false,
     profileNicknameDraft: '',
-    profileSaving: false
+    profileSaving: false,
+    unreadMessageCount: 0
   },
 
   onLoad() {
-    const today = new Date().toISOString().split('T')[0]
+    const today = storage.getBeijingDateString()
     this.setData({
       today,
       startDate: today,
@@ -76,6 +79,15 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
+    if (user.isGuest) {
+      this.setData({
+        user,
+        unreadMessageCount: 0
+      })
+      this.loadTransactions()
+      return
+    }
+
     // 同步云端关系后再读取视图状态，保证关注列表是最新的
     await social.syncRelationsFromCloud('gold')
 
@@ -88,11 +100,25 @@ Page({
       goldViewIndex: Math.max(0, (viewState.readableUsers || []).findIndex((item) => item && item.id === targetUserId)),
       goldViewUserId: targetUserId,
       goldViewTargetName: (viewState.targetUser && viewState.targetUser.nickname) || user.nickname,
+      goldViewDisplayUser: viewState.targetUser || user,
       isGoldReadOnly: !!viewState.readOnly
+    })
+
+    const messageCenter = this.buildPendingMessageCenter(user.id)
+    const chatUnreadCount = await chat.getUnreadCount('gold')
+    this.setData({
+      unreadMessageCount: messageCenter.count + chatUnreadCount
     })
 
     await storage.syncTransactionsFromCloud(targetUserId)
     this.loadTransactions()
+  },
+
+  onReturnToMyHome() {
+    const user = this.data.user
+    if (!user || !user.id) return
+    social.setGoldViewTarget('', user.id)
+    this.refreshPage()
   },
 
   onGoldViewChange(e) {
@@ -251,9 +277,24 @@ Page({
     const buyStats = storage.calculateAveragePrice(list, 'buy')
     const sellStats = storage.calculateAveragePrice(list, 'sell')
 
+    // 计算本次统计的操作收益：有效交易克数 * 卖出均价 - 手续费
+    const buyWeight = (buyStats && buyStats.totalWeight) || 0
+    const sellWeight = (sellStats && sellStats.totalWeight) || 0
+    const effectiveTradeWeight = Math.min(buyWeight, sellWeight)
+    const sellAvgPrice = (sellStats && sellStats.avgPrice) || 0
+    const buyAvgPrice = (buyStats && buyStats.avgPrice) || 0
+    const sellFee = (sellStats && sellStats.totalFee) || 0
+    const operationProfit = effectiveTradeWeight * (sellAvgPrice - buyAvgPrice) - sellFee
+
+    // 将计算结果注入到 buyStats，便于模板渲染
+    const buyStatsWithOp = Object.assign({}, buyStats, {
+      effectiveTradeWeight,
+      operationProfit
+    })
+
     this.setData({
       showStats: true,
-      buyStats,
+      buyStats: buyStatsWithOp,
       sellStats,
       queryResultTransactions: list.map(tx => ({
         ...tx,
@@ -268,9 +309,25 @@ Page({
 
   buildStatsByTransactions(transactions) {
     const list = Array.isArray(transactions) ? transactions : []
+    const buy = storage.calculateAveragePrice(list, 'buy')
+    const sell = storage.calculateAveragePrice(list, 'sell')
+
+    const buyWeight = (buy && buy.totalWeight) || 0
+    const sellWeight = (sell && sell.totalWeight) || 0
+    const effectiveTradeWeight = Math.min(buyWeight, sellWeight)
+    const sellAvgPrice = (sell && sell.avgPrice) || 0
+    const buyAvgPrice = (buy && buy.avgPrice) || 0
+    const sellFee = (sell && sell.totalFee) || 0
+    const operationProfit = effectiveTradeWeight * (sellAvgPrice - buyAvgPrice) - sellFee
+
+    const buyWithOp = Object.assign({}, buy, {
+      effectiveTradeWeight,
+      operationProfit
+    })
+
     return {
-      buy: storage.calculateAveragePrice(list, 'buy'),
-      sell: storage.calculateAveragePrice(list, 'sell')
+      buy: buyWithOp,
+      sell
     }
   },
 
@@ -726,6 +783,21 @@ Page({
   },
 
   onGoSocial() {
+    // 仅好友图标走该入口，消息图标必须绑定 onOpenMessageCenter。
     wx.navigateTo({ url: '/pages/social/social?scene=gold' })
-  }
+  },
+
+  buildPendingMessageCenter(userId) {
+    const uid = String(userId || '')
+    if (!uid) {
+      return { count: 0 }
+    }
+
+    const overview = social.getRelationOverview(uid, { scene: 'gold' })
+    return { count: (overview.incomingPending || []).length }
+  },
+
+  onOpenMessageCenter() {
+    wx.navigateTo({ url: '/pages/messages/messages?scene=gold' })
+  },
 })

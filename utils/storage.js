@@ -11,6 +11,114 @@ const PLATFORMS = ['民生', '招商', '浙商', '其他']
 const CLOUD_TX_LIMIT = 1000
 const PROFILE_MAIN_ID = 'PROFILE_MAIN'
 const INVITE_MAIN_ID = 'INVITE_MAIN'
+const GOLD_PREVIEW_PRICE_KEY = 'gold_preview_price'
+const LAST_MANUAL_GOLD_PRICE_KEY = 'gold_last_manual_price'
+
+function buildGuestId() {
+  const stamp = Date.now().toString(36)
+  const random = Math.floor(Math.random() * 1679616).toString(36).padStart(4, '0')
+  return `guest_${stamp}${random}`
+}
+
+function loginAsGuest(inputNickname = '') {
+  try {
+    const current = wx.getStorageSync(CURRENT_USER_KEY)
+    if (current && current.id && current.isGuest) {
+      current.lastLoginAt = new Date().toISOString()
+      wx.setStorageSync(CURRENT_USER_KEY, current)
+      return current
+    }
+
+    const nickname = String(inputNickname || '').trim().slice(0, 20)
+    const suffix = Math.floor(Math.random() * 9000 + 1000)
+    const guestUser = {
+      id: buildGuestId(),
+      nickname: nickname || `访客${suffix}`,
+      avatarUrl: '',
+      isGuest: true,
+      isWechatAuth: false,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString()
+    }
+
+    wx.setStorageSync(CURRENT_USER_KEY, guestUser)
+    migrateLegacyDataToUser(guestUser.id)
+    return guestUser
+  } catch (error) {
+    console.error('创建访客会话失败', error)
+    return null
+  }
+}
+
+function updateGuestNickname(nickname) {
+  const safeNickname = String(nickname || '').trim().slice(0, 20)
+  if (!safeNickname) {
+    return null
+  }
+
+  try {
+    const current = wx.getStorageSync(CURRENT_USER_KEY)
+    if (!current || !current.id || !current.isGuest) {
+      return null
+    }
+
+    current.nickname = safeNickname
+    current.lastLoginAt = new Date().toISOString()
+    wx.setStorageSync(CURRENT_USER_KEY, current)
+    return current
+  } catch (error) {
+    console.error('更新访客昵称失败', error)
+    return null
+  }
+}
+
+function setGoldPreviewPrice(price) {
+  const numericPrice = Number(price)
+  if (!(numericPrice > 0)) {
+    return false
+  }
+
+  try {
+    wx.setStorageSync(GOLD_PREVIEW_PRICE_KEY, numericPrice)
+    return true
+  } catch (error) {
+    console.warn('写入共享金价失败', error)
+    return false
+  }
+}
+
+function getGoldPreviewPrice() {
+  try {
+    const value = Number(wx.getStorageSync(GOLD_PREVIEW_PRICE_KEY))
+    return value > 0 ? value : 0
+  } catch (error) {
+    return 0
+  }
+}
+
+function setLastManualGoldPrice(price) {
+  const numericPrice = Number(price)
+  if (!(numericPrice > 0)) {
+    return false
+  }
+
+  try {
+    wx.setStorageSync(LAST_MANUAL_GOLD_PRICE_KEY, numericPrice)
+    return true
+  } catch (error) {
+    console.warn('写入手动金价失败', error)
+    return false
+  }
+}
+
+function getLastManualGoldPrice() {
+  try {
+    const value = Number(wx.getStorageSync(LAST_MANUAL_GOLD_PRICE_KEY))
+    return value > 0 ? value : 0
+  } catch (error) {
+    return 0
+  }
+}
 
 function platformCode(platform) {
   const map = {
@@ -143,12 +251,8 @@ function logout() {
 function getCurrentUser() {
   try {
     const user = wx.getStorageSync(CURRENT_USER_KEY)
-    if (user && user.id && user.nickname && user.isWechatAuth) {
+    if (user && user.id && user.nickname && (user.isWechatAuth || user.isGuest)) {
       return user
-    }
-
-    if (user && user.id && user.nickname && !user.isWechatAuth) {
-      wx.removeStorageSync(CURRENT_USER_KEY)
     }
 
     return null
@@ -565,7 +669,7 @@ function calculateHoldings(transactions) {
     currentHolding,
     avgCost,
     realizedProfit,
-    totalInvestment
+    totalInvestment: avgCost * currentHolding
   }
 }
 
@@ -596,10 +700,30 @@ function filterByDateRange(transactions, startDate, endDate) {
   return (transactions || []).filter(tx => tx.date >= startDate && tx.date <= endDate)
 }
 
+function getBeijingDateString(inputDate) {
+  const sourceDate = inputDate instanceof Date ? inputDate : new Date()
+  const beijingMs = sourceDate.getTime() + (8 * 60 * 60 * 1000)
+  const beijingDate = new Date(beijingMs)
+  const year = beijingDate.getUTCFullYear()
+  const month = String(beijingDate.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(beijingDate.getUTCDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function getBeijingTimeString(inputDate) {
+  const sourceDate = inputDate instanceof Date ? inputDate : new Date()
+  const beijingMs = sourceDate.getTime() + (8 * 60 * 60 * 1000)
+  const beijingDate = new Date(beijingMs)
+  const hour = String(beijingDate.getUTCHours()).padStart(2, '0')
+  const minute = String(beijingDate.getUTCMinutes()).padStart(2, '0')
+  const second = String(beijingDate.getUTCSeconds()).padStart(2, '0')
+  return `${hour}:${minute}:${second}`
+}
+
 function buildTransactionFromInput(input, options = {}) {
   const now = new Date()
-  const date = input.date || now.toISOString().split('T')[0]
-  const timeText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+  const date = input.date || getBeijingDateString(now)
+  const timeText = getBeijingTimeString(now)
   const timestamp = `${date} ${timeText}`
 
   const price = parseFloat(input.price)
@@ -1796,9 +1920,16 @@ function confirmWeddingGuestAttendanceByCode(code, guestName) {
 
 module.exports = {
   PLATFORMS,
+  getBeijingDateString,
   loginByWechat,
+  loginAsGuest,
+  setGoldPreviewPrice,
+  getGoldPreviewPrice,
+  setLastManualGoldPrice,
+  getLastManualGoldPrice,
   logout,
   getCurrentUser,
+  updateGuestNickname,
   getUsers,
   getTransactions,
   saveTransactions,

@@ -1,0 +1,8 @@
+<view class="note-bottom-nav {{mode === 'card' ? 'mode-card' : 'mode-fixed'}}">
+  <view class="note-bottom-nav-inner">
+    <view class="note-nav-item {{activeKey === item.key ? 'active' : ''}}" wx:for="{{items}}" wx:key="key" data-key="{{item.key}}" bindtap="onTapItem">
+      <image wx:if="{{item.icon}}" class="note-nav-icon" src="{{activeKey === item.key && item.activeIcon ? item.activeIcon : item.icon}}" mode="aspectFit" />
+      <text class="note-nav-text">{{item.label}}</text>
+    </view>
+  </view>
+</view>

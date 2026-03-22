@@ -2,10 +2,12 @@
 <view class="container">
   <top-user-card
     user="{{user}}"
+    showMessageBadge="{{true}}"
+    unreadMessageCount="{{unreadMessageCount}}"
     bindavatar="onOpenProfileModal"
-    bindselector="onGoSelector"
+    bindopenselector="onGoSelector"
     bindwedding="onGoWedding"
-    bindmessage="onGoSelector"
+    bindopenmessage="onOpenMessageCenter"
     bindsocial="onGoSocial"
   />
 
@@ -45,7 +47,7 @@
         <view class="leaderboard-latest">最新交易｜{{item.latestTradeText}}</view>
       </view>
       <view class="leaderboard-value">
-        <text class="leaderboard-number profit-positive" wx:if="{{leaderboardActiveKey === 'profit'}}">¥{{fmt.toFixed(item.totalProfit, 2)}}</text>
+        <text wx:if="{{leaderboardActiveKey === 'profit'}}" class="leaderboard-number {{item.totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(item.totalProfit, 2)}}</text>
         <text class="leaderboard-number" wx:if="{{leaderboardActiveKey === 'fans'}}">{{item.followerCount}}</text>
         <text class="leaderboard-number" wx:if="{{leaderboardActiveKey === 'holding'}}">{{fmt.toFixed(item.currentHolding, 2)}}g</text>
         <text class="leaderboard-label" wx:if="{{leaderboardActiveKey === 'profit'}}">累计收益</text>
@@ -55,8 +57,13 @@
     </view>
   </view>
 
-  <view class="modal-mask" wx:if="{{visitorModalVisible}}" bindtap="onCloseVisitorModal"></view>
-  <view class="visitor-modal" wx:if="{{visitorModalVisible && visitorProfile}}">
+  <view class="modal-mask" wx:if="{{visitorModalVisible}}" bindtap="onCloseVisitorModal" catchtouchmove="noop"></view>
+  <view class="visitor-modal" wx:if="{{visitorModalVisible && visitorProfile}}" catchtouchmove="noop">
+    <view class="visitor-top-bar" wx:if="{{visitorProfile}}">
+      <text class="visitor-top-text">当前浏览用户：{{visitorProfile.user.nickname}}</text>
+      <button class="visitor-return-btn" bindtap="onReturnToMyHome">返回我的主页</button>
+    </view>
+    <scroll-view class="visitor-modal-scroll" scroll-y="{{true}}" show-scrollbar="{{false}}" enhanced="{{true}}">
     <view class="visitor-hero">
       <view class="visitor-hero-top">
         <view class="visitor-identity">
@@ -115,8 +122,38 @@
           <text class="visitor-summary-value {{visitorProfile.totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(visitorProfile.totalProfit, 2)}}</text>
         </view>
       </view>
+      <view class="visitor-actions" wx:if="{{visitorProfile.isFollowing || visitorProfile.isSelf}}">
+        <button class="visitor-action-btn" bindtap="onViewVisitorHistory">查看历史记录</button>
+      </view>
       <view class="visitor-locked" wx:else>
         <text class="visitor-locked-text">当前仅展示主页信息与最新交易，关注后可查看整体收益。</text>
+      </view>
+    </view>
+
+    <view class="visitor-platform-card" wx:if="{{(visitorProfile.isFollowing || visitorProfile.isSelf) && visitorProfile.platformSummary && visitorProfile.platformSummary.length > 0}}">
+      <view class="visitor-platform-title">分平台持仓/收益</view>
+      <view class="visitor-platform-item" wx:for="{{visitorProfile.platformSummary}}" wx:key="platform">
+        <text class="visitor-platform-name">{{item.platform}}</text>
+        <view class="visitor-platform-line">
+          <view class="visitor-platform-meta-wrap">
+            <text class="visitor-platform-tag">仓</text>
+            <text class="visitor-platform-meta">{{fmt.toFixed(item.currentHolding, 2)}}g</text>
+          </view>
+          <view class="visitor-platform-value-wrap">
+            <text class="visitor-platform-value {{item.unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(item.unrealizedProfit, 2)}}</text>
+            <text class="visitor-platform-tag">持</text>
+          </view>
+        </view>
+        <view class="visitor-platform-line">
+          <view class="visitor-platform-meta-wrap">
+            <text class="visitor-platform-tag">均</text>
+            <text class="visitor-platform-meta">¥{{fmt.toFixed(item.avgCost, 2)}}</text>
+          </view>
+          <view class="visitor-platform-value-wrap">
+            <text class="visitor-platform-value {{item.realizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(item.realizedProfit, 2)}}</text>
+            <text class="visitor-platform-tag">累</text>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -128,6 +165,7 @@
     <view class="visitor-close-row">
       <button class="visitor-close-btn" bindtap="onCloseVisitorModal">关闭</button>
     </view>
+    </scroll-view>
   </view>
 
   <view class="profile-modal-mask" wx:if="{{profileModalVisible}}" bindtap="onCloseProfileModal"></view>

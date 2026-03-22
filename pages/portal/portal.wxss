@@ -10,6 +10,25 @@
   font-size: 24rpx;
 }
 
+.portal-entry-row {
+  display: flex;
+  gap: 12rpx;
+  margin: 0 4rpx 18rpx;
+}
+
+.portal-entry-btn {
+  flex: 1;
+  text-align: center;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 14rpx;
+  background: #ffffff;
+  border: 1rpx solid #dbe7f3;
+  color: #334155;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
 .guest-card {
   margin-bottom: 16rpx;
   padding: 20rpx;
@@ -33,10 +52,62 @@
 .guest-login-btn {
   margin-top: 14rpx;
   border-radius: 999rpx;
-  background: #ecfeff;
+  background: #e6fbff;
   color: #0e7490;
-  border: 1rpx solid #a5f3fc;
-  font-size: 24rpx;
+  border: 2rpx solid #8fe7f2;
+  font-size: 28rpx;
+  min-height: 94rpx;
+  line-height: 94rpx;
+  box-shadow: 0 10rpx 24rpx rgba(14, 116, 144, 0.18);
+}
+
+.guest-login-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+}
+
+.guest-login-star {
+  width: 34rpx;
+  height: 34rpx;
+}
+
+.guest-login-text {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0e7490;
+}
+
+.guest-mode-btn {
+  margin-top: 10rpx;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+  color: #9ca3af;
+  border: 1rpx solid #d1d5db;
+  font-size: 20rpx;
+  min-height: 70rpx;
+  line-height: 70rpx;
+  white-space: nowrap;
+}
+
+.guest-id-bar {
+  margin: 0 0 14rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 14rpx;
+  background: #fffbeb;
+  border: 1rpx solid #fde68a;
+}
+
+.guest-id-label {
+  font-size: 20rpx;
+  color: #92400e;
+  margin-right: 10rpx;
+}
+
+.guest-id-value {
+  font-size: 20rpx;
+  color: #78350f;
 }
 
 .choice-card {
@@ -52,6 +123,10 @@
 
 .choice-card.wedding {
   background: linear-gradient(135deg, #f7c6df, #f5b1d1);
+}
+
+.choice-card.workout {
+  background: linear-gradient(135deg, #34d399, #10b981);
 }
 
 .choice-title {

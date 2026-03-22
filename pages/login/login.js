@@ -16,11 +16,6 @@ Page({
       return
     }
 
-    // 清理旧的访客会话，统一走微信授权登录。
-    if (user && !user.isWechatAuth) {
-      storage.logout()
-    }
-
     this.setData({
       nickname: '',
       authorizedUserInfo: null,

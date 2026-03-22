@@ -1,20 +1,37 @@
 <view class="container">
   <top-user-card
     user="{{user}}"
+    showQuickActions="{{false}}"
     bindavatar="onOpenProfileModal"
-    bindselector="noop"
-    bindmessage="onGoSocial"
+    bindopenselector="noop"
+    bindopenmessage="onGoMessages"
     bindsocial="onGoSocial"
   />
 
   <view class="guest-card" wx:if="{{!user}}">
     <view class="guest-title">先体验，再登录</view>
-    <view class="guest-desc">可先浏览功能说明，登录后再同步个人数据与云端记录</view>
-    <button class="guest-login-btn" bindtap="onGoLogin">微信登录</button>
+    <view class="guest-desc">可先浏览功能说明，访客模式下数据仅保存本地</view>
+    <button class="guest-login-btn" bindtap="onGoLogin">
+      <view class="guest-login-inner">
+        <image class="guest-login-star" src="/images/星星-active.png" mode="aspectFit" />
+        <text class="guest-login-text">微信登录（推荐）</text>
+      </view>
+    </button>
+    <button class="guest-mode-btn" bindtap="onGoGuestMode">访客模式（数据仅保存本地）</button>
+  </view>
+
+  <view class="guest-id-bar" wx:if="{{user && user.isGuest}}">
+    <text class="guest-id-label">当前访客ID</text>
+    <text class="guest-id-value">{{guestUserId}}</text>
   </view>
 
   <view class="portal-tip" wx:if="{{user}}">请选择要进入的笔记场景</view>
   <view class="portal-tip" wx:else>请选择要体验的笔记场景</view>
+
+  <view class="portal-entry-row">
+    <view class="portal-entry-btn" bindtap="onGoSocial">好友列表</view>
+    <view class="portal-entry-btn" bindtap="onGoMessages">消息中心</view>
+  </view>
 
   <view class="choice-card gold" bindtap="onGoGold">
     <view class="choice-title">黄金笔记</view>
@@ -26,6 +43,12 @@
     <view class="choice-title">结婚笔记</view>
     <view class="choice-desc">按结婚阶段管理任务、预算和提醒记录</view>
     <view class="choice-cta">进入结婚笔记</view>
+  </view>
+
+  <view class="choice-card workout" bindtap="onGoWorkout">
+    <view class="choice-title">运动笔记</view>
+    <view class="choice-desc">分析总览、运动记录、计划打卡与减脂趋势</view>
+    <view class="choice-cta">进入运动分析</view>
   </view>
 
   <view class="profile-modal-mask" wx:if="{{profileModalVisible}}" bindtap="onCloseProfileModal"></view>

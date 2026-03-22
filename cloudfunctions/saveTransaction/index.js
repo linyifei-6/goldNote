@@ -64,6 +64,20 @@ function normalizeDate(dateText, fallbackDate) {
   return fallbackDate
 }
 
+function getBeijingDateTimeParts(inputDate) {
+  const sourceDate = inputDate instanceof Date ? inputDate : new Date()
+  const beijingMs = sourceDate.getTime() + (8 * 60 * 60 * 1000)
+  const beijingDate = new Date(beijingMs)
+
+  const dateText = `${beijingDate.getUTCFullYear()}-${String(beijingDate.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingDate.getUTCDate()).padStart(2, '0')}`
+  const timeText = `${String(beijingDate.getUTCHours()).padStart(2, '0')}:${String(beijingDate.getUTCMinutes()).padStart(2, '0')}:${String(beijingDate.getUTCSeconds()).padStart(2, '0')}`
+
+  return {
+    dateText,
+    timeText
+  }
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const { action, transaction, userId } = event
@@ -97,8 +111,9 @@ exports.main = async (event, context) => {
       }
 
       const now = new Date()
-      const txDate = date || now.toISOString().split('T')[0]
-      const timeText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+      const nowBeijing = getBeijingDateTimeParts(now)
+      const txDate = date || nowBeijing.dateText
+      const timeText = nowBeijing.timeText
       const timestamp = `${txDate} ${timeText}`
 
       const feeInfo = calculateFee(type, price, weight, platform)
@@ -147,7 +162,7 @@ exports.main = async (event, context) => {
       const price = Number(updateData.price)
       const weight = Number(updateData.weight)
       const platform = normalizePlatform(updateData.platform || targetTx.platform)
-      const fallbackDate = String(targetTx.date || new Date().toISOString().split('T')[0])
+      const fallbackDate = String(targetTx.date || getBeijingDateTimeParts(new Date()).dateText)
       const txDate = normalizeDate(updateData.date, fallbackDate)
 
       if (!(price > 0) || !(weight > 0)) {
@@ -155,7 +170,7 @@ exports.main = async (event, context) => {
       }
 
       const now = new Date()
-      const timeText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+      const timeText = getBeijingDateTimeParts(now).timeText
       const feeInfo = calculateFee(type, price, weight, platform)
 
       await transactionsCollection

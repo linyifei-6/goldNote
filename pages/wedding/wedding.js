@@ -1,6 +1,8 @@
 const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
 const social = require('../../utils/social')
+const chat = require('../../utils/chat')
+const noteNav = require('../../utils/noteNav')
 
 const INVITEE_STATUS = ['未确认', '已确认']
 const TASK_TYPES = ['婚纱摄影', '婚宴酒店', '婚礼策划', '婚礼服务', '婚礼节点', '婚品物料', '婚房装修', '其他']
@@ -32,26 +34,7 @@ Page({
     countdownText: '未设置婚期',
     showBasicInfoEditor: true,
     activeSection: 'budget',
-    sectionTabs: [
-      {
-        key: 'task',
-        label: '备婚任务',
-        icon: '/images/倒计时.png',
-        activeIcon: '/images/倒计时-active.png'
-      },
-      {
-        key: 'budget',
-        label: '预算管理',
-        icon: '/images/预算管理.png',
-        activeIcon: '/images/预算管理-active.png'
-      },
-      {
-        key: 'friends',
-        label: '亲友',
-        icon: '/images/亲友圈.png',
-        activeIcon: '/images/亲友圈-active.png'
-      }
-    ],
+    sectionTabs: noteNav.WEDDING_SECTION_TABS,
     taskTypeOptions: TASK_TYPES,
     taskTypeIndex: 0,
     taskPriorityIndex: 2,
@@ -118,9 +101,7 @@ Page({
     profileModalVisible: false,
     profileNicknameDraft: '',
     profileSaving: false,
-    messageModalVisible: false,
     unreadMessageCount: 0,
-    pendingMessageList: [],
     expenseCategory: '',
     expenseAmount: '',
     expenseDate: '',
@@ -141,13 +122,19 @@ Page({
     }
   },
 
-  onLoad() {
+  onLoad(options) {
     const today = new Date().toISOString().split('T')[0]
-    this.setData({
+    const section = String((options && options.section) || '').trim()
+    const allowSections = ['task', 'budget', 'friends']
+    const nextData = {
       today,
       taskDueDate: today,
       expenseDate: today
-    })
+    }
+    if (allowSections.includes(section)) {
+      nextData.activeSection = section
+    }
+    this.setData(nextData)
   },
 
   async onShow() {
@@ -164,6 +151,7 @@ Page({
     const coupleSummary = this.buildCoupleSummary(user.id)
     const coupleCenter = this.buildCoupleCenter(user.id)
     const messageCenter = this.buildPendingMessageCenter(user.id)
+    const chatUnreadCount = await chat.getUnreadCount('wedding')
 
     this.setData({
       user,
@@ -173,8 +161,7 @@ Page({
       coupleInviteUsers: coupleCenter.inviteUsers,
       coupleIncomingPending: coupleCenter.incomingPending,
       coupleOutgoingPending: coupleCenter.outgoingPending,
-      unreadMessageCount: messageCenter.count,
-      pendingMessageList: messageCenter.list
+      unreadMessageCount: messageCenter.count + chatUnreadCount
     })
 
     await storage.syncWeddingDataFromCloud(weddingWorkspaceOwnerId)
@@ -233,27 +220,15 @@ Page({
     }
   },
 
-  relationTypeLabel(type) {
-    if (type === 'couple') return '情侣关系'
-    if (type === 'kin') return '亲友关系'
-    return '关注'
-  },
-
   buildPendingMessageCenter(userId) {
     const uid = String(userId || '')
     if (!uid) {
-      return { count: 0, list: [] }
+      return { count: 0 }
     }
 
     const overview = social.getRelationOverview(uid, { scene: 'wedding' })
-    const list = (overview.incomingPending || []).map((item) => ({
-      ...item,
-      typeLabel: this.relationTypeLabel(item.type)
-    }))
-
     return {
-      count: list.length,
-      list
+      count: (overview.incomingPending || []).length
     }
   },
 
@@ -780,7 +755,7 @@ Page({
   },
 
   onSwitchSection(e) {
-    const section = e.currentTarget.dataset.section
+    const section = String((e && e.detail && e.detail.key) || (e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.section) || '')
     if (!section || section === this.data.activeSection) {
       return
     }
@@ -891,33 +866,7 @@ Page({
   },
 
   onOpenMessageCenter() {
-    this.setData({ messageModalVisible: true })
-  },
-
-  onCloseMessageCenter() {
-    this.setData({ messageModalVisible: false })
-  },
-
-  onAcceptMessage(e) {
-    const relationId = e.currentTarget.dataset.id
-    const result = social.acceptRelationRequest(relationId)
-    if (!result.success) {
-      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
-      return
-    }
-    wx.showToast({ title: '已同意', icon: 'success' })
-    this.onShow()
-  },
-
-  onRejectMessage(e) {
-    const relationId = e.currentTarget.dataset.id
-    const result = social.rejectRelationRequest(relationId)
-    if (!result.success) {
-      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
-      return
-    }
-    wx.showToast({ title: '已拒绝', icon: 'none' })
-    this.onShow()
+    wx.navigateTo({ url: '/pages/messages/messages?scene=wedding' })
   },
 
   onUserActions() {

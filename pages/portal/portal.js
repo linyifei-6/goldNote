@@ -4,26 +4,60 @@ const storage = require('../../utils/storage')
 Page({
   data: {
     user: null,
+    guestUserId: '',
     profileModalVisible: false,
     profileNicknameDraft: '',
     profileSaving: false
   },
 
   onShow() {
-    const user = storage.getCurrentUser()
-    this.setData({ user })
+    const currentUser = storage.getCurrentUser() || null
+    this.setData({
+      user: currentUser,
+      guestUserId: currentUser && currentUser.isGuest ? currentUser.id : ''
+    })
+  },
+
+  ensureGuestSession() {
+    let user = this.data.user
+    if (!user) {
+      user = storage.loginAsGuest()
+    }
+    if (user) {
+      this.setData({
+        user,
+        guestUserId: user.isGuest ? user.id : ''
+      })
+    }
+    return user
   },
 
   onGoGold() {
+    this.ensureGuestSession()
     wx.switchTab({ url: '/pages/index/index' })
   },
 
   onGoWedding() {
+    this.ensureGuestSession()
     wx.navigateTo({ url: '/pages/wedding/wedding' })
+  },
+
+  onGoWorkout() {
+    this.ensureGuestSession()
+    wx.navigateTo({ url: '/pages/workoutStats/workoutStats' })
   },
 
   onGoSocial() {
     wx.navigateTo({ url: '/pages/social/social?scene=gold' })
+  },
+
+  onGoMessages() {
+    const user = this.data.user
+    if (!user || user.isGuest) {
+      wx.showToast({ title: '请先微信登录后使用聊天', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/messages/messages?scene=gold' })
   },
 
   noop() {},
@@ -42,6 +76,15 @@ Page({
 
   onGoLogin() {
     wx.navigateTo({ url: '/pages/login/login' })
+  },
+
+  onGoGuestMode() {
+    const guest = this.ensureGuestSession()
+    if (!guest) {
+      wx.showToast({ title: '访客模式启动失败', icon: 'none' })
+      return
+    }
+    wx.showToast({ title: '已进入访客模式（仅本地）', icon: 'success' })
   },
 
   onCloseProfileModal() {

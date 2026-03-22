@@ -351,6 +351,19 @@
   word-break: break-all;
 }
 
+/* Ensure profit color overrides default .stat-value color */
+.stat-value.profit-positive {
+  color: #ff5252;
+}
+.stat-value.profit-negative {
+  color: #4caf50;
+}
+
+/* Fee amount fixed green */
+.stat-value.fee-value {
+  color: #4caf50;
+}
+
 .no-data {
   text-align: center;
   padding: 30rpx 0;
@@ -505,16 +518,32 @@
   position: absolute;
   top: 18rpx;
   right: 18rpx;
-  width: 36rpx;
-  height: 36rpx;
-  background: #d9953f;
-  color: white;
-  border-radius: 50%;
+}
+
+.gold-view-banner {
+  margin: 12rpx 0;
+  padding: 8rpx 12rpx;
+  background: #fff3e0;
+  border: 1rpx solid #f9bd9e;
+  border-radius: 10rpx;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
+  gap: 10rpx;
+}
+
+.gold-view-text {
+  color: #c1621f;
+  font-size: 24rpx;
+}
+
+.gold-view-btn {
+  padding: 8rpx 12rpx;
+  border-radius: 10rpx;
+  border: none;
+  background: #f59e0b;
+  color: #fff;
   font-size: 22rpx;
-  font-weight: bold;
 }
 
 .btn-row {

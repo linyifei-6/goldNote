@@ -1,0 +1,261 @@
+.container {
+  min-height: 100vh;
+  padding: 24rpx;
+  padding-bottom: calc(168rpx + env(safe-area-inset-bottom));
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16rpx;
+  border: 1rpx solid #dcfce7;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.couple-status-card {
+  margin-bottom: 16rpx;
+  background: #ffffff;
+  border: 1rpx solid #fde68a;
+  border-radius: 16rpx;
+  padding: 18rpx 20rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.couple-status-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.couple-status-title {
+  color: #92400e;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.couple-status-text {
+  color: #7c2d12;
+  font-size: 22rpx;
+}
+
+.couple-status-action {
+  flex-shrink: 0;
+  color: #b45309;
+  font-size: 22rpx;
+  border: 1rpx solid #f59e0b;
+  border-radius: 999rpx;
+  padding: 8rpx 18rpx;
+  background: #fffbeb;
+}
+
+.range-row {
+  margin-bottom: 12rpx;
+  display: flex;
+  gap: 10rpx;
+}
+
+.range-chip {
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid #d1d5db;
+  color: #64748b;
+  font-size: 22rpx;
+}
+
+.range-chip.active {
+  color: #0f766e;
+  border-color: #5eead4;
+  background: #f0fdfa;
+  font-weight: 600;
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #065f46;
+  margin-bottom: 12rpx;
+}
+
+.overview-card {
+  border-color: #bbf7d0;
+}
+
+.overview-status {
+  font-size: 22rpx;
+  color: #0f766e;
+  margin-bottom: 12rpx;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10rpx;
+}
+
+.overview-item {
+  border: 1rpx solid #e2e8f0;
+  border-radius: 12rpx;
+  padding: 12rpx;
+  background: #f8fafc;
+}
+
+.overview-label {
+  font-size: 20rpx;
+  color: #64748b;
+}
+
+.overview-value {
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10rpx 0;
+  border-bottom: 1rpx solid #eef2f7;
+  color: #334155;
+  font-size: 24rpx;
+}
+
+.chart-wrap {
+  margin-top: 14rpx;
+  padding: 12rpx;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 12rpx;
+  background: #ffffff;
+}
+
+.chart-canvas {
+  width: 660rpx;
+  height: 300rpx;
+}
+
+.chart-hint {
+  margin-top: 8rpx;
+  color: #64748b;
+  font-size: 20rpx;
+}
+
+.section-title {
+  font-size: 27rpx;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10rpx;
+}
+
+.sub {
+  margin-top: 4rpx;
+  margin-bottom: 8rpx;
+  color: #475569;
+  font-size: 20rpx;
+}
+
+.input {
+  width: 100%;
+  min-height: 68rpx;
+  line-height: 40rpx;
+  background: #f8fafc;
+  border-radius: 10rpx;
+  padding: 12rpx;
+  color: #1e293b;
+  box-sizing: border-box;
+  margin-top: 6rpx;
+}
+
+.selector-chip-row {
+  margin-top: 6rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6rpx;
+}
+
+.selector-chip-row.compact-row {
+  margin-top: 4rpx;
+}
+
+.selector-chip {
+  padding: 6rpx 10rpx;
+  border-radius: 10rpx;
+  background: #f3f3f3;
+  border: 1rpx solid #e8e8e8;
+  color: #6d532e;
+  font-size: 20rpx;
+}
+
+.btn-row {
+  display: flex;
+  gap: 12rpx;
+}
+
+.mini-btn {
+  flex: 1;
+  border-radius: 10rpx;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 22rpx;
+  min-height: 64rpx;
+  line-height: 64rpx;
+}
+
+.mini-btn.confirm {
+  background: #f5b1d1;
+  color: #6b2d4d;
+}
+
+.picker-label {
+  display: block;
+  margin-top: 8rpx;
+  margin-bottom: 2rpx;
+  color: #475569;
+  font-size: 20rpx;
+}
+
+.couple-list {
+  margin-top: 12rpx;
+}
+
+.couple-item {
+  border: 1rpx solid #f5dce9;
+  border-radius: 12rpx;
+  padding: 10rpx 12rpx;
+  margin-top: 8rpx;
+}
+
+.couple-item-title {
+  font-size: 23rpx;
+  color: #4b5563;
+}
+
+.modal-mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 998;
+}
+
+.modal-card {
+  position: fixed;
+  left: 24rpx;
+  right: 24rpx;
+  top: 18%;
+  background: #ffffff;
+  border-radius: 14rpx;
+  padding: 16rpx;
+  z-index: 999;
+  box-shadow: 0 14rpx 30rpx rgba(15, 23, 42, 0.2);
+}
+
+.modal-card .input {
+  margin-top: 6rpx;
+}

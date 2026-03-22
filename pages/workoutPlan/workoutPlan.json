@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "运动计划",
+  "usingComponents": {
+    "top-user-card": "/components/top-user-card/top-user-card",
+    "note-bottom-nav": "/components/note-bottom-nav/note-bottom-nav"
+  }
+}

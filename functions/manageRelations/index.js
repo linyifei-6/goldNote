@@ -21,6 +21,50 @@ function normalizeScene(scene) {
   return scene === 'wedding' ? 'wedding' : 'gold'
 }
 
+async function queryRelations(collectionName, query) {
+  return db.collection(collectionName)
+    .where(query)
+    .limit(500)
+    .get()
+    .then((res) => (res && res.data) || [])
+}
+
+function normalizeLegacyRelation(item, scene) {
+  if (!item || !item.requesterId || !item.targetId) {
+    return null
+  }
+
+  const type = sanitizeText(item.type, 20)
+  const status = sanitizeText(item.status, 20)
+  if (!ALLOWED_TYPES.includes(type) || !ALLOWED_STATUSES.includes(status)) {
+    return null
+  }
+
+  return {
+    id: sanitizeText(item.id, 60) || `MR${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+    type,
+    status,
+    scene,
+    requesterId: sanitizeText(item.requesterId, 80),
+    targetId: sanitizeText(item.targetId, 80),
+    sharedWeddingOwnerId: sanitizeText(item.sharedWeddingOwnerId, 80),
+    createdAt: item.createdAt || new Date(),
+    updatedAt: item.updatedAt || new Date()
+  }
+}
+
+function dedupeRelations(list) {
+  const map = {}
+  ;(Array.isArray(list) ? list : []).forEach((item) => {
+    if (!item) return
+    const key = sanitizeText(item.id, 60)
+      || `${sanitizeText(item.type, 20)}|${sanitizeText(item.requesterId, 80)}|${sanitizeText(item.targetId, 80)}`
+    if (!key) return
+    map[key] = item
+  })
+  return Object.keys(map).map((key) => map[key])
+}
+
 /**
  * 查询当前用户在某场景下参与的所有关系（以 requester 或 target 身份）。
  * 不过滤已终止的关系，让客户端决定如何使用。
@@ -28,17 +72,58 @@ function normalizeScene(scene) {
 async function handleGet(openId, event) {
   const scene = normalizeScene(event.scene)
 
-  const result = await db.collection('social_relations')
-    .where(
+  const primaryList = await queryRelations(
+    'social_relations',
+    _.or([
+      { requesterId: openId, scene },
+      { targetId: openId, scene }
+    ])
+  )
+
+  // 兼容历史集合（旧版本曾把黄金关系放在 social_relations_gold）
+  let legacyList = []
+  const legacyCollection = scene === 'gold' ? 'social_relations_gold' : 'social_relations_wedding'
+  try {
+    const legacyRaw = await queryRelations(
+      legacyCollection,
       _.or([
-        { requesterId: openId, scene },
-        { targetId: openId, scene }
+        { requesterId: openId },
+        { targetId: openId }
       ])
     )
-    .limit(500)
-    .get()
+    legacyList = legacyRaw
+      .map((item) => normalizeLegacyRelation(item, scene))
+      .filter(Boolean)
+  } catch (error) {
+    // legacy collection 不存在时忽略
+    legacyList = []
+  }
 
-  return { success: true, data: result.data || [], scene }
+  const merged = dedupeRelations([...(primaryList || []), ...legacyList])
+
+  // 将 legacy 数据回填到新集合，避免后续读取丢失
+  if (legacyList.length > 0) {
+    const primaryIdMap = {}
+    ;(primaryList || []).forEach((item) => {
+      if (item && item.id) {
+        primaryIdMap[String(item.id)] = true
+      }
+    })
+
+    for (let index = 0; index < legacyList.length; index++) {
+      const item = legacyList[index]
+      if (!item || !item.id || primaryIdMap[item.id]) {
+        continue
+      }
+      try {
+        await db.collection('social_relations').add({ data: item })
+      } catch (error) {
+        // 忽略重复写入错误
+      }
+    }
+  }
+
+  return { success: true, data: merged, scene }
 }
 
 /**

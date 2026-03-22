@@ -278,6 +278,33 @@
   transform: scale(0.98);
 }
 
+.gold-view-banner {
+  margin: 12rpx 0;
+  padding: 8rpx 12rpx;
+  background: #fff3e0;
+  border: 1rpx solid #f9bd9e;
+  border-radius: 10rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.gold-view-text {
+  color: #c1621f;
+  font-size: 24rpx;
+}
+
+.gold-view-btn {
+  padding: 8rpx 12rpx;
+  border-radius: 10rpx;
+  border: none;
+  background: #f59e3b;
+  color: #fff;
+  font-size: 22rpx;
+}
+
+
 .btn-sell {
   background: linear-gradient(135deg, #ff5252, #d32f2f);
   box-shadow: 0 4rpx 12rpx rgba(255, 82, 82, 0.4);

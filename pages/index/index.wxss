@@ -38,13 +38,6 @@
   color: #6b7280;
 }
 
-.profile-close-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -6rpx;
-  margin-bottom: 6rpx;
-}
-
 .profile-row {
   margin-bottom: 10rpx;
 }
@@ -115,12 +108,6 @@
   background: #f1f5f9;
 }
 
-.profile-btn-row {
-  margin-top: 6rpx;
-  display: flex;
-  gap: 8rpx;
-}
-
 .profile-safe-actions {
   margin-top: 16rpx;
   display: flex;
@@ -184,6 +171,32 @@
   background: #f1f5f9;
   color: #334155;
   border-color: #e2e8f0;
+}
+
+.gold-view-banner {
+  margin: 12rpx 0;
+  padding: 8rpx 12rpx;
+  background: #fff3e0;
+  border: 1rpx solid #f9bd9e;
+  border-radius: 10rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.gold-view-text {
+  color: #c1621f;
+  font-size: 24rpx;
+}
+
+.gold-view-btn {
+  padding: 8rpx 12rpx;
+  border-radius: 10rpx;
+  border: none;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 22rpx;
 }
 
 .profile-mini-btn {
@@ -444,6 +457,11 @@
   text-overflow: ellipsis;
 }
 
+/* 當數字較長時使用更小字體以顯示更多位數 */
+.kpi-value.small-number {
+  font-size: 22rpx;
+}
+
 .holding-foot {
   margin-top: 14rpx;
   display: flex;
@@ -471,6 +489,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.price-title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.price-last-manual {
+  font-size: 20rpx;
+  color: #9b8a6e;
+  white-space: nowrap;
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  background: #f8f3e8;
 }
 
 .curve-hint {

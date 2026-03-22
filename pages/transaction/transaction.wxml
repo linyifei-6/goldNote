@@ -1,13 +1,20 @@
 <wxs src="../../utils/fmt.wxs" module="fmt" />
 <view class="container">
   <top-user-card
-    user="{{user}}"
+    user="{{goldViewDisplayUser || user}}"
+    showMessageBadge="{{true}}"
+    unreadMessageCount="{{unreadMessageCount}}"
     bindavatar="onOpenProfileModal"
-    bindselector="onGoSelector"
+    bindopenselector="onGoSelector"
     bindwedding="onGoWedding"
-    bindmessage="onGoSelector"
+    bindopenmessage="onOpenMessageCenter"
     bindsocial="onGoSocial"
   />
+
+  <view class="gold-view-banner" wx:if="{{isGoldReadOnly}}">
+    <text class="gold-view-text">正在查看用户：{{goldViewTargetName}}</text>
+    <button class="gold-view-btn" bindtap="onReturnToMyHome">返回我的主页</button>
+  </view>
 
   <view class="card" wx:if="{{isGoldReadOnly}}">
     <view class="card-title">当前为只读模式</view>
@@ -99,7 +106,7 @@
   <!-- 提交按钮 -->
   <view class="btn-container" wx:if="{{!isGoldReadOnly}}">
     <button class="btn {{transactionType === 'sell' ? 'btn-sell' : ''}}" bindtap="submitTransaction">
-      {{transactionType === 'buy' ? '确认买入' : '确认卖出'}}
+      {{transactionType === 'buy' ? '模拟买入' : '模拟卖出'}}
     </button>
   </view>
 
@@ -163,4 +170,5 @@
       <button class="profile-action-btn neutral" bindtap="onCloseProfileModal" disabled="{{profileSaving}}">关闭</button>
     </view>
   </view>
+
 </view>

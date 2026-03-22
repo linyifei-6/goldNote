@@ -2,12 +2,8 @@ const storage = require('./storage')
 
 function ensureLogin(redirectPath = '/pages/login/login') {
   const user = storage.getCurrentUser()
-  if (user && user.isWechatAuth) {
+  if (user && (user.isWechatAuth || user.isGuest)) {
     return user
-  }
-
-  if (user && !user.isWechatAuth) {
-    storage.logout()
   }
 
   wx.redirectTo({
@@ -251,6 +247,15 @@ function updateNickname(nickname) {
   const safeNickname = String(nickname || '').trim().slice(0, 20)
   if (!safeNickname) {
     return Promise.reject(new Error('昵称不能为空'))
+  }
+
+  const currentUser = storage.getCurrentUser()
+  if (currentUser && currentUser.isGuest && !currentUser.isWechatAuth) {
+    const updatedGuest = storage.updateGuestNickname(safeNickname)
+    if (!updatedGuest) {
+      return Promise.reject(new Error('访客昵称更新失败'))
+    }
+    return Promise.resolve(updatedGuest)
   }
 
   return updateWechatProfile({ nickname: safeNickname })

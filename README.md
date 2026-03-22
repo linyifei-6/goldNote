@@ -167,20 +167,29 @@ goldnote/
 - `getTransactions`
 - `saveTransaction`
 - `manageRelations`
+- `manageMessages`
 - `getGoldLeaderboard`
 - `getWeddingData`
 - `saveWeddingData`
+- `getWorkoutData`
+- `saveWorkoutData`
 
 ### 数据库集合
 
 - `users`
 - `transactions`
 - `social_relations`
+- `social_threads`
+- `social_messages`
 - `wedding_profiles`
 - `wedding_tasks`
 - `wedding_expenses`
 - `wedding_notes`
 - `wedding_invites`
+- `workout_profiles`
+- `workout_sessions`
+- `workout_plans`
+- `workout_weight_records`
 
 ### 云存储
 

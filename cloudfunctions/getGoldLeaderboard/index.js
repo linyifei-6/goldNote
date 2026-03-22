@@ -92,7 +92,7 @@ function calculateHoldings(transactions) {
     currentHolding,
     avgCost,
     realizedProfit,
-    totalInvestment
+    totalInvestment: avgCost * currentHolding
   }
 }
 
@@ -139,32 +139,39 @@ async function fetchAllDocs(collectionName, query = {}) {
 
 async function getFollowerCountMap() {
   try {
-    let relations = await fetchAllDocs('social_relations', {
-      type: 'follow',
-      status: 'accepted',
-      scene: 'gold'
-    })
+    const [relationsV2, relationsLegacy] = await Promise.all([
+      fetchAllDocs('social_relations').catch(() => []),
+      fetchAllDocs('social_relations_gold').catch(() => [])
+    ])
 
-    // 兼容历史集合（旧版本数据）
-    if (!Array.isArray(relations) || relations.length === 0) {
-      try {
-        relations = await fetchAllDocs('social_relations_gold', {
-          type: 'follow',
-          status: 'accepted'
-        })
-      } catch (legacyError) {
-        relations = []
-      }
-    }
-
+    const merged = ([]).concat(relationsV2 || [], relationsLegacy || [])
+    const uniquePairs = {}
     const map = {}
-    relations.forEach((item) => {
+
+    merged.forEach((item) => {
+      const type = String((item && item.type) || '').trim()
+      const status = String((item && item.status) || '').trim()
+      const scene = String((item && item.scene) || '').trim()
+      const requesterId = String((item && item.requesterId) || '').trim()
       const targetId = String((item && item.targetId) || '').trim()
-      if (!targetId) {
+
+      // 兼容历史格式：type 可能为 follow/gold，scene 可能缺失（默认按 gold 处理）
+      const isGoldFollow = (type === 'follow' || type === 'gold')
+        && status === 'accepted'
+        && (!scene || scene === 'gold')
+
+      if (!isGoldFollow || !requesterId || !targetId || requesterId === targetId) {
         return
       }
+
+      const pairKey = `${requesterId}=>${targetId}`
+      if (uniquePairs[pairKey]) {
+        return
+      }
+      uniquePairs[pairKey] = true
       map[targetId] = (map[targetId] || 0) + 1
     })
+
     return map
   } catch (error) {
     return {}

@@ -2,10 +2,12 @@ const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
 const goldPrice = require('../../utils/goldPrice')
 const social = require('../../utils/social')
+const chat = require('../../utils/chat')
 
 Page({
   data: {
     currentPrice: '',
+    lastManualPrice: '',
     user: null,
     priceUpdateTimer: null,
     countdownTimer: null,
@@ -39,17 +41,32 @@ Page({
     platformProfits: [],
     summaryPlatforms: [],
     goldViewUserId: '',
+    goldViewDisplayUser: null,
     isGoldReadOnly: false,
     profileModalVisible: false,
     profileNicknameDraft: '',
     profileSaving: false,
-    messageModalVisible: false,
-    unreadMessageCount: 0,
-    pendingMessageList: []
+    unreadMessageCount: 0
   },
 
   onLoad() {
+    this.applyLastManualPrice()
     this.refreshPage()
+  },
+
+  applyLastManualPrice() {
+    const lastManualPrice = Number(storage.getLastManualGoldPrice())
+    if (!(lastManualPrice > 0)) {
+      return
+    }
+
+    const formatted = lastManualPrice.toFixed(2)
+    this.setData({
+      currentPrice: formatted,
+      lastManualPrice: formatted
+    })
+    goldPrice.setSimulatorBasePrice(lastManualPrice)
+    storage.setGoldPreviewPrice(lastManualPrice)
   },
 
   onShow() {
@@ -71,6 +88,18 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
+    // 访客模式仅使用本地数据，不触发社交与云同步
+    if (user.isGuest) {
+      this.setData({
+        user,
+        goldViewUserId: user.id,
+        isGoldReadOnly: false,
+        unreadMessageCount: 0
+      })
+      this.loadHoldings()
+      return
+    }
+
     // 同步云端关系后再读取视图状态，保证关注列表是最新的
     await social.syncRelationsFromCloud('gold')
 
@@ -80,13 +109,15 @@ Page({
     this.setData({
       user,
       goldViewUserId: targetUserId,
+      goldViewDisplayUser: viewState.targetUser || user,
+      goldViewTargetName: (viewState.targetUser && viewState.targetUser.nickname) || user.nickname,
       isGoldReadOnly: !!viewState.readOnly
     })
 
     const messageCenter = this.buildPendingMessageCenter(user.id)
+    const chatUnreadCount = await chat.getUnreadCount('gold')
     this.setData({
-      unreadMessageCount: messageCenter.count,
-      pendingMessageList: messageCenter.list
+      unreadMessageCount: messageCenter.count + chatUnreadCount
     })
 
     await storage.syncTransactionsFromCloud(targetUserId)
@@ -227,9 +258,27 @@ Page({
     this.setData({
       currentPrice: numericPrice.toFixed(2)
     })
+    storage.setLastManualGoldPrice(numericPrice)
+    storage.setGoldPreviewPrice(numericPrice)
+    this.setData({ lastManualPrice: numericPrice.toFixed(2) })
     this.syncSimulatorBasePriceFromCurrentInput()
     this.loadHoldings()
     wx.showToast({ title: '手动金价已生效', icon: 'none' })
+  },
+
+  onUseLastManualPrice() {
+    const lastManualPrice = Number(this.data.lastManualPrice)
+    if (!(lastManualPrice > 0)) {
+      wx.showToast({ title: '暂无可用手动金价', icon: 'none' })
+      return
+    }
+
+    const formatted = lastManualPrice.toFixed(2)
+    this.setData({ currentPrice: formatted })
+    storage.setGoldPreviewPrice(lastManualPrice)
+    this.syncSimulatorBasePriceFromCurrentInput()
+    this.loadHoldings()
+    wx.showToast({ title: `已应用 ¥${formatted}`, icon: 'none' })
   },
 
   togglePriceMode() {
@@ -418,7 +467,13 @@ Page({
   calculateProfits() {
     const { holdings } = this.data
     const currentPrice = parseFloat(this.data.currentPrice) || 0
-    const totalProfit = holdings.realizedProfit
+    const platformProfitList = Array.isArray(this.data.platformProfits) ? this.data.platformProfits : []
+    const totalProfitFromPlatforms = platformProfitList.reduce((sum, item) => {
+      return sum + (Number(item && item.realizedProfit) || 0)
+    }, 0)
+    const totalProfit = platformProfitList.length > 0
+      ? totalProfitFromPlatforms
+      : (Number(holdings.realizedProfit) || 0)
     const totalReturnRate = holdings.totalInvestment > 0
       ? (totalProfit / holdings.totalInvestment) * 100
       : 0
@@ -774,24 +829,21 @@ Page({
     wx.navigateTo({ url: '/pages/social/social?scene=gold' })
   },
 
-  relationTypeLabel(type) {
-    if (type === 'couple') return '情侣关系'
-    if (type === 'kin') return '亲友关系'
-    return '关注'
+  onReturnToMyHome() {
+    const user = this.data.user
+    if (!user || !user.id) return
+    social.setGoldViewTarget('', user.id)
+    this.refreshPage()
   },
 
   buildPendingMessageCenter(userId) {
     const uid = String(userId || '')
     if (!uid) {
-      return { count: 0, list: [] }
+      return { count: 0 }
     }
 
     const overview = social.getRelationOverview(uid, { scene: 'gold' })
-    const list = (overview.incomingPending || []).map((item) => ({
-      ...item,
-      typeLabel: this.relationTypeLabel(item.type)
-    }))
-    return { count: list.length, list }
+    return { count: (overview.incomingPending || []).length }
   },
 
   onOpenProfileModal() {
@@ -898,33 +950,7 @@ Page({
   },
 
   onOpenMessageCenter() {
-    this.setData({ messageModalVisible: true })
-  },
-
-  onCloseMessageCenter() {
-    this.setData({ messageModalVisible: false })
-  },
-
-  onAcceptMessage(e) {
-    const relationId = e.currentTarget.dataset.id
-    const result = social.acceptRelationRequest(relationId, { scene: 'gold' })
-    if (!result.success) {
-      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
-      return
-    }
-    wx.showToast({ title: '已同意', icon: 'success' })
-    this.refreshPage()
-  },
-
-  onRejectMessage(e) {
-    const relationId = e.currentTarget.dataset.id
-    const result = social.rejectRelationRequest(relationId, { scene: 'gold' })
-    if (!result.success) {
-      wx.showToast({ title: result.message || '处理失败', icon: 'none' })
-      return
-    }
-    wx.showToast({ title: '已拒绝', icon: 'none' })
-    this.refreshPage()
+    wx.navigateTo({ url: '/pages/messages/messages?scene=gold' })
   },
 
   /**
@@ -989,7 +1015,7 @@ Page({
   },
 
   /**
-   * 获取实时金价
+    * 获取模拟金价
    */
   fetchGoldPrice(isAutoRefresh = false, preferredSource) {
     if (isAutoRefresh && !this.data.autoUpdateMode) {
@@ -1028,6 +1054,7 @@ Page({
           countdown: 2,
           internationalPrice
         })
+        storage.setGoldPreviewPrice(result.price)
 
         // 更新收益计算
         this.loadHoldings()

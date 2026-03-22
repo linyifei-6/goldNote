@@ -269,35 +269,6 @@
   margin-bottom: 0;
 }
 
-.section-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-}
-
-.section-item {
-  width: 33.33%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6rpx;
-}
-
-.section-icon {
-  width: 40rpx;
-  height: 40rpx;
-}
-
-.section-label {
-  font-size: 21rpx;
-  color: #64748b;
-}
-
-.section-label.active {
-  color: #c05892;
-  font-weight: 700;
-}
-
 .bottom-nav-spacer {
   height: calc(116rpx + env(safe-area-inset-bottom));
 }

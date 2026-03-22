@@ -14,21 +14,24 @@
   <view wx:if="{{searchKeyword}}">
     <view class="list-wrap" wx:if="{{searchResults.length > 0}}">
       <view class="user-item" wx:for="{{searchResults}}" wx:key="userId">
-        <view class="user-main" data-user-id="{{item.userId}}" bindtap="onAvatarTap">
-          <image class="avatar" src="{{item.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
-          <view class="meta">
-            <text class="name">{{item.nickname}}</text>
-            <text class="desc">ID: {{item.userId}}</text>
-          </view>
-        </view>
-        <view class="actions">
-          <button
-            class="mini-btn {{item.actionType === 'follow' ? 'primary' : 'muted'}}"
-            data-action="{{item.actionType}}"
+        <view class="avatar-wrap">
+          <image class="avatar" src="{{item.avatarUrl || '/images/logo.png'}}" mode="aspectFill" data-user-id="{{item.userId}}" bindtap="onAvatarTap" />
+          <view
+            class="follow-toggle {{item.toggleClass}}"
+            data-action="{{item.toggleAction}}"
             data-relation-id="{{item.relationId}}"
             data-user-id="{{item.userId}}"
-            bindtap="onListAction"
-          >{{item.actionText}}</button>
+            catchtap="onToggleFollow"
+          >{{item.toggleText}}</view>
+        </view>
+        <view class="user-main" data-user-id="{{item.userId}}" data-user-name="{{item.nickname}}" bindtap="onStartChat">
+          <view class="line-top">
+            <text class="name">{{item.nickname}}</text>
+            <text class="time">{{item.lastChatTime || ''}}</text>
+          </view>
+          <view class="line-bottom">
+            <text class="preview">{{item.lastChatPreview}}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -39,23 +42,24 @@
   <view wx:else>
     <view class="list-wrap" wx:if="{{displayList.length > 0}}">
       <view class="user-item" wx:for="{{displayList}}" wx:key="uid">
-        <view class="user-main" data-user-id="{{item.userId}}" bindtap="onAvatarTap">
-          <image class="avatar" src="{{item.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
-          <view class="meta">
-            <text class="name">{{item.nickname}}</text>
-            <text class="desc">{{item.desc}}</text>
-          </view>
-        </view>
-        <view class="actions">
-          <button
-            class="mini-btn {{item.actionType === 'followBack' ? 'primary' : 'muted'}}"
-            wx:if="{{item.actionText}}"
-            data-action="{{item.actionType}}"
+        <view class="avatar-wrap">
+          <image class="avatar" src="{{item.avatarUrl || '/images/logo.png'}}" mode="aspectFill" data-user-id="{{item.userId}}" bindtap="onAvatarTap" />
+          <view
+            class="follow-toggle {{item.toggleClass}}"
+            data-action="{{item.toggleAction}}"
             data-relation-id="{{item.relationId}}"
             data-user-id="{{item.userId}}"
-            bindtap="onListAction"
-          >{{item.actionText}}</button>
-          <text class="more-icon">...</text>
+            catchtap="onToggleFollow"
+          >{{item.toggleText}}</view>
+        </view>
+        <view class="user-main" data-user-id="{{item.userId}}" data-user-name="{{item.nickname}}" bindtap="onStartChat">
+          <view class="line-top">
+            <text class="name">{{item.nickname}}</text>
+            <text class="time">{{item.lastChatTime || ''}}</text>
+          </view>
+          <view class="line-bottom">
+            <text class="preview">{{item.lastChatPreview}}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -63,8 +67,13 @@
   </view>
 
   <!-- 访客主页弹层 -->
-  <view class="modal-mask" wx:if="{{visitorModalVisible}}" bindtap="onCloseVisitorModal"></view>
-  <view class="visitor-modal" wx:if="{{visitorModalVisible && visitorProfile}}">
+  <view class="modal-mask" wx:if="{{visitorModalVisible}}" bindtap="onCloseVisitorModal" catchtouchmove="noop"></view>
+  <view class="visitor-modal" wx:if="{{visitorModalVisible && visitorProfile}}" catchtouchmove="noop">
+    <view class="visitor-top-bar" wx:if="{{visitorProfile}}">
+      <text class="visitor-top-text">当前浏览用户：{{visitorProfile.user.nickname}}</text>
+      <button class="visitor-return-btn" bindtap="onReturnToMyHome">返回我的主页</button>
+    </view>
+    <scroll-view class="visitor-modal-scroll" scroll-y="{{true}}" show-scrollbar="{{false}}" enhanced="{{true}}">
     <view class="visitor-hero">
       <view class="visitor-hero-top">
         <view class="visitor-identity">
@@ -82,7 +91,6 @@
           <text class="visitor-action-text">{{visitorProfile.isSelf ? '本人' : (visitorProfile.isFollowing ? '已关注' : '关注')}}</text>
         </view>
       </view>
-      <view class="visitor-stats-row">
         <view class="visitor-stat">
           <text class="visitor-stat-value">{{visitorProfile.followingCount}}</text>
           <text class="visitor-stat-label">关注</text>
@@ -91,7 +99,6 @@
           <text class="visitor-stat-value">{{visitorProfile.followerCount}}</text>
           <text class="visitor-stat-label">粉丝</text>
         </view>
-      </view>
     </view>
 
     <view class="visitor-summary-card">
@@ -119,8 +126,38 @@
           <text class="visitor-summary-value {{visitorProfile.totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(visitorProfile.totalProfit, 2)}}</text>
         </view>
       </view>
+      <view class="visitor-actions" wx:if="{{visitorProfile.isFollowing || visitorProfile.isSelf}}">
+        <button class="visitor-action-btn" bindtap="onViewVisitorHistory">查看历史记录</button>
+      </view>
       <view class="visitor-locked" wx:else>
         <text class="visitor-locked-text">当前仅展示主页信息，关注后可查看整体收益。</text>
+      </view>
+    </view>
+
+    <view class="visitor-platform-card" wx:if="{{(visitorProfile.isFollowing || visitorProfile.isSelf) && visitorProfile.platformSummary && visitorProfile.platformSummary.length > 0}}">
+      <view class="visitor-platform-title">分平台持仓/收益</view>
+      <view class="visitor-platform-item" wx:for="{{visitorProfile.platformSummary}}" wx:key="platform">
+        <text class="visitor-platform-name">{{item.platform}}</text>
+        <view class="visitor-platform-line">
+          <view class="visitor-platform-meta-wrap">
+            <text class="visitor-platform-tag">仓</text>
+            <text class="visitor-platform-meta">{{fmt.toFixed(item.currentHolding, 2)}}g</text>
+          </view>
+          <view class="visitor-platform-value-wrap">
+            <text class="visitor-platform-value {{item.unrealizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(item.unrealizedProfit, 2)}}</text>
+            <text class="visitor-platform-tag">持</text>
+          </view>
+        </view>
+        <view class="visitor-platform-line">
+          <view class="visitor-platform-meta-wrap">
+            <text class="visitor-platform-tag">均</text>
+            <text class="visitor-platform-meta">¥{{fmt.toFixed(item.avgCost, 2)}}</text>
+          </view>
+          <view class="visitor-platform-value-wrap">
+            <text class="visitor-platform-value {{item.realizedProfit >= 0 ? 'profit-positive' : 'profit-negative'}}">¥{{fmt.toFixed(item.realizedProfit, 2)}}</text>
+            <text class="visitor-platform-tag">累</text>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -132,5 +169,6 @@
     <view class="visitor-close-row">
       <button class="visitor-close-btn" bindtap="onCloseVisitorModal">关闭</button>
     </view>
+    </scroll-view>
   </view>
 </view>

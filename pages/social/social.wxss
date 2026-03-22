@@ -50,10 +50,10 @@
 }
 
 .user-item {
-  padding: 22rpx 20rpx;
+  padding: 20rpx;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
   border-bottom: 1rpx solid #edf0f4;
 }
 
@@ -65,8 +65,16 @@
   min-width: 0;
   flex: 1;
   display: flex;
-  align-items: center;
-  gap: 14rpx;
+  flex-direction: column;
+  gap: 8rpx;
+  padding-top: 2rpx;
+}
+
+.avatar-wrap {
+  position: relative;
+  width: 84rpx;
+  height: 84rpx;
+  flex-shrink: 0;
 }
 
 .avatar {
@@ -75,58 +83,75 @@
   border-radius: 50%;
   background: #e5e7eb;
   flex-shrink: 0;
+  margin-top: 2rpx;
 }
 
-.meta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-}
-
-.name {
-  font-size: 32rpx;
-  color: #111827;
-  font-weight: 700;
-}
-
-.desc {
-  font-size: 24rpx;
-  color: #8a93a3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.actions {
-  margin-left: 14rpx;
+.follow-toggle {
+  position: absolute;
+  right: -2rpx;
+  bottom: -2rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 700;
+  border: 2rpx solid #ffffff;
+  box-sizing: border-box;
+  line-height: 1;
 }
 
-.mini-btn {
-  min-width: 132rpx;
-  height: 58rpx;
-  line-height: 58rpx;
-  border-radius: 999rpx;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1rpx solid #e5e7eb;
-  font-size: 24rpx;
-  padding: 0 22rpx;
-}
-
-.mini-btn.primary {
-  background: #f6b73c;
-  border-color: #f6b73c;
+.follow-toggle.followed {
+  background: #22c55e;
   color: #ffffff;
 }
 
-.mini-btn.muted {
-  background: #ffffff;
-  border-color: #d9dde4;
+.follow-toggle.unfollowed {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.line-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.line-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  font-size: 30rpx;
   color: #111827;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
+.preview {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .more-icon {
@@ -166,7 +191,10 @@
   box-shadow: 0 24rpx 48rpx rgba(95, 69, 33, 0.24);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+}
+
+.visitor-modal-scroll {
+  height: 100%;
 }
 
 .visitor-hero {
@@ -179,6 +207,25 @@
   display: flex;
   justify-content: space-between;
   gap: 16rpx;
+}
+
+.visitor-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+.visitor-top-text {
+  color: rgba(255,255,255,0.95);
+  font-size: 18rpx;
+}
+.visitor-return-btn {
+  background: rgba(255,255,255,0.95);
+  color: #7d5e2e;
+  padding: 8rpx 12rpx;
+  border-radius: 10rpx;
+  font-size: 18rpx;
 }
 
 .visitor-identity {
@@ -373,6 +420,74 @@
   color: #fff;
   font-size: 24rpx;
   line-height: 1.6;
+}
+
+.visitor-platform-card {
+  margin: 14rpx 20rpx 0;
+  border-radius: 20rpx;
+  background: #fffcf5;
+  padding: 16rpx;
+  flex-shrink: 0;
+}
+
+.visitor-platform-title {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #4f3a17;
+  margin-bottom: 10rpx;
+}
+
+.visitor-platform-item {
+  padding: 10rpx 0;
+  border-bottom: 1rpx dashed #eadfcb;
+}
+
+.visitor-platform-item:last-child {
+  border-bottom: none;
+  padding-bottom: 2rpx;
+}
+
+.visitor-platform-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #34281a;
+  margin-bottom: 4rpx;
+}
+
+.visitor-platform-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2rpx;
+}
+
+.visitor-platform-meta-wrap,
+.visitor-platform-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.visitor-platform-tag {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 8rpx;
+  background: #efe7d7;
+  color: #8b6f43;
+  font-size: 20rpx;
+  line-height: 28rpx;
+  text-align: center;
+}
+
+.visitor-platform-meta {
+  font-size: 22rpx;
+  color: #7f6440;
+}
+
+.visitor-platform-value {
+  font-size: 40rpx;
+  font-weight: 700;
 }
 
 .visitor-close-row {

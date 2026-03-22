@@ -4,8 +4,8 @@
     show-message-badge="{{true}}"
     unread-message-count="{{unreadMessageCount}}"
     bindavatar="onOpenProfileModal"
-    bindselector="onGoSelector"
-    bindmessage="onOpenMessageCenter"
+    bindopenselector="onGoSelector"
+    bindopenmessage="onOpenMessageCenter"
     bindsocial="onGoSocial"
   />
 
@@ -28,12 +28,7 @@
   </view>
 
   <view class="card nav-card">
-    <view class="section-nav">
-      <view class="section-item" wx:for="{{sectionTabs}}" wx:key="key" data-section="{{item.key}}" bindtap="onSwitchSection">
-        <image class="section-icon" src="{{activeSection === item.key ? item.activeIcon : item.icon}}" mode="aspectFit" />
-        <text class="section-label {{activeSection === item.key ? 'active' : ''}}">{{item.label}}</text>
-      </view>
-    </view>
+    <note-bottom-nav items="{{sectionTabs}}" active-key="{{activeSection}}" mode="card" bindchange="onSwitchSection" />
   </view>
 
   <view class="card" wx:if="{{showBasicInfoEditor}}">
@@ -309,22 +304,6 @@
     <view class="profile-safe-actions">
       <button class="profile-save-btn" bindtap="onSaveProfileNickname">保存昵称</button>
       <button class="profile-action-btn neutral" bindtap="onCloseProfileModal">关闭</button>
-    </view>
-  </view>
-
-  <view class="modal-mask" wx:if="{{messageModalVisible}}" bindtap="onCloseMessageCenter"></view>
-  <view class="modal-card profile-modal-card" wx:if="{{messageModalVisible}}">
-    <view class="section-title">未读消息</view>
-    <view class="empty" wx:if="{{pendingMessageList.length === 0}}">暂无待处理申请</view>
-    <view class="couple-item" wx:for="{{pendingMessageList}}" wx:key="id">
-      <view class="couple-item-title">{{item.user.nickname}} 申请 {{item.typeLabel}}</view>
-      <view class="btn-row">
-        <button class="mini-btn" data-id="{{item.id}}" bindtap="onRejectMessage">拒绝</button>
-        <button class="mini-btn confirm" data-id="{{item.id}}" bindtap="onAcceptMessage">同意</button>
-      </view>
-    </view>
-    <view class="btn-row">
-      <button class="mini-btn" bindtap="onCloseMessageCenter">关闭</button>
     </view>
   </view>
 

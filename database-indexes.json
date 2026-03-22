@@ -69,6 +69,178 @@
           "direction": "desc"
         }
       ]
+    },
+    {
+      "collectionName": "workout_sessions",
+      "indexName": "userId_workoutDate",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "workoutDate",
+          "direction": "desc"
+        }
+      ]
+    },
+    {
+      "collectionName": "workout_sessions",
+      "indexName": "userId_updatedAt",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "updatedAt",
+          "direction": "desc"
+        }
+      ]
+    },
+    {
+      "collectionName": "workout_weight_records",
+      "indexName": "userId_recordDate",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "recordDate",
+          "direction": "desc"
+        }
+      ]
+    },
+    {
+      "collectionName": "workout_plans",
+      "indexName": "userId_weekStartDate",
+      "keys": [
+        {
+          "name": "userId",
+          "direction": "asc"
+        },
+        {
+          "name": "weekStartDate",
+          "direction": "desc"
+        }
+      ]
+    },
+    {
+      "collectionName": "social_relations",
+      "indexName": "scene_requester_status",
+      "keys": [
+        {
+          "name": "scene",
+          "direction": "asc"
+        },
+        {
+          "name": "requesterId",
+          "direction": "asc"
+        },
+        {
+          "name": "status",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "social_relations",
+      "indexName": "scene_target_status",
+      "keys": [
+        {
+          "name": "scene",
+          "direction": "asc"
+        },
+        {
+          "name": "targetId",
+          "direction": "asc"
+        },
+        {
+          "name": "status",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "social_relations",
+      "indexName": "id",
+      "keys": [
+        {
+          "name": "id",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "social_threads",
+      "indexName": "scene_memberA",
+      "keys": [
+        {
+          "name": "scene",
+          "direction": "asc"
+        },
+        {
+          "name": "memberA",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "social_threads",
+      "indexName": "scene_memberB",
+      "keys": [
+        {
+          "name": "scene",
+          "direction": "asc"
+        },
+        {
+          "name": "memberB",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "social_threads",
+      "indexName": "id",
+      "keys": [
+        {
+          "name": "id",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "social_messages",
+      "indexName": "threadId_createdAtMs",
+      "keys": [
+        {
+          "name": "threadId",
+          "direction": "asc"
+        },
+        {
+          "name": "createdAtMs",
+          "direction": "asc"
+        }
+      ]
+    },
+    {
+      "collectionName": "social_messages",
+      "indexName": "threadId_sender_clientMsgId",
+      "keys": [
+        {
+          "name": "threadId",
+          "direction": "asc"
+        },
+        {
+          "name": "senderId",
+          "direction": "asc"
+        },
+        {
+          "name": "clientMsgId",
+          "direction": "asc"
+        }
+      ]
     }
   ]
 }

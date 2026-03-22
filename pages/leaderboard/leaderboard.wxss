@@ -321,6 +321,10 @@
   flex-direction: column;
 }
 
+.visitor-modal-scroll {
+  height: 100%;
+}
+
 .visitor-hero {
   padding: 28rpx 24rpx 22rpx;
   background: linear-gradient(160deg, #f6c668 0%, #d2932c 100%);
@@ -330,6 +334,25 @@
   display: flex;
   justify-content: space-between;
   gap: 16rpx;
+}
+
+.visitor-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+.visitor-top-text {
+  color: rgba(255,255,255,0.95);
+  font-size: 18rpx;
+}
+.visitor-return-btn {
+  background: rgba(255,255,255,0.95);
+  color: #7d5e2e;
+  padding: 8rpx 12rpx;
+  border-radius: 10rpx;
+  font-size: 18rpx;
 }
 
 .visitor-identity {
@@ -517,6 +540,74 @@
   color: #fff;
   font-size: 24rpx;
   line-height: 1.6;
+}
+
+.visitor-platform-card {
+  margin: 14rpx 20rpx 0;
+  border-radius: 20rpx;
+  background: #fffcf5;
+  padding: 16rpx;
+  flex-shrink: 0;
+}
+
+.visitor-platform-title {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #4f3a17;
+  margin-bottom: 10rpx;
+}
+
+.visitor-platform-item {
+  padding: 10rpx 0;
+  border-bottom: 1rpx dashed #eadfcb;
+}
+
+.visitor-platform-item:last-child {
+  border-bottom: none;
+  padding-bottom: 2rpx;
+}
+
+.visitor-platform-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #34281a;
+  margin-bottom: 4rpx;
+}
+
+.visitor-platform-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2rpx;
+}
+
+.visitor-platform-meta-wrap,
+.visitor-platform-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.visitor-platform-tag {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 8rpx;
+  background: #efe7d7;
+  color: #8b6f43;
+  font-size: 20rpx;
+  line-height: 28rpx;
+  text-align: center;
+}
+
+.visitor-platform-meta {
+  font-size: 22rpx;
+  color: #7f6440;
+}
+
+.visitor-platform-value {
+  font-size: 40rpx;
+  font-weight: 700;
 }
 
 .visitor-close-row {

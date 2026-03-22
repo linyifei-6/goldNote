@@ -1,0 +1,131 @@
+.container {
+  min-height: 100vh;
+  padding: 24rpx;
+  padding-bottom: calc(168rpx + env(safe-area-inset-bottom));
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16rpx;
+  border: 1rpx solid #dcfce7;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #065f46;
+  margin-bottom: 14rpx;
+}
+
+.edit-tip {
+  margin-top: -2rpx;
+  margin-bottom: 12rpx;
+  color: #0f766e;
+  background: #ecfeff;
+  border: 1rpx solid #a5f3fc;
+  border-radius: 10rpx;
+  padding: 10rpx 12rpx;
+  font-size: 20rpx;
+}
+
+.field {
+  margin-bottom: 12rpx;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.chip {
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid #d1d5db;
+  color: #64748b;
+  font-size: 22rpx;
+}
+
+.chip.active {
+  color: #0f766e;
+  border-color: #5eead4;
+  background: #f0fdfa;
+  font-weight: 600;
+}
+
+.label {
+  display: block;
+  font-size: 22rpx;
+  color: #6b7280;
+  margin-bottom: 6rpx;
+}
+
+.input {
+  width: 100%;
+  height: 72rpx;
+  border-radius: 12rpx;
+  background: #f3f4f6;
+  padding: 0 14rpx;
+  box-sizing: border-box;
+}
+
+.save-btn {
+  margin-top: 14rpx;
+  background: #10b981;
+  color: #ffffff;
+  border-radius: 14rpx;
+}
+
+.form-actions {
+  margin-top: 14rpx;
+  display: flex;
+  gap: 12rpx;
+}
+
+.form-actions .save-btn {
+  margin-top: 0;
+  flex: 1;
+}
+
+.cancel-btn {
+  flex: 1;
+  background: #ffffff;
+  color: #64748b;
+  border: 1rpx solid #cbd5e1;
+  border-radius: 14rpx;
+}
+
+.record-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 23rpx;
+  color: #334155;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #eef2f7;
+}
+
+.record-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.record-sub {
+  color: #94a3b8;
+  font-size: 20rpx;
+}
+
+.record-del {
+  flex-shrink: 0;
+  color: #dc2626;
+  border: 1rpx solid #fecaca;
+  background: #fef2f2;
+  border-radius: 999rpx;
+  padding: 6rpx 16rpx;
+  font-size: 20rpx;
+}

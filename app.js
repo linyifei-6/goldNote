@@ -1,4 +1,5 @@
 ﻿const storage = require('./utils/storage')
+const goldPrice = require('./utils/goldPrice')
 
 App({
   onLaunch() {
@@ -11,9 +12,10 @@ App({
       console.warn('当前基础库不支持云能力')
     }
 
-    const currentUser = storage.getCurrentUser()
-    if (currentUser && !currentUser.isWechatAuth) {
-      storage.logout()
+    const lastManualPrice = Number(storage.getLastManualGoldPrice())
+    if (lastManualPrice > 0) {
+      goldPrice.setSimulatorBasePrice(lastManualPrice)
+      storage.setGoldPreviewPrice(lastManualPrice)
     }
 
     this.globalData = {

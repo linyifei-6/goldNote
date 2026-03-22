@@ -1,6 +1,7 @@
 const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
 const social = require('../../utils/social')
+const chat = require('../../utils/chat')
 
 Page({
   data: {
@@ -24,14 +25,16 @@ Page({
     goldViewIndex: 0,
     goldViewUserId: '',
     goldViewTargetName: '',
+    goldViewDisplayUser: null,
     isGoldReadOnly: false,
     profileModalVisible: false,
     profileNicknameDraft: '',
-    profileSaving: false
+    profileSaving: false,
+    unreadMessageCount: 0
   },
 
   onLoad() {
-    const today = new Date().toISOString().split('T')[0]
+    const today = storage.getBeijingDateString()
     this.setData({
       today,
       date: today
@@ -47,6 +50,16 @@ Page({
     const user = auth.ensureLogin()
     if (!user) return
 
+    if (user.isGuest) {
+      this.setData({
+        user,
+        unreadMessageCount: 0
+      })
+      this.loadCurrentHolding()
+      this.loadRecentTransactions()
+      return
+    }
+
     // 同步云端关系后再读取视图状态，保证关注列表是最新的
     await social.syncRelationsFromCloud('gold')
 
@@ -59,7 +72,14 @@ Page({
       goldViewIndex: Math.max(0, (viewState.readableUsers || []).findIndex((item) => item && item.id === targetUserId)),
       goldViewUserId: targetUserId,
       goldViewTargetName: (viewState.targetUser && viewState.targetUser.nickname) || user.nickname,
+      goldViewDisplayUser: viewState.targetUser || user,
       isGoldReadOnly: !!viewState.readOnly
+    })
+
+    const messageCenter = this.buildPendingMessageCenter(user.id)
+    const chatUnreadCount = await chat.getUnreadCount('gold')
+    this.setData({
+      unreadMessageCount: messageCenter.count + chatUnreadCount
     })
 
     await storage.syncTransactionsFromCloud(targetUserId)
@@ -298,7 +318,29 @@ Page({
   },
 
   onGoSocial() {
+    // 仅好友图标走该入口，消息图标必须绑定 onOpenMessageCenter。
     wx.navigateTo({ url: '/pages/social/social?scene=gold' })
+  },
+
+  onReturnToMyHome() {
+    const user = this.data.user
+    if (!user || !user.id) return
+    social.setGoldViewTarget('', user.id)
+    this.refreshPage()
+  },
+
+  buildPendingMessageCenter(userId) {
+    const uid = String(userId || '')
+    if (!uid) {
+      return { count: 0 }
+    }
+
+    const overview = social.getRelationOverview(uid, { scene: 'gold' })
+    return { count: (overview.incomingPending || []).length }
+  },
+
+  onOpenMessageCenter() {
+    wx.navigateTo({ url: '/pages/messages/messages?scene=gold' })
   },
 
   onOpenProfileModal() {
