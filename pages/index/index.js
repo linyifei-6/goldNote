@@ -141,7 +141,8 @@ Page({
     }
 
     const selectedPlatform = platformOptions[curvePlatformIndex]
-    const rawCurvePoints = storage.buildProfitCurve(transactions, selectedPlatform)
+    const actualSelectedPlatform = selectedPlatform === '自定义' ? '其他' : selectedPlatform
+    const rawCurvePoints = storage.buildProfitCurve(transactions, actualSelectedPlatform)
     const allCurvePoints = this.buildDailyCumulativeCurve(rawCurvePoints)
     const cumulativeCurvePoints = this.filterCurveBySelectedRange(allCurvePoints)
     const platformAnalysis = this.buildPlatformAnalysis(transactions, currentPriceNum)
@@ -333,7 +334,8 @@ Page({
   },
 
   getPlatformOptions(transactions) {
-    return ['全部', ...storage.PLATFORMS]
+    const options = storage.getPlatformOptions(this.data.goldViewUserId)
+    return ['全部', ...options]
   },
 
   filterCurveBySelectedRange(points) {
@@ -383,11 +385,14 @@ Page({
     const holdings = []
     const profits = []
 
-    storage.PLATFORMS.forEach(platform => {
+    // 聚合交易中出现的所有平台（包含自定义），按交易数据计算持仓与收益
+    const platformSet = new Set(
+      (list || []).map(tx => String(tx.platform || '').trim()).filter(Boolean)
+    )
+
+    Array.from(platformSet).forEach(platform => {
       const platformTx = list.filter(tx => tx.platform === platform)
-      if (platformTx.length === 0) {
-        return
-      }
+      if (platformTx.length === 0) return
 
       const result = storage.calculateHoldings(platformTx)
       const unrealizedProfit = currentPrice > 0

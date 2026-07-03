@@ -1,0 +1,51 @@
+
+<view class="card {{match && match.status === 'finished' ? 'finished' : ''}}" bindtap="onTap">
+  <view class="match-header">
+    <text class="match-time">{{match.matchDate}} {{match.matchTime}}</text>
+    <text class="match-status status-{{match.status}}">
+      {{match.status === 'scheduled' ? '未开始' : match.status === 'live' ? '比赛中' : '已结束'}}
+    </text>
+  </view>
+  <view class="match-teams">
+    <view class="team team-a">
+      <text class="name">{{teamA}}</text>
+    </view>
+    <view class="vs-section">
+      <block wx:if="{{match && match.status === 'finished' && match.scoreA !== null}}">
+        <text class="score">{{match.scoreA}} : {{match.scoreB}}</text>
+      </block>
+      <block wx:else>
+        <text class="vs-txt">VS</text>
+      </block>
+      <block wx:if="{{match && match.scoreAPenalty !== undefined && match.scoreAPenalty !== null}}">
+        <text class="penalty">(点球 {{match.scoreAPenalty}}-{{match.scoreBPenalty}})</text>
+      </block>
+    </view>
+    <view class="team team-b">
+      <text class="name">{{teamB}}</text>
+    </view>
+  </view>
+  <view class="match-footer">
+    <block wx:if="{{prediction}}">
+      <text class="predicted">已预测 {{prediction.predictedWinner === 'teamA' ? teamA : prediction.predictedWinner === 'teamB' ? teamB : '平局'}}</text>
+      <block wx:if="{{prediction.stakePoints > 0}}">
+        <text class="stake"> 下注 {{prediction.stakePoints}}分</text>
+      </block>
+      <block wx:if="{{prediction.status === 'scored'}}">
+        <text class="points"> 得{{prediction.points.total}}分</text>
+        <block wx:if="{{prediction.payout}}">
+          <text class="profit {{prediction.payout.profit >= 0 ? 'green' : 'red'}}">
+            {{prediction.payout.profit >= 0 ? '+' : ''}}{{prediction.payout.profit}}分
+          </text>
+        </block>
+      </block>
+    </block>
+    <block wx:else>
+      <text class="unpredicted" wx:if="{{match && match.status === 'scheduled'}}">点击竞猜</text>
+      <text class="odds-preview" wx:if="{{match && match.status === 'scheduled' && match.odds}}">
+        赔率 {{match.odds.teamA}} / {{match.odds.draw > 0 ? match.odds.draw : '无平'}} / {{match.odds.teamB}}
+      </text>
+      <text class="venue">{{match.venue}}</text>
+    </block>
+  </view>
+</view>

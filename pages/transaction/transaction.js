@@ -11,6 +11,10 @@ Page({
     weight: '',
     platforms: [...storage.PLATFORMS],
     platformIndex: 0,
+    platformName: '',
+    platformFeeRate: '',
+    showPlatformNameInput: false,
+    showPlatformFeeInput: false,
     feeRateText: '0.4%',
     date: '',
     today: '',
@@ -107,7 +111,7 @@ Page({
   },
 
   getPlatformOptions(transactions) {
-    return [...storage.PLATFORMS]
+    return storage.getPlatformOptions(this.data.goldViewUserId)
   },
 
   loadCurrentHolding() {
@@ -119,15 +123,46 @@ Page({
       platformIndex = 0
     }
 
-    const platformName = platformOptions[platformIndex]
+    const selectedPlatform = platformOptions[platformIndex]
 
     const holdings = storage.calculateHoldings(transactions)
-    const platformTransactions = transactions.filter(item => item.platform === platformName)
+    // 计算平台持仓：如果 UI 选中 '自定义'，则匹配存储中 '其他'（历史数据）；否则匹配平台名或自定义名
+    const platformTransactions = selectedPlatform === '自定义'
+      ? transactions.filter(item => String(item.platform || '') === '其他' || !String(item.platform || '').trim())
+      : transactions.filter(item => item.platform === selectedPlatform)
     const platformHoldings = storage.calculateHoldings(platformTransactions)
+
+    // 处理平台名与默认手续费展示：自定义与自定义命名平台默认手续费为 0
+    let platformNameValue = ''
+    let platformFeeRateValue = 0.004
+    let showNameInput = false
+    let showFeeInput = false
+
+    if (selectedPlatform === '自定义') {
+      platformNameValue = ''
+      platformFeeRateValue = '0'
+      showNameInput = true
+      showFeeInput = true
+    } else if (!storage.PLATFORMS.includes(selectedPlatform)) {
+      // 这是已存在的自定义命名平台（例如用户之前新增的银行）
+      platformNameValue = selectedPlatform
+      platformFeeRateValue = '0'
+      showNameInput = false
+      showFeeInput = true
+    } else {
+      platformNameValue = selectedPlatform
+      platformFeeRateValue = selectedPlatform === '招商' ? '0' : '0.004'
+      showNameInput = false
+      showFeeInput = false
+    }
 
     this.setData({
       platforms: platformOptions,
       platformIndex,
+      platformName: platformNameValue,
+      platformFeeRate: platformFeeRateValue,
+      showPlatformNameInput: showNameInput,
+      showPlatformFeeInput: showFeeInput,
       currentHolding: holdings.currentHolding,
       platformHolding: platformHoldings.currentHolding
     })
@@ -181,8 +216,39 @@ Page({
   },
 
   onPlatformChange(e) {
+    const platformIndex = parseInt(e.detail.value, 10)
+    if (Number.isNaN(platformIndex)) return
+    const platformOptions = this.data.platforms || []
+    const selectedPlatform = platformOptions[platformIndex]
+
+    let platformName = ''
+    let platformFeeRate = 0.004
+    let showNameInput = false
+    let showFeeInput = false
+
+    if (selectedPlatform === '自定义') {
+      platformName = ''
+      platformFeeRate = 0
+      showNameInput = true
+      showFeeInput = true
+    } else if (!storage.PLATFORMS.includes(selectedPlatform)) {
+      platformName = selectedPlatform
+      platformFeeRate = 0
+      showNameInput = false
+      showFeeInput = true
+    } else {
+      platformName = selectedPlatform
+      platformFeeRate = selectedPlatform === '招商' ? 0 : 0.004
+      showNameInput = false
+      showFeeInput = false
+    }
+
     this.setData({
-      platformIndex: parseInt(e.detail.value, 10)
+      platformIndex,
+      platformName,
+      platformFeeRate,
+      showPlatformNameInput: showNameInput,
+      showPlatformFeeInput: showFeeInput
     })
     this.loadCurrentHolding()
     this.calculateFees()
@@ -191,7 +257,38 @@ Page({
   onPlatformTap(e) {
     const platformIndex = parseInt(e.currentTarget.dataset.index, 10)
     if (Number.isNaN(platformIndex)) return
-    this.setData({ platformIndex })
+    const platformOptions = this.data.platforms || []
+    const selectedPlatform = platformOptions[platformIndex]
+
+    let platformName = ''
+    let platformFeeRate = 0.004
+    let showNameInput = false
+    let showFeeInput = false
+
+    if (selectedPlatform === '自定义') {
+      platformName = ''
+      platformFeeRate = 0
+      showNameInput = true
+      showFeeInput = true
+    } else if (!storage.PLATFORMS.includes(selectedPlatform)) {
+      platformName = selectedPlatform
+      platformFeeRate = 0
+      showNameInput = false
+      showFeeInput = true
+    } else {
+      platformName = selectedPlatform
+      platformFeeRate = selectedPlatform === '招商' ? 0 : 0.004
+      showNameInput = false
+      showFeeInput = false
+    }
+
+    this.setData({
+      platformIndex,
+      platformName,
+      platformFeeRate,
+      showPlatformNameInput: showNameInput,
+      showPlatformFeeInput: showFeeInput
+    })
     this.loadCurrentHolding()
     this.calculateFees()
   },
@@ -202,13 +299,42 @@ Page({
     })
   },
 
+  onPlatformNameInput(e) {
+    this.setData({
+      platformName: String(e.detail.value || '').trim().slice(0, 20)
+    })
+  },
+
+  onPlatformFeeRateInput(e) {
+    const raw = String(e.detail.value || '').trim()
+    this.setData({ platformFeeRate: raw })
+    this.calculateFees()
+  },
+
   calculateFees() {
-    const { price, weight, transactionType, platforms, platformIndex } = this.data
+    const { price, weight, transactionType, platforms, platformIndex, platformFeeRate } = this.data
     const priceNum = parseFloat(price) || 0
     const weightNum = parseFloat(weight) || 0
     const amount = priceNum * weightNum
     const selectedPlatform = platforms[platformIndex]
-    const feeRate = selectedPlatform === '招商' ? 0 : 0.004
+
+    let feeRate
+    let feeRateIsValid = false
+    if (platformFeeRate !== undefined && platformFeeRate !== null && String(platformFeeRate).trim() !== '') {
+      feeRate = Number(platformFeeRate)
+      feeRateIsValid = Number.isFinite(feeRate) && feeRate >= 0
+    }
+
+    if (!feeRateIsValid) {
+      if (selectedPlatform === '招商') {
+        feeRate = 0
+      } else if (!storage.PLATFORMS.includes(selectedPlatform) || selectedPlatform === '自定义') {
+        // 自定义平台默认 0
+        feeRate = 0
+      } else {
+        feeRate = 0.004
+      }
+    }
 
     if (transactionType === 'sell') {
       const feeAmount = amount * feeRate
@@ -216,7 +342,7 @@ Page({
       this.setData({
         feeAmount,
         netAmount,
-        feeRateText: feeRate === 0 ? '0%' : '0.4%',
+        feeRateText: `${(feeRate * 100).toFixed(2)}%`,
         transactionAmount: 0,
         displayAmount: amount
       })
@@ -224,7 +350,7 @@ Page({
       this.setData({
         feeAmount: 0,
         netAmount: -amount,
-        feeRateText: feeRate === 0 ? '0%' : '0.4%',
+        feeRateText: `${(feeRate * 100).toFixed(2)}%`,
         transactionAmount: amount,
         displayAmount: amount
       })
@@ -262,7 +388,18 @@ Page({
       return
     }
 
-    const platformName = platforms[platformIndex]
+    const selectedPlatform = platforms[platformIndex]
+    let platformToSave = ''
+    if (selectedPlatform === '自定义') {
+      const nameInput = String(this.data.platformName || '').trim()
+      platformToSave = nameInput || '其他'
+    } else {
+      platformToSave = selectedPlatform
+    }
+
+    const rawFee = String(this.data.platformFeeRate || '')
+    const feeRateRaw = rawFee !== '' ? Number(rawFee) : NaN
+    const feeRateValid = rawFee !== '' && Number.isFinite(feeRateRaw) && feeRateRaw >= 0
 
     if (transactionType === 'sell' && weightNum > platformHolding + 1e-8) {
       wx.showModal({
@@ -274,13 +411,18 @@ Page({
     }
 
     const selectedDate = date || today
-    const result = await storage.saveTransactionAsync({
+    const payload = {
       type: transactionType,
       price: priceNum,
       weight: weightNum,
-      platform: platformName,
+      platform: platformToSave,
       date: selectedDate
-    })
+    }
+    if (feeRateValid) {
+      payload.fee_rate = feeRateRaw
+    }
+
+    const result = await storage.saveTransactionAsync(payload)
 
     if (!result.success) {
       wx.showToast({

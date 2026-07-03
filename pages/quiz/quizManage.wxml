@@ -1,0 +1,38 @@
+<view class="container">
+  <view class="hero">
+    <text class="title">赛程维护</text>
+    <text class="subtitle">先拉取最新赛程，确认后再发布到正式赛程</text>
+  </view>
+
+  <view class="card">
+    <view class="card-title">数据来源</view>
+    <input class="url-input" placeholder="可输入赛程 JSON 地址" value="{{sourceUrl}}" bindinput="onSourceUrlInput" />
+    <textarea class="json-input" placeholder="或直接粘贴赛程 JSON" value="{{rawJsonText}}" bindinput="onRawJsonInput"></textarea>
+    <view class="button-row">
+      <button class="action-btn primary" loading="{{loadingPull}}" bindtap="onPullLatest">拉取最新赛程</button>
+      <button class="action-btn ghost" loading="{{loadingRestore}}" bindtap="onRestoreBundled">恢复内置赛程</button>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">草稿赛程</view>
+    <view class="info-line" wx:if="{{draft}}">版本 {{draft.version}} · {{draft.roundCount}} 轮 · {{draft.matchCount}} 场</view>
+    <view class="info-line muted" wx:if="{{draft}}">更新：{{draft.updatedAt}}<text wx:if="{{draft.sourceName}}"> · 来源：{{draft.sourceName}}</text></view>
+    <view class="empty" wx:else>暂无草稿，先拉取或导入赛程</view>
+    <button class="action-btn publish" loading="{{loadingPublish}}" bindtap="onPublish">发布赛程</button>
+  </view>
+
+  <view class="card">
+    <view class="card-title">正式赛程</view>
+    <view class="info-line" wx:if="{{active}}">版本 {{active.version}} · {{active.roundCount}} 轮 · {{active.matchCount}} 场</view>
+    <view class="info-line muted" wx:if="{{active}}">发布时间：{{active.publishedAt || active.updatedAt}}</view>
+    <view class="info-line muted" wx:if="{{active && active.sourceUrl}}">源地址：{{active.sourceUrl}}</view>
+    <view class="empty" wx:else>暂无正式赛程</view>
+  </view>
+
+  <view class="status-bar" wx:if="{{statusText}}">{{statusText}}</view>
+
+  <view class="footer-actions">
+    <button class="action-btn secondary" bindtap="onGoBack">返回赛程页</button>
+  </view>
+</view>

@@ -1,0 +1,88 @@
+<wxs src="../../utils/fmt.wxs" module="fmt" />
+<view class="container">
+  <view class="match-banner" wx:if="{{match}}">
+    <text class="match-meta">{{match.matchDate}} {{match.matchTime}}</text>
+    <view class="teams">
+      <view class="team side-a">
+        <text class="name">{{teamA}}</text>
+      </view>
+      <text class="vstext">VS</text>
+      <view class="team side-b">
+        <text class="name">{{teamB}}</text>
+      </view>
+    </view>
+    <text class="venue">{{match.venue}}</text>
+  </view>
+
+  <block wx:if="{{isEdit && existingPrediction}}">
+    <view class="section current-pred">
+      <view class="section-title">当前预测</view>
+      <text class="pred-text">
+        胜方: {{existingPrediction.predictedWinner === 'teamA' ? teamA : existingPrediction.predictedWinner === 'teamB' ? teamB : '平局'}}
+        <block wx:if="{{existingPrediction.predictedScoreA != null}}"> {{existingPrediction.predictedScoreA}}-{{existingPrediction.predictedScoreB}}</block>
+        <block wx:if="{{existingPrediction.stakePoints > 0}}"> | 下注 {{existingPrediction.stakePoints}}分</block>
+        <block wx:if="{{existingPrediction.status === 'scored'}}"> | 得{{existingPrediction.points.total}}分</block>
+      </text>
+      <text class="pred-hint">修改预测将覆盖原记录</text>
+    </view>
+  </block>
+
+  <view class="section">
+    <view class="section-title">赔率</view>
+    <text class="market-text" wx:if="{{marketText}}">{{marketText}}</text>
+    <view class="odds-row" wx:if="{{odds}}">
+      <view class="odd-item {{prediction.predictedWinner === 'teamA' ? 'selected' : ''}}" bindtap="selectWinner" data-winner="teamA">
+        <text class="odd-label">{{teamA}}</text>
+        <text class="odd-value">{{odds.teamA}}</text>
+      </view>
+      <block wx:if="{{allowDraw}}">
+        <view class="odd-item {{prediction.predictedWinner === 'draw' ? 'selected' : ''}}" bindtap="selectWinner" data-winner="draw">
+          <text class="odd-label">平局</text>
+          <text class="odd-value">{{odds.draw}}</text>
+        </view>
+      </block>
+      <view class="odd-item {{prediction.predictedWinner === 'teamB' ? 'selected' : ''}}" bindtap="selectWinner" data-winner="teamB">
+        <text class="odd-label">{{teamB}}</text>
+        <text class="odd-value">{{odds.teamB}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">比分预测（可选）</view>
+    <view class="score-row">
+      <input class="score-input" type="digit" placeholder="0" value="{{prediction.predictedScoreA}}" bindinput="onScoreAInput" maxlength="2" />
+      <text class="score-colon">:</text>
+      <input class="score-input" type="digit" placeholder="0" value="{{prediction.predictedScoreB}}" bindinput="onScoreBInput" maxlength="2" />
+    </view>
+  </view>
+
+  <view class="section" wx:if="{{pool}}">
+    <view class="section-title">下注积分</view>
+    <view class="pool-info">
+      <text>可用: {{pool.totalPoints - pool.lockedInBets}}分</text>
+      <text>总资产: {{pool.totalPoints}}分</text>
+    </view>
+    <slider min="0" max="{{maxBet}}" step="10" value="{{stakeValue}}" bindchange="onStakeChange" show-value="{{false}}" />
+    <view class="stake-row">
+      <text class="stake-label">下注: {{stakeValue}}分</text>
+      <text class="potential" wx:if="{{stakeValue > 0 && selectedOdds > 0}}">预期回报: {{potentialReturnText}}分</text>
+    </view>
+  </view>
+
+  <view class="section summary" wx:if="{{stakeValue > 0 && selectedOdds > 0}}">
+    <text class="summary-label">结算预览</text>
+    <text class="summary-line">赔率: {{selectedOdds}} x 比分加成 {{scoreMult}}</text>
+    <text class="summary-line">下注: {{stakeValue}}分</text>
+    <text class="summary-line highlight">若命中预期回报: {{expectedReturn}}分</text>
+    <text class="summary-line">净盈亏: {{netProfitText}}分</text>
+  </view>
+
+  <view class="knockout-tip" wx:if="{{match && match.isKnockout}}">
+    <text>淘汰赛仅支持主队胜 / 客队胜，不支持平局预测。</text>
+  </view>
+
+  <button class="btn-submit" bindtap="submitPrediction" loading="{{submitting}}" disabled="{{!prediction.predictedWinner}}">
+    {{isEdit ? '更新预测' : '提交预测'}}
+  </button>
+</view>

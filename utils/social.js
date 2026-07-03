@@ -874,7 +874,16 @@ function buildGoldPlatformSummary(targetUserId, currentPrice) {
   const holdingMap = {}
   const profitMap = {}
 
-  storage.PLATFORMS.forEach((platform) => {
+  // 聚合所有在交易中出现的平台（支持自定义平台名）
+  const platformSet = new Set(
+    (transactions || [])
+      .map(tx => String(tx.platform || '').trim())
+      .filter(Boolean)
+  )
+
+  const platforms = Array.from(platformSet)
+
+  platforms.forEach((platform) => {
     const platformTx = transactions.filter((tx) => tx.platform === platform)
     if (platformTx.length === 0) {
       return
@@ -892,11 +901,6 @@ function buildGoldPlatformSummary(targetUserId, currentPrice) {
         : 0
     }
   })
-
-  const platforms = [...new Set([
-    ...Object.keys(holdingMap),
-    ...Object.keys(profitMap)
-  ])]
 
   const orderMap = {
     民生: 0,

@@ -49,7 +49,9 @@ function normalizeCloudUser(cloudUser, fallbackProfile) {
 }
 
 /**
- * 请求微信授权信息
+ * 【已废弃】请求微信授权信息
+ * wx.getUserProfile 自 2023年4月起被微信官方废弃，不再返回真实用户信息
+ * @deprecated 使用 cloudLoginDirect 替代
  * @returns {Promise<Object>} userInfo
  */
 function requestWechatProfile() {
@@ -91,6 +93,42 @@ function requestWechatProfileWithFallback() {
         fail: () => reject(error)
       })
     })
+  })
+}
+
+/**
+ * 直接通过云函数完成微信登录（无需 wx.getUserProfile）
+ * 云函数会自动获取用户的 OPENID，无需前端传 code
+ * @param {string} nickname 用户输入的昵称（可选）
+ * @param {string} avatarUrl 用户选择的头像 URL（可选）
+ * @returns {Promise<Object>} user 用户对象
+ */
+function cloudLoginDirect(nickname, avatarUrl) {
+  if (!(wx && wx.cloud && typeof wx.cloud.callFunction === 'function')) {
+    return Promise.reject(new Error('云能力不可用，无法完成微信身份登录'))
+  }
+
+  return wx.cloud.callFunction({
+    name: 'login',
+    data: {
+      keepNickname: true,
+      userInfo: {
+        nickname: nickname || '微信用户',
+        avatarUrl: avatarUrl || ''
+      }
+    }
+  }).then((res) => {
+    const result = (res && res.result) || {}
+    if (!result.success || !result.user) {
+      throw new Error(result.message || '微信登录失败')
+    }
+
+    const normalizedUser = normalizeCloudUser(result.user, { nickname: nickname })
+    if (!normalizedUser) {
+      throw new Error('登录返回的用户数据无效')
+    }
+
+    return storage.loginByWechat(normalizedUser)
   })
 }
 
@@ -138,7 +176,9 @@ function loginWithWechatProfile(userInfo, customNickname = '') {
 }
 
 /**
- * 微信授权后自动登录：老用户直接登录，新用户用于后续昵称确认
+ * 【已废弃】微信授权后自动登录
+ * wx.getUserProfile 已被废弃，此函数不再正常工作
+ * @deprecated 使用 cloudLoginDirect 替代
  * @param {Object} userInfo 微信授权返回的 userInfo
  * @returns {Promise<{user: Object, isNewUser: boolean}>}
  */
@@ -183,7 +223,8 @@ function autoLoginWithWechatProfile(userInfo) {
 }
 
 /**
- * 兼容旧调用：一步式微信登录
+ * 【已废弃】兼容旧调用：一步式微信登录（依赖废弃 API）
+ * @deprecated 使用 cloudLoginDirect 替代
  */
 function wechatLogin(customNickname = '') {
   return requestWechatProfile().then((userInfo) => {
@@ -352,6 +393,7 @@ async function resolveUsersAvatarUrls(users, getUrl, setUrl) {
 module.exports = {
   ensureLogin,
   logout,
+  cloudLoginDirect,
   requestWechatProfile,
   requestWechatProfileWithFallback,
   autoLoginWithWechatProfile,

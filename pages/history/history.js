@@ -47,8 +47,12 @@ Page({
       price: '',
       weight: '',
       date: '',
-      platformIndex: 0
+      platformIndex: 0,
+      platformName: '',
+      platformFeeRate: ''
     },
+    showEditPlatformNameInput: false,
+    showEditPlatformFeeInput: false,
     goldViewUsers: [],
     goldViewIndex: 0,
     goldViewUserId: '',
@@ -174,7 +178,7 @@ Page({
   },
 
   getPlatformOptions(transactions) {
-    return [...storage.PLATFORMS]
+    return storage.getPlatformOptions(this.data.goldViewUserId)
   },
 
   applyRecordFilters() {
@@ -191,7 +195,14 @@ Page({
     const selectedType = typeFilters[typeFilterIndex]
 
     const transactions = (allTransactions || [])
-      .filter(tx => selectedPlatform === '全部' || tx.platform === selectedPlatform)
+      .filter(tx => {
+        if (selectedPlatform === '全部') return true
+        if (selectedPlatform === '自定义') {
+          // 显示为“自定义”的项对应存储中的 '其他'（或空值）
+          return String(tx.platform || '') === '其他' || !(String(tx.platform || '').trim())
+        }
+        return tx.platform === selectedPlatform
+      })
       .filter(tx => selectedType === '全部' || (selectedType === '买入' ? tx.type === 'buy' : tx.type === 'sell'))
       .map(tx => ({
         ...tx,
@@ -526,6 +537,125 @@ Page({
     })
   },
 
+  async deleteSelected() {
+    if (this.data.isGoldReadOnly) {
+      wx.showToast({ title: '好友视图不可删除', icon: 'none' })
+      return
+    }
+
+    const { allTransactions, selectedTxIds } = this.data
+    if (!Array.isArray(selectedTxIds) || selectedTxIds.length === 0) {
+      wx.showToast({ title: '请选择至少一条记录', icon: 'none' })
+      return
+    }
+
+    const confirmed = await new Promise((resolve) => {
+      wx.showModal({
+        title: '删除确认',
+        content: `删除后不可恢复，确定删除所选 ${selectedTxIds.length} 条记录吗？`,
+        success: (res) => resolve(!!res.confirm)
+      })
+    })
+
+    if (!confirmed) return
+
+    wx.showLoading({ title: '删除中...' })
+    try {
+      // 按时间降序删除，减少因时间序列导致的校验失败概率
+      const map = {}
+      ;(allTransactions || []).forEach(tx => { map[tx.id] = tx })
+
+      const parseTs = (t) => {
+        if (!t) return 0
+        const s = String(t).trim().replace(' ', 'T')
+        const v = new Date(s).getTime()
+        return Number.isFinite(v) ? v : 0
+      }
+
+      const ids = [...selectedTxIds].sort((a, b) => {
+        return (parseTs(map[b] && (map[b].timestamp || map[b].date)) || 0) - (parseTs(map[a] && (map[a].timestamp || map[a].date)) || 0)
+      })
+
+      for (let i = 0; i < ids.length; i++) {
+        const txId = ids[i]
+        // 使用异步删除以兼容云端与本地
+        // storage.deleteTransactionAsync 会在云端环境下调用云函数
+        // 并在本地环境下执行校验性删除
+        // 若失败则抛出错误并中断操作
+        // eslint-disable-next-line no-await-in-loop
+        const res = await storage.deleteTransactionAsync(txId)
+        if (!res || !res.success) {
+          throw new Error((res && res.message) || '删除失败')
+        }
+      }
+
+      wx.showToast({ title: '删除成功', icon: 'success' })
+      this.setData({ selectedTxIds: [], selectedCount: 0 })
+      this.refreshPage()
+    } catch (error) {
+      wx.showToast({ title: (error && error.message) || '删除失败', icon: 'none' })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  async deleteQuerySelected() {
+    if (this.data.isGoldReadOnly) {
+      wx.showToast({ title: '好友视图不可删除', icon: 'none' })
+      return
+    }
+
+    const { queryResultTransactions, querySelectedTxIds } = this.data
+    if (!Array.isArray(querySelectedTxIds) || querySelectedTxIds.length === 0) {
+      wx.showToast({ title: '请选择至少一条记录', icon: 'none' })
+      return
+    }
+
+    const confirmed = await new Promise((resolve) => {
+      wx.showModal({
+        title: '删除确认',
+        content: `删除后不可恢复，确定删除所选 ${querySelectedTxIds.length} 条记录吗？`,
+        success: (res) => resolve(!!res.confirm)
+      })
+    })
+
+    if (!confirmed) return
+
+    wx.showLoading({ title: '删除中...' })
+    try {
+      const map = {}
+      ;(queryResultTransactions || []).forEach(tx => { map[tx.id] = tx })
+
+      const parseTs = (t) => {
+        if (!t) return 0
+        const s = String(t).trim().replace(' ', 'T')
+        const v = new Date(s).getTime()
+        return Number.isFinite(v) ? v : 0
+      }
+
+      const ids = [...querySelectedTxIds].sort((a, b) => {
+        return (parseTs(map[b] && (map[b].timestamp || map[b].date)) || 0) - (parseTs(map[a] && (map[a].timestamp || map[a].date)) || 0)
+      })
+
+      for (let i = 0; i < ids.length; i++) {
+        const txId = ids[i]
+        // eslint-disable-next-line no-await-in-loop
+        const res = await storage.deleteTransactionAsync(txId)
+        if (!res || !res.success) {
+          throw new Error((res && res.message) || '删除失败')
+        }
+      }
+
+      wx.showToast({ title: '删除成功', icon: 'success' })
+      this.setData({ queryResultTransactions: (queryResultTransactions || []).map(tx => ({ ...tx, selected: false })), querySelectedTxIds: [], querySelectedCount: 0, queryCustomStats: null })
+      this.loadTransactions()
+    } catch (error) {
+      wx.showToast({ title: (error && error.message) || '删除失败', icon: 'none' })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
   editTransaction(e) {
     if (this.data.isGoldReadOnly) {
       wx.showToast({ title: '好友视图不可修改', icon: 'none' })
@@ -536,7 +666,33 @@ Page({
     if (!tx) {
       return
     }
-    const platformIndex = this.data.platforms.findIndex(item => item === tx.platform)
+    // 页面显示中 '其他' 显示为 '自定义'，需要映射
+    const targetDisplay = tx.platform === '其他' ? '自定义' : tx.platform
+    const platformIndex = this.data.platforms.findIndex(item => item === targetDisplay)
+
+    // 决定平台名称与手续费的初始展示（自定义平台默认手续费为 0）
+    let platformNameValue = ''
+    let platformFeeRateValue = 0
+    let showNameInput = false
+    let showFeeInput = false
+
+    if (targetDisplay === '自定义') {
+      platformNameValue = ''
+      platformFeeRateValue = (tx.fee_rate !== undefined && tx.fee_rate !== null) ? String(tx.fee_rate) : '0'
+      showNameInput = true
+      showFeeInput = true
+    } else if (!storage.PLATFORMS.includes(targetDisplay)) {
+      // 已存在的自定义命名平台
+      platformNameValue = targetDisplay
+      platformFeeRateValue = (tx.fee_rate !== undefined && tx.fee_rate !== null) ? String(tx.fee_rate) : '0'
+      showNameInput = false
+      showFeeInput = true
+    } else {
+      platformNameValue = targetDisplay
+      platformFeeRateValue = targetDisplay === '招商' ? '0' : '0.004'
+      showNameInput = false
+      showFeeInput = false
+    }
 
     this.setData({
       editVisible: true,
@@ -546,8 +702,12 @@ Page({
         price: String(tx.price),
         weight: String(tx.weight),
         date: tx.date,
-        platformIndex: platformIndex >= 0 ? platformIndex : 0
-      }
+        platformIndex: platformIndex >= 0 ? platformIndex : 0,
+        platformName: platformNameValue,
+        platformFeeRate: platformFeeRateValue
+      },
+      showEditPlatformNameInput: showNameInput,
+      showEditPlatformFeeInput: showFeeInput
     })
   },
 
@@ -576,21 +736,79 @@ Page({
   },
 
   onEditPlatformChange(e) {
+    const platformIndex = parseInt(e.detail.value, 10)
+    if (Number.isNaN(platformIndex)) return
+    const platformOptions = this.data.platforms || []
+    const selectedPlatform = platformOptions[platformIndex]
+
+    let platformName = ''
+    let platformFeeRate = ''
+    let showNameInput = false
+    let showFeeInput = false
+
+    if (selectedPlatform === '自定义') {
+      platformName = ''
+      platformFeeRate = '0'
+      showNameInput = true
+      showFeeInput = true
+    } else if (!storage.PLATFORMS.includes(selectedPlatform)) {
+      platformName = selectedPlatform
+      platformFeeRate = '0'
+      showNameInput = false
+      showFeeInput = true
+    } else {
+      platformName = selectedPlatform
+      platformFeeRate = selectedPlatform === '招商' ? '0' : '0.004'
+      showNameInput = false
+      showFeeInput = false
+    }
+
     this.setData({
-      'editForm.platformIndex': parseInt(e.detail.value, 10)
+      'editForm.platformIndex': platformIndex,
+      'editForm.platformName': platformName,
+      'editForm.platformFeeRate': platformFeeRate,
+      showEditPlatformNameInput: showNameInput,
+      showEditPlatformFeeInput: showFeeInput
     })
+  },
+
+  onEditPlatformNameInput(e) {
+    this.setData({
+      'editForm.platformName': String(e.detail.value || '').trim().slice(0, 20)
+    })
+  },
+
+  onEditPlatformFeeRateInput(e) {
+    const raw = String(e.detail.value || '').trim()
+    this.setData({ 'editForm.platformFeeRate': raw })
   },
 
   async submitEdit() {
     const form = this.data.editForm
 
-    const result = await storage.updateTransactionAsync(form.id, {
+    const chosen = this.data.platforms[form.platformIndex]
+    let platformToSave = ''
+    if (chosen === '自定义') {
+      const nameInput = String(form.platformName || '').trim()
+      platformToSave = nameInput || '其他'
+    } else {
+      platformToSave = chosen
+    }
+
+    const rawFee = String(form.platformFeeRate || '')
+    const feeRateRaw = rawFee !== '' ? Number(rawFee) : NaN
+    const feeRateValid = rawFee !== '' && Number.isFinite(feeRateRaw) && feeRateRaw >= 0
+
+    const payload = {
       type: form.type,
       price: parseFloat(form.price),
       weight: parseFloat(form.weight),
       date: form.date,
-      platform: this.data.platforms[form.platformIndex]
-    })
+      platform: platformToSave
+    }
+    if (feeRateValid) payload.fee_rate = feeRateRaw
+
+    const result = await storage.updateTransactionAsync(form.id, payload)
 
     if (!result.success) {
       wx.showToast({

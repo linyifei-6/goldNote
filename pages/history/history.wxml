@@ -169,6 +169,7 @@
       <view class="btn-row" wx:if="{{querySelectedCount > 0 && !isGoldReadOnly}}">
         <button class="btn secondary" bindtap="clearQuerySelection">清空选择</button>
         <button class="btn" bindtap="calculateQueryCustom">计算均价</button>
+        <button class="btn danger" bindtap="deleteQuerySelected">全部删除</button>
       </view>
 
       <view class="selected-stats-wrap selected-stats-top" wx:if="{{queryCustomStats}}">
@@ -406,6 +407,7 @@
   <view class="floating-action-bar" wx:if="{{selectedCount > 0 && !isGoldReadOnly}}">
     <button class="btn secondary" bindtap="clearSelection">清空选择</button>
     <button class="btn" bindtap="calculateCustom">计算均价</button>
+    <button class="btn danger" bindtap="deleteSelected">全部删除</button>
   </view>
 
   <view class="edit-mask" wx:if="{{editVisible}}">
@@ -428,6 +430,16 @@
           <view class="picker">{{platforms[editForm.platformIndex]}}</view>
           <text class="picker-arrow">›</text>
         </picker>
+      </view>
+
+      <view class="form-item" wx:if="{{showEditPlatformNameInput}}">
+        <text class="form-label">平台名称</text>
+        <input class="form-input" placeholder="输入平台名称（最多20字）" value="{{editForm.platformName}}" bindinput="onEditPlatformNameInput" />
+      </view>
+
+      <view class="form-item" wx:if="{{showEditPlatformFeeInput}}">
+        <text class="form-label">手续费率（小数）</text>
+        <input class="form-input" type="digit" placeholder="例如 0.004 表示 0.4%" value="{{editForm.platformFeeRate}}" bindinput="onEditPlatformFeeRateInput" />
       </view>
 
       <view class="form-item">
@@ -458,7 +470,7 @@
     <view class="profile-row">
       <text class="profile-label">头像</text>
       <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
-        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/主页.png'}}" mode="aspectFill" />
         <text class="profile-op">修改</text>
       </view>
     </view>

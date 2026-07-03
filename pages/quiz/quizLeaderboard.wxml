@@ -1,0 +1,37 @@
+<view class="container">
+  <view class="header">
+    <text class="title">排行榜</text>
+  </view>
+  <view class="tab-nav">
+    <view class="tab {{sortBy === 'points' ? 'active' : ''}}" data-sort="points" bindtap="onSortTab">竞猜积分</view>
+    <view class="tab {{sortBy === 'wealth' ? 'active' : ''}}" data-sort="wealth" bindtap="onSortTab">财富榜</view>
+    <view class="tab {{sortBy === 'accuracy' ? 'active' : ''}}" data-sort="accuracy" bindtap="onSortTab">命中率</view>
+  </view>
+  <view class="list" wx:if="{{leaderboard.length > 0}}">
+    <view class="item {{item.userId === currentUserId ? 'myself' : ''}}"
+          wx:for="{{leaderboard}}" wx:key="userId">
+      <text class="rank">#{{item.rank}}</text>
+      <view class="avatar-wrap">
+        <image class="avatar" src="{{item.avatarUrl}}" mode="aspectFill" wx:if="{{item.avatarUrl}}" />
+        <view class="avatar-placeholder" wx:else>{{item.nickname.charAt(0)}}</view>
+      </view>
+      <view class="info">
+        <text class="nickname">{{item.nickname}}</text>
+        <text class="detail">
+          <block wx:if="{{sortBy === 'wealth'}}">资产 {{item.bettingAssets}} | 盈亏 {{item.bettingProfit}} | 连对 {{item.currentStreak}}</block>
+          <block wx:elif="{{sortBy === 'accuracy'}}">命中率 {{item.accuracy}}% | 连对 {{item.currentStreak}}</block>
+          <block wx:else>积分 {{item.totalPoints}} | 命中 {{item.correctPredictions}} / {{item.totalPredictions}}</block>
+        </text>
+      </view>
+      <text class="score">
+        {{sortBy === 'points' ? item.totalPoints : sortBy === 'wealth' ? item.bettingAssets : item.accuracy + '%'}}
+      </text>
+    </view>
+  </view>
+  <view class="empty" wx:else><text>暂无排行数据</text></view>
+  <view class="my-rank" wx:if="{{myRank}}">
+    <text wx:if="{{sortBy === 'wealth'}}">你的排名: #{{myRank.rank}} | 资产{{myRank.bettingAssets}} | 盈亏{{myRank.bettingProfit}}</text>
+    <text wx:elif="{{sortBy === 'accuracy'}}">你的排名: #{{myRank.rank}} | 命中{{myRank.accuracy}}% | 连对{{myRank.currentStreak}}</text>
+    <text wx:else>你的排名: #{{myRank.rank}} | {{myRank.totalPoints}}分 | 命中{{myRank.accuracy}}%</text>
+  </view>
+</view>

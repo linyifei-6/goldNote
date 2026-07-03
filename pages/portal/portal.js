@@ -44,10 +44,17 @@ Page({
 
   onGoWorkout() {
     this.ensureGuestSession()
-    wx.navigateTo({ url: '/pages/workoutStats/workoutStats' })
+    wx.navigateTo({ url: '/pages/workout/workoutStats' })
   },
 
-  onGoSocial() {
+  
+  onGoQuiz: function() {
+    var user = this.ensureGuestSession()
+    if (!user) return
+    wx.navigateTo({ url: '/pages/quiz/quiz' })
+  },
+
+onGoSocial() {
     wx.navigateTo({ url: '/pages/social/social?scene=gold' })
   },
 

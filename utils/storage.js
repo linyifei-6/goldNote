@@ -139,10 +139,24 @@ function normalizePlatformName(platform, allowEmpty) {
   if (!text) {
     return allowEmpty ? '' : '其他'
   }
-  if (PLATFORMS.includes(text)) {
-    return text
+  // 保留用户输入的平台名（允许自定义），仅在为空时返回 '其他'（或空字符串）
+  return text
+}
+
+function getPlatformOptions(userId) {
+  // 返回页面下拉/筛选使用的列表：基础平台（'其他' 显示为 '自定义'）+ 用户交易中出现的自定义平台
+  try {
+    const transactions = getTransactions(userId) || []
+    const used = transactions
+      .map(tx => String(tx.platform || '').trim())
+      .filter(name => name.length > 0)
+    const extras = Array.from(new Set(used.filter(name => !PLATFORMS.includes(name))))
+    const base = PLATFORMS.map(p => (p === '其他' ? '自定义' : p))
+    return [...base, ...extras]
+  } catch (error) {
+    console.error('获取平台选项失败', error)
+    return PLATFORMS.map(p => (p === '其他' ? '自定义' : p))
   }
-  return '其他'
 }
 
 function getTransactionsStorageKey(userId) {
@@ -730,25 +744,32 @@ function buildTransactionFromInput(input, options = {}) {
   const weight = parseFloat(input.weight)
   const type = input.type
   const platform = normalizePlatformName(input.platform, false)
-
-  let feeRate = 0
-  let feeAmount = 0
-  let netAmount = 0
+  // 允许通过 input.fee_rate 指定手续费率（小数，例如 0.004 表示 0.4%）
+  let feeRate = Number(input.fee_rate)
+  const feeRateIsValid = Number.isFinite(feeRate) && feeRate >= 0
 
   if (type === 'sell') {
-    // 招商平台卖出不收手续费，其他平台收0.4%手续费
-    if (platform === '招商') {
-      feeRate = 0
-      feeAmount = 0
-      netAmount = price * weight
+    if (feeRateIsValid) {
+      // 使用显式传入的费率
+      feeRate = feeRate
     } else {
-      feeRate = 0.004
-      feeAmount = price * weight * feeRate
-      netAmount = price * weight * 0.996
+      // 招商平台默认 0，标准平台（存在于 PLATFORMS 且非招商）默认 0.004，其他自定义平台默认 0
+      if (platform === '招商') {
+        feeRate = 0
+      } else if (PLATFORMS.includes(platform)) {
+        feeRate = 0.004
+      } else {
+        // 自定义平台（不在 PLATFORMS 中）默认 0
+        feeRate = 0
+      }
     }
   } else {
-    netAmount = -(price * weight)
+    // 买入场景不收手续费，默认为 0，除非显式传入（保留兼容性）
+    feeRate = feeRateIsValid ? feeRate : 0
   }
+
+  const feeAmount = type === 'sell' ? price * weight * feeRate : 0
+  const netAmount = type === 'sell' ? price * weight - feeAmount : -(price * weight)
 
   return {
     id: options.id,
@@ -777,6 +798,13 @@ function validateTransactionInput(input, transactions, editingId) {
 
   if (!platform) {
     return { valid: false, message: '交易平台不能为空' }
+  }
+
+  if (input.fee_rate !== undefined && input.fee_rate !== null) {
+    const feeRate = Number(input.fee_rate)
+    if (!Number.isFinite(feeRate) || feeRate < 0) {
+      return { valid: false, message: '手续费率需为非负数字' }
+    }
   }
 
   if (!(price > 0)) {
@@ -1394,6 +1422,7 @@ function getWeddingTasks(userId) {
         budgetAmount: Math.max(0, parseFloat(item.budgetAmount) || 0),
         actualAmount: Math.max(0, parseFloat(item.actualAmount) || 0),
         note: sanitizeWeddingText(item.note, 300),
+        noteImages: Array.isArray(item.noteImages) ? item.noteImages : [],
         sortOrder: Number(item.sortOrder) || 0,
         createdAt: item.createdAt || '',
         updatedAt: item.updatedAt || ''
@@ -1442,6 +1471,7 @@ function createWeddingTask(input, userId) {
       budgetAmount: Math.max(0, parseFloat(input && input.budgetAmount) || 0),
       actualAmount: Math.max(0, parseFloat(input && input.actualAmount) || 0),
       note: sanitizeWeddingText(input && input.note, 300),
+      noteImages: Array.isArray(input && input.noteImages) ? input.noteImages : [],
       sortOrder: maxOrder + 1,
       createdAt: now,
       updatedAt: now
@@ -1504,6 +1534,7 @@ function updateWeddingTask(taskId, input, userId) {
       budgetAmount: Math.max(0, parseFloat(input && input.budgetAmount) || 0),
       actualAmount: Math.max(0, parseFloat(input && input.actualAmount) || 0),
       note: sanitizeWeddingText(input && input.note, 300),
+      noteImages: Array.isArray(input && input.noteImages) ? input.noteImages : (current.noteImages || []),
       updatedAt: new Date().toISOString()
     }
 
@@ -1977,4 +2008,6 @@ module.exports = {
   createWeddingNote,
   updateWeddingNote,
   deleteWeddingNote
+  ,
+  getPlatformOptions
 }

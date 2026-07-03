@@ -282,7 +282,7 @@
     <view class="profile-row">
       <text class="profile-label">头像</text>
       <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
-        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/主页.png'}}" mode="aspectFill" />
         <text class="profile-op">修改</text>
       </view>
     </view>
@@ -333,6 +333,16 @@
     </view>
     <view class="picker-label">备注</view>
     <textarea class="textarea" maxlength="300" placeholder="可记录进展或注意事项" value="{{taskEditForm.note}}" bindinput="onTaskEditNoteInput" />
+    <view class="picker-label">图片备注</view>
+    <view class="image-upload-row">
+      <block wx:for="{{taskEditForm.noteImages}}" wx:key="*this">
+        <view class="image-thumbnail" data-index="{{index}}" bindtap="onPreviewTaskEditImages">
+          <image src="{{item}}" mode="aspectFill" />
+          <view class="image-remove" data-index="{{index}}" catchtap="onRemoveTaskEditImage">×</view>
+        </view>
+      </block>
+      <button class="mini-btn" bindtap="onAddTaskEditImage">添加图片</button>
+    </view>
     <view class="picker-label">预算支出（元）</view>
     <input class="input" type="digit" placeholder="请输入花费金额" value="{{taskEditForm.budgetAmount}}" bindinput="onTaskEditAmountInput" />
     <view class="picker-label">实际支出（元）</view>
@@ -354,6 +364,16 @@
     <view class="detail-line">实际支出：{{taskDetailActualText}} 元</view>
     <view class="picker-label">备注</view>
     <textarea class="textarea" maxlength="300" placeholder="填写任务备注" value="{{taskDetailNote}}" bindinput="onTaskDetailNoteInput" />
+    <view class="picker-label">图片备注</view>
+    <view class="image-upload-row">
+      <block wx:for="{{taskDetailImages}}" wx:key="*this">
+        <view class="image-thumbnail" data-index="{{index}}" bindtap="onPreviewTaskDetailImages">
+          <image src="{{item}}" mode="aspectFill" />
+          <view class="image-remove" data-index="{{index}}" catchtap="onRemoveTaskDetailImage">×</view>
+        </view>
+      </block>
+      <button class="mini-btn" bindtap="onAddTaskDetailImage">添加图片</button>
+    </view>
     <view class="btn-row">
       <button class="mini-btn" bindtap="onCloseTaskDetail">关闭</button>
       <button class="mini-btn confirm" bindtap="onSaveTaskDetail">保存备注</button>

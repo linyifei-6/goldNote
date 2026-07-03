@@ -3,25 +3,18 @@ const storage = require('../../utils/storage')
 
 Page({
   data: {
-    loginLoading: false,
     nickname: '',
-    authorizedUserInfo: null,
-    needNicknameConfirm: false
+    loginLoading: false
   },
 
   onShow() {
     const user = storage.getCurrentUser()
-    if (user && user.isWechatAuth) {
+    if (user && (user.isWechatAuth || user.isGuest)) {
       wx.redirectTo({ url: '/pages/portal/portal' })
       return
     }
 
-    this.setData({
-      nickname: '',
-      authorizedUserInfo: null,
-      needNicknameConfirm: false,
-      loginLoading: false
-    })
+    this.setData({ loginLoading: false })
   },
 
   onNicknameInput(e) {
@@ -31,7 +24,8 @@ Page({
   },
 
   /**
-   * 第一步：微信授权
+   * ?????????????? OPENID ????
+   * ?? wx.getUserProfile?? API ???????
    */
   onWechatLogin() {
     if (this.data.loginLoading) {
@@ -40,46 +34,28 @@ Page({
 
     this.setData({ loginLoading: true })
 
-    auth.requestWechatProfile()
-      .then(userInfo => {
-        if (!userInfo) {
-          throw new Error('未获取到微信用户信息')
+    const nickname = String(this.data.nickname || '').trim()
+
+    auth.cloudLoginDirect(nickname)
+      .then((user) => {
+        if (!user) {
+          throw new Error('??????????')
         }
 
-        return auth.autoLoginWithWechatProfile(userInfo).then(({ user, isNewUser }) => {
-          if (!user) {
-            throw new Error('微信登录失败，请重试')
-          }
+        const app = getApp()
+        if (app && typeof app.refreshGlobalState === 'function') {
+          app.refreshGlobalState()
+        }
 
-          if (!isNewUser) {
-            const app = getApp()
-            app.refreshGlobalState()
-            wx.redirectTo({ url: '/pages/portal/portal' })
-            return
-          }
-
-          this.setData({
-            authorizedUserInfo: userInfo,
-            nickname: user.nickName || user.nickname || userInfo.nickName || '',
-            needNicknameConfirm: true
-          })
-        })
+        wx.showToast({ title: '登录成功', icon: 'success' })
+        wx.redirectTo({ url: '/pages/portal/portal' })
       })
       .catch(error => {
         console.error('微信登录失败', error)
-        
-        if (error.errMsg && error.errMsg.includes('cancel')) {
-          // 用户取消授权
-          wx.showToast({
-            title: '已取消授权登录',
-            icon: 'none'
-          })
-        } else {
-          wx.showToast({
-            title: error.message || '微信登录失败，请重试',
-            icon: 'none'
-          })
-        }
+        wx.showToast({
+          title: error.message || '微信登录失败，请检查网络后重试',
+          icon: 'none'
+        })
       })
       .finally(() => {
         this.setData({ loginLoading: false })
@@ -87,58 +63,26 @@ Page({
   },
 
   /**
-   * 第二步：确认昵称并完成登录
+   * 游客登录：无需微信授权
    */
-  onConfirmWechatLogin() {
-    if (this.data.loginLoading) {
-      return
-    }
-
-    const userInfo = this.data.authorizedUserInfo
-    const nickname = String(this.data.nickname || '').trim()
-    if (!userInfo) {
-      wx.showToast({
-        title: '请先完成微信授权',
-        icon: 'none'
-      })
-      return
-    }
-
-    if (!nickname) {
-      wx.showToast({
-        title: '请输入昵称',
-        icon: 'none'
-      })
-      return
-    }
-
+  onGuestLogin() {
+    if (this.data.loginLoading) return
     this.setData({ loginLoading: true })
 
-    auth.loginWithWechatProfile(userInfo, nickname)
-      .then((user) => {
-        if (!user) {
-          throw new Error('微信登录失败，请重试')
-        }
+    const nickname = String(this.data.nickname || '').trim()
+    const guestUser = storage.loginAsGuest(nickname)
 
-        const app = getApp()
+    if (guestUser) {
+      const app = getApp()
+      if (app && typeof app.refreshGlobalState === 'function') {
         app.refreshGlobalState()
+      }
+      wx.showToast({ title: '已进入游客模式', icon: 'none' })
+      wx.redirectTo({ url: '/pages/portal/portal' })
+    } else {
+      wx.showToast({ title: '创建游客会话失败', icon: 'none' })
+    }
 
-        wx.showToast({
-          title: `欢迎你，${user.nickname}`,
-          icon: 'none'
-        })
-
-        wx.redirectTo({ url: '/pages/portal/portal' })
-      })
-      .catch((error) => {
-        console.error('确认登录失败', error)
-        wx.showToast({
-          title: error.message || '微信登录失败，请重试',
-          icon: 'none'
-        })
-      })
-      .finally(() => {
-        this.setData({ loginLoading: false })
-      })
+    this.setData({ loginLoading: false })
   }
 })

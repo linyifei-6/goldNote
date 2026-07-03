@@ -51,6 +51,12 @@
     <view class="choice-cta">进入运动分析</view>
   </view>
 
+  <view class="choice-card quiz" bindtap="onGoQuiz">
+    <view class="choice-title">竞猜笔记</view>
+    <view class="choice-desc">世界杯竞猜、赛程浏览、下注积分</view>
+    <view class="choice-cta">进入竞猜笔记</view>
+  </view>
+
   <view class="profile-modal-mask" wx:if="{{profileModalVisible}}" bindtap="onCloseProfileModal"></view>
   <view class="profile-modal-card" wx:if="{{profileModalVisible}}">
     <view class="profile-modal-head">
@@ -60,7 +66,7 @@
     <view class="profile-row">
       <text class="profile-label">头像</text>
       <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
-        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/主页.png'}}" mode="aspectFill" />
         <text class="profile-op">修改</text>
       </view>
     </view>

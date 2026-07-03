@@ -336,3 +336,11 @@
   color: #b45309;
   border-color: #fed7aa;
 }
+
+.choice-card.quiz {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+.choice-card.quiz .choice-cta {
+  color: #667eea;
+  border-color: #667eea;
+}

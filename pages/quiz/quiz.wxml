@@ -1,0 +1,85 @@
+<wxs src="../../utils/fmt.wxs" module="fmt" />
+<view class="container">
+  <view class="header">
+    <view class="header-left">
+      <text class="title">竞猜笔记</text>
+      <text class="subtitle">2026世界杯</text>
+    </view>
+    <view class="header-right" wx:if="{{userStats}}">
+      <text class="stat-item">积分 {{userStats.totalPoints}}</text>
+      <text class="stat-item">命中 {{userStats.accuracy}}%</text>
+    </view>
+  </view>
+
+  <view class="stats-bar" wx:if="{{myPool}}">
+    <text>下注池: {{myPool.totalPoints}}分</text>
+    <text wx:if="{{myPool.betProfit > 0}}">盈亏: +{{myPool.betProfit}}分</text>
+    <text wx:if="{{myPool.betProfit < 0}}">盈亏: {{myPool.betProfit}}分</text>
+  </view>
+
+  <view class="mode-nav">
+    <view class="mode-tab {{viewMode === 'upcoming' ? 'active' : ''}}" data-mode="upcoming" bindtap="onViewModeTap">未来赛程</view>
+    <view class="mode-tab {{viewMode === 'history' ? 'active' : ''}}" data-mode="history" bindtap="onViewModeTap">历史赛程</view>
+  </view>
+
+  <view class="sync-bar">
+    <text>{{roundSummaryText}}</text>
+    <text>{{lastRefreshedText}}</text>
+  </view>
+
+  <view class="maintain-bar" bindtap="onGoScheduleAdmin">
+    <text class="maintain-text">赛程维护 / 发布</text>
+    <text class="maintain-arrow">进入</text>
+  </view>
+
+  <scroll-view class="date-nav" scroll-x="true" show-scrollbar="{{false}}" wx:if="{{dateOptions.length > 0}}">
+    <view wx:for="{{dateOptions}}" wx:key="value" class="date-tab {{item.value === selectedDate ? 'active' : ''}}"
+          data-date="{{item.value}}" bindtap="onDateTabTap">
+      <text>{{item.label}}</text>
+    </view>
+  </scroll-view>
+
+  <view class="my-predictions" wx:if="{{myPredictions.length > 0}}">
+    <view class="section-title">{{myPredictionsTitle}}</view>
+    <view wx:for="{{myPredictions}}" wx:key="id" class="mini-pred">
+      <text class="pred-match">{{item.matchName}}</text>
+      <text class="pred-result">
+        {{item.predictedWinner === 'teamA' ? item.teamAName : item.predictedWinner === 'teamB' ? item.teamBName : '平局'}}
+        <block wx:if="{{item.predictedScoreA != null}}"> {{item.predictedScoreA}}-{{item.predictedScoreB}}</block>
+      </text>
+      <text class="pred-status {{item.status}}">
+        {{item.status === 'scored' ? item.points.total + '分' : item.status === 'pending' ? '待结算' : ''}}
+      </text>
+    </view>
+  </view>
+
+  <view class="round-summary" wx:if="{{rounds.length > 0}}">
+    <text class="round-summary-title">当前轮次</text>
+    <text class="round-summary-text">{{rounds[currentRoundIndex].name}} · 共 {{currentMatches.length}} 场</text>
+  </view>
+
+  <scroll-view class="round-nav" scroll-x="true" show-scrollbar="{{false}}">
+    <view wx:for="{{rounds}}" wx:key="key" class="round-tab {{index === currentRoundIndex ? 'active' : ''}}"
+          data-index="{{index}}" bindtap="onRoundTabTap">
+      <text>{{item.name}}</text>
+    </view>
+  </scroll-view>
+
+  <view class="match-list" wx:if="{{currentMatches.length > 0}}">
+    <block wx:for="{{currentMatches}}" wx:key="id" wx:for-item="match">
+      <quiz-match-card
+        match="{{match}}"
+        prediction="{{predictionMap[match.id] || null}}"
+        teamA="{{match.teamA_label}}" teamB="{{match.teamB_label}}"
+        flagA="{{match.teamA_flag}}" flagB="{{match.teamB_flag}}"
+        bind:matchtap="onMatchTap"
+/>
+    </block>
+  </view>
+  <view class="empty" wx:else><text>暂无比赛数据</text></view>
+
+  <view class="bottom-bar">
+    <view class="bottom-btn" bindtap="onGoLeaderboard">排行榜</view>
+    <view class="bottom-btn secondary" bindtap="onGoMyPredictions">我的预测</view>
+  </view>
+</view>

@@ -1,0 +1,44 @@
+
+.card {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+}
+.card.finished { opacity: 0.8; }
+.match-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16rpx;
+}
+.match-time { font-size: 24rpx; color: #666; }
+.match-status { font-size: 22rpx; padding: 2rpx 12rpx; border-radius: 6rpx; }
+.status-scheduled { background: #e8f5e9; color: #2e7d32; }
+.status-live { background: #ffebee; color: #c62828; }
+.status-finished { background: #f5f5f5; color: #757575; }
+.match-teams {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.team { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6rpx; }
+.flag { font-size: 48rpx; }
+.name { font-size: 28rpx; font-weight: 600; color: #333; }
+.vs-section {
+  flex: none; width: 140rpx;
+  display: flex; flex-direction: column; align-items: center;
+}
+.score { font-size: 36rpx; font-weight: 700; color: #f6b73c; }
+.vs-txt { font-size: 26rpx; color: #999; }
+.penalty { font-size: 20rpx; color: #999; margin-top: 4rpx; }
+.match-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 16rpx; font-size: 24rpx;
+}
+.predicted { color: #f6b73c; }
+.stake { color: #ff9800; }
+.points { color: #4caf50; }
+.profit { font-weight: 600; }
+.green { color: #4caf50; }
+.red { color: #f44336; }
+.unpredicted { color: #999; }
+.odds-preview { display: block; color: #888; margin-top: 6rpx; font-size: 22rpx; }
+.venue { color: #999; }

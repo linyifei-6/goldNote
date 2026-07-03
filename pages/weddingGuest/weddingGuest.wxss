@@ -2,6 +2,7 @@
   min-height: 100vh;
   padding: 20rpx;
   background: linear-gradient(180deg, #fffaf0 0%, #f7f3ef 100%);
+  font-size: 24rpx;
 }
 
 .hero {

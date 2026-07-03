@@ -2,7 +2,7 @@ const workoutStore = require('../../utils/workoutStore')
 const storage = require('../../utils/storage')
 const social = require('../../utils/social')
 const chat = require('../../utils/chat')
-const noteNav = require('../../utils/noteNav')
+const noteNav = require('../workout/noteNav')
 
 Page({
   data: {

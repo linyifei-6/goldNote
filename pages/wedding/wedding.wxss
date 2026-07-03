@@ -2,6 +2,7 @@
   min-height: 100vh;
   padding: 20rpx;
   padding-bottom: 184rpx;
+  font-size: 24rpx;
   background: linear-gradient(180deg, #fff7fb 0%, #fff2f8 48%, #ffeff6 100%);
 }
 
@@ -257,6 +258,41 @@
   margin-bottom: 12rpx;
   box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.06);
 }
+
+.image-upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 10rpx;
+}
+
+.image-thumbnail {
+  position: relative;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.image-thumbnail image {
+  width: 100%;
+  height: 100%;
+}
+
+.image-remove {
+  position: absolute;
+  top: 2rpx;
+  right: 2rpx;
+  width: 24rpx;
+  height: 24rpx;
+  line-height: 24rpx;
+  text-align: center;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 18rpx;
+}
+
 
 .nav-card {
   position: fixed;

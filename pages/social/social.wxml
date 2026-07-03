@@ -15,7 +15,7 @@
     <view class="list-wrap" wx:if="{{searchResults.length > 0}}">
       <view class="user-item" wx:for="{{searchResults}}" wx:key="userId">
         <view class="avatar-wrap">
-          <image class="avatar" src="{{item.avatarUrl || '/images/logo.png'}}" mode="aspectFill" data-user-id="{{item.userId}}" bindtap="onAvatarTap" />
+          <image class="avatar" src="{{item.avatarUrl || '/images/主页.png'}}" mode="aspectFill" data-user-id="{{item.userId}}" bindtap="onAvatarTap" />
           <view
             class="follow-toggle {{item.toggleClass}}"
             data-action="{{item.toggleAction}}"
@@ -43,7 +43,7 @@
     <view class="list-wrap" wx:if="{{displayList.length > 0}}">
       <view class="user-item" wx:for="{{displayList}}" wx:key="uid">
         <view class="avatar-wrap">
-          <image class="avatar" src="{{item.avatarUrl || '/images/logo.png'}}" mode="aspectFill" data-user-id="{{item.userId}}" bindtap="onAvatarTap" />
+          <image class="avatar" src="{{item.avatarUrl || '/images/主页.png'}}" mode="aspectFill" data-user-id="{{item.userId}}" bindtap="onAvatarTap" />
           <view
             class="follow-toggle {{item.toggleClass}}"
             data-action="{{item.toggleAction}}"

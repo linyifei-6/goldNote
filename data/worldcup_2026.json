@@ -1,0 +1,770 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-07-03",
+  "teams": [
+    {
+      "id": "arg",
+      "name": "阿根廷",
+      "shortName": "阿根廷",
+      "flag": ":flag-ar:",
+      "fifaRanking": 7,
+      "group": "A"
+    },
+    {
+      "id": "bra",
+      "name": "巴西",
+      "shortName": "巴西",
+      "flag": ":flag-br:",
+      "fifaRanking": 5,
+      "group": "A"
+    },
+    {
+      "id": "fra",
+      "name": "法国",
+      "shortName": "法国",
+      "flag": ":flag-fr:",
+      "fifaRanking": 2,
+      "group": "B"
+    },
+    {
+      "id": "ger",
+      "name": "德国",
+      "shortName": "德国",
+      "flag": ":flag-de:",
+      "fifaRanking": 11,
+      "group": "B"
+    },
+    {
+      "id": "esp",
+      "name": "西班牙",
+      "shortName": "西班牙",
+      "flag": ":flag-es:",
+      "fifaRanking": 8,
+      "group": "C"
+    },
+    {
+      "id": "por",
+      "name": "葡萄牙",
+      "shortName": "葡萄牙",
+      "flag": ":flag-pt:",
+      "fifaRanking": 6,
+      "group": "C"
+    },
+    {
+      "id": "eng",
+      "name": "英格兰",
+      "shortName": "英格兰",
+      "flag": ":flag-eng:",
+      "fifaRanking": 4,
+      "group": "D"
+    },
+    {
+      "id": "ned",
+      "name": "荷兰",
+      "shortName": "荷兰",
+      "flag": ":flag-nl:",
+      "fifaRanking": 9,
+      "group": "D"
+    },
+    {
+      "id": "ita",
+      "name": "意大利",
+      "shortName": "意大利",
+      "flag": ":flag-it:",
+      "fifaRanking": 10,
+      "group": "E"
+    },
+    {
+      "id": "uru",
+      "name": "乌拉圭",
+      "shortName": "乌拉圭",
+      "flag": ":flag-uy:",
+      "fifaRanking": 14,
+      "group": "E"
+    },
+    {
+      "id": "jpn",
+      "name": "日本",
+      "shortName": "日本",
+      "flag": ":flag-jp:",
+      "fifaRanking": 18,
+      "group": "F"
+    },
+    {
+      "id": "kor",
+      "name": "韩国",
+      "shortName": "韩国",
+      "flag": ":flag-kr:",
+      "fifaRanking": 23,
+      "group": "F"
+    },
+    {
+      "id": "chn",
+      "name": "中国",
+      "shortName": "中国",
+      "flag": ":flag-cn:",
+      "fifaRanking": 78,
+      "group": "G"
+    },
+    {
+      "id": "mex",
+      "name": "墨西哥",
+      "shortName": "墨西哥",
+      "flag": ":flag-mx:",
+      "fifaRanking": 15,
+      "group": "G"
+    },
+    {
+      "id": "usa",
+      "name": "美国",
+      "shortName": "美国",
+      "flag": ":flag-us:",
+      "fifaRanking": 13,
+      "group": "H"
+    },
+    {
+      "id": "can",
+      "name": "加拿大",
+      "shortName": "加拿大",
+      "flag": ":flag-ca:",
+      "fifaRanking": 45,
+      "group": "H"
+    }
+  ],
+  "rounds": [
+    {
+      "key": "group_1",
+      "name": "小组赛第1轮",
+      "matches": [
+        {
+          "id": "G01",
+          "round": "group_1",
+          "teamA": "bra",
+          "teamB": "arg",
+          "matchDate": "2026-06-11",
+          "matchTime": "21:00",
+          "venue": "Sao Paulo",
+          "status": "finished",
+          "scoreA": 2,
+          "scoreB": 1,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 1,
+          "odds": {
+            "teamA": 2.35,
+            "teamB": 2.37,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G02",
+          "round": "group_1",
+          "teamA": "fra",
+          "teamB": "ger",
+          "matchDate": "2026-06-11",
+          "matchTime": "18:00",
+          "venue": "Munich",
+          "status": "finished",
+          "scoreA": 1,
+          "scoreB": 1,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 2,
+          "odds": {
+            "teamA": 2.31,
+            "teamB": 2.41,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G03",
+          "round": "group_1",
+          "teamA": "esp",
+          "teamB": "por",
+          "matchDate": "2026-06-12",
+          "matchTime": "21:00",
+          "venue": "Madrid",
+          "status": "finished",
+          "scoreA": 3,
+          "scoreB": 2,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 3,
+          "odds": {
+            "teamA": 2.37,
+            "teamB": 2.35,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G04",
+          "round": "group_1",
+          "teamA": "eng",
+          "teamB": "ned",
+          "matchDate": "2026-06-12",
+          "matchTime": "18:00",
+          "venue": "London",
+          "status": "finished",
+          "scoreA": 2,
+          "scoreB": 0,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 4,
+          "odds": {
+            "teamA": 2.33,
+            "teamB": 2.39,
+            "draw": 4.18
+          }
+        }
+      ]
+    },
+    {
+      "key": "group_2",
+      "name": "小组赛第2轮",
+      "matches": [
+        {
+          "id": "G05",
+          "round": "group_2",
+          "teamA": "arg",
+          "teamB": "fra",
+          "matchDate": "2026-06-17",
+          "matchTime": "21:00",
+          "venue": "Buenos Aires",
+          "status": "finished",
+          "scoreA": 0,
+          "scoreB": 0,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 5,
+          "odds": {
+            "teamA": 2.39,
+            "teamB": 2.33,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G06",
+          "round": "group_2",
+          "teamA": "ger",
+          "teamB": "esp",
+          "matchDate": "2026-06-17",
+          "matchTime": "18:00",
+          "venue": "Berlin",
+          "status": "finished",
+          "scoreA": 1,
+          "scoreB": 2,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 6,
+          "odds": {
+            "teamA": 2.38,
+            "teamB": 2.34,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G07",
+          "round": "group_2",
+          "teamA": "por",
+          "teamB": "eng",
+          "matchDate": "2026-06-18",
+          "matchTime": "21:00",
+          "venue": "Lisbon",
+          "status": "finished",
+          "scoreA": 2,
+          "scoreB": 2,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 7,
+          "odds": {
+            "teamA": 2.37,
+            "teamB": 2.35,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G08",
+          "round": "group_2",
+          "teamA": "ned",
+          "teamB": "ita",
+          "matchDate": "2026-06-18",
+          "matchTime": "18:00",
+          "venue": "Amsterdam",
+          "status": "finished",
+          "scoreA": 3,
+          "scoreB": 1,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 8,
+          "odds": {
+            "teamA": 2.35,
+            "teamB": 2.36,
+            "draw": 4.18
+          }
+        }
+      ]
+    },
+    {
+      "key": "group_3",
+      "name": "小组赛第3轮",
+      "matches": [
+        {
+          "id": "G09",
+          "round": "group_3",
+          "teamA": "bra",
+          "teamB": "fra",
+          "matchDate": "2026-06-23",
+          "matchTime": "21:00",
+          "venue": "Rio de Janeiro",
+          "status": "finished",
+          "scoreA": 3,
+          "scoreB": 0,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 9,
+          "odds": {
+            "teamA": 2.38,
+            "teamB": 2.34,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G10",
+          "round": "group_3",
+          "teamA": "arg",
+          "teamB": "ger",
+          "matchDate": "2026-06-23",
+          "matchTime": "18:00",
+          "venue": "Buenos Aires",
+          "status": "finished",
+          "scoreA": 2,
+          "scoreB": 1,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 10,
+          "odds": {
+            "teamA": 2.34,
+            "teamB": 2.38,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G11",
+          "round": "group_3",
+          "teamA": "esp",
+          "teamB": "eng",
+          "matchDate": "2026-06-24",
+          "matchTime": "21:00",
+          "venue": "Barcelona",
+          "status": "finished",
+          "scoreA": 1,
+          "scoreB": 1,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 11,
+          "odds": {
+            "teamA": 2.38,
+            "teamB": 2.34,
+            "draw": 4.18
+          }
+        },
+        {
+          "id": "G12",
+          "round": "group_3",
+          "teamA": "por",
+          "teamB": "ned",
+          "matchDate": "2026-06-24",
+          "matchTime": "18:00",
+          "venue": "Porto",
+          "status": "finished",
+          "scoreA": 0,
+          "scoreB": 1,
+          "isKnockout": false,
+          "stage": "group",
+          "sortOrder": 12,
+          "odds": {
+            "teamA": 2.34,
+            "teamB": 2.38,
+            "draw": 4.18
+          }
+        }
+      ]
+    },
+    {
+      "key": "round_32",
+      "name": "1/16决赛",
+      "matches": [
+        {
+          "id": "R32_01",
+          "round": "round_32",
+          "teamA": "bra",
+          "teamB": "jpn",
+          "matchDate": "2026-06-29",
+          "matchTime": "21:00",
+          "venue": "Sao Paulo",
+          "status": "finished",
+          "scoreA": 4,
+          "scoreB": 0,
+          "isKnockout": true,
+          "stage": "round_32",
+          "sortOrder": 13,
+          "odds": {
+            "teamA": 2.1,
+            "teamB": 2.24,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R32_02",
+          "round": "round_32",
+          "teamA": "ned",
+          "teamB": "mex",
+          "matchDate": "2026-06-29",
+          "matchTime": "18:00",
+          "venue": "Amsterdam",
+          "status": "finished",
+          "scoreA": 2,
+          "scoreB": 1,
+          "isKnockout": true,
+          "stage": "round_32",
+          "sortOrder": 14,
+          "odds": {
+            "teamA": 2.13,
+            "teamB": 2.2,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R32_03",
+          "round": "round_32",
+          "teamA": "arg",
+          "teamB": "chn",
+          "matchDate": "2026-06-30",
+          "matchTime": "21:00",
+          "venue": "Buenos Aires",
+          "status": "finished",
+          "scoreA": 3,
+          "scoreB": 0,
+          "isKnockout": true,
+          "stage": "round_32",
+          "sortOrder": 15,
+          "odds": {
+            "teamA": 1.79,
+            "teamB": 2.75,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R32_04",
+          "round": "round_32",
+          "teamA": "ita",
+          "teamB": "jpn",
+          "matchDate": "2026-06-30",
+          "matchTime": "18:00",
+          "venue": "Rome",
+          "status": "finished",
+          "scoreA": 1,
+          "scoreB": 2,
+          "isKnockout": true,
+          "stage": "round_32",
+          "sortOrder": 16,
+          "odds": {
+            "teamA": 2.12,
+            "teamB": 2.21,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R32_05",
+          "round": "round_32",
+          "teamA": "fra",
+          "teamB": "usa",
+          "matchDate": "2026-07-01",
+          "matchTime": "21:00",
+          "venue": "Paris",
+          "status": "finished",
+          "scoreA": 3,
+          "scoreB": 1,
+          "isKnockout": true,
+          "stage": "round_32",
+          "sortOrder": 17,
+          "odds": {
+            "teamA": 2.11,
+            "teamB": 2.23,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R32_06",
+          "round": "round_32",
+          "teamA": "esp",
+          "teamB": "can",
+          "matchDate": "2026-07-01",
+          "matchTime": "18:00",
+          "venue": "Madrid",
+          "status": "finished",
+          "scoreA": 4,
+          "scoreB": 0,
+          "isKnockout": true,
+          "stage": "round_32",
+          "sortOrder": 18,
+          "odds": {
+            "teamA": 1.97,
+            "teamB": 2.41,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R32_07",
+          "round": "round_32",
+          "teamA": "ger",
+          "teamB": "uru",
+          "matchDate": "2026-07-02",
+          "matchTime": "21:00",
+          "venue": "Berlin",
+          "status": "finished",
+          "scoreA": 2,
+          "scoreB": 2,
+          "isKnockout": true,
+          "stage": "round_32",
+          "sortOrder": 19,
+          "scoreAPenalty": 4,
+          "scoreBPenalty": 2,
+          "odds": {
+            "teamA": 2.15,
+            "teamB": 2.18,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R32_08",
+          "round": "round_32",
+          "teamA": "eng",
+          "teamB": "kor",
+          "matchDate": "2026-07-02",
+          "matchTime": "18:00",
+          "venue": "London",
+          "status": "finished",
+          "scoreA": 3,
+          "scoreB": 0,
+          "isKnockout": true,
+          "stage": "round_32",
+          "sortOrder": 20,
+          "odds": {
+            "teamA": 2.06,
+            "teamB": 2.27,
+            "draw": 6.13
+          }
+        }
+      ]
+    },
+    {
+      "key": "round_16",
+      "name": "1/8决赛",
+      "matches": [
+        {
+          "id": "R16_01",
+          "round": "round_16",
+          "teamA": "bra",
+          "teamB": "jpn",
+          "matchDate": "2026-07-03",
+          "matchTime": "18:00",
+          "venue": "Sao Paulo",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "round_16",
+          "sortOrder": 21,
+          "odds": {
+            "teamA": 2.1,
+            "teamB": 2.24,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R16_02",
+          "round": "round_16",
+          "teamA": "ned",
+          "teamB": "ita",
+          "matchDate": "2026-07-03",
+          "matchTime": "21:00",
+          "venue": "Amsterdam",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "round_16",
+          "sortOrder": 22,
+          "odds": {
+            "teamA": 2.16,
+            "teamB": 2.17,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R16_03",
+          "round": "round_16",
+          "teamA": "arg",
+          "teamB": "ger",
+          "matchDate": "2026-07-04",
+          "matchTime": "18:00",
+          "venue": "Buenos Aires",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "round_16",
+          "sortOrder": 23,
+          "odds": {
+            "teamA": 2.14,
+            "teamB": 2.19,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R16_04",
+          "round": "round_16",
+          "teamA": "fra",
+          "teamB": "esp",
+          "matchDate": "2026-07-04",
+          "matchTime": "21:00",
+          "venue": "Paris",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "round_16",
+          "sortOrder": 24,
+          "odds": {
+            "teamA": 2.13,
+            "teamB": 2.2,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R16_05",
+          "round": "round_16",
+          "teamA": "eng",
+          "teamB": "can",
+          "matchDate": "2026-07-05",
+          "matchTime": "18:00",
+          "venue": "London",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "round_16",
+          "sortOrder": 25,
+          "odds": {
+            "teamA": 1.95,
+            "teamB": 2.43,
+            "draw": 6.13
+          }
+        },
+        {
+          "id": "R16_06",
+          "round": "round_16",
+          "teamA": "por",
+          "teamB": "uru",
+          "matchDate": "2026-07-05",
+          "matchTime": "21:00",
+          "venue": "Lisbon",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "round_16",
+          "sortOrder": 26,
+          "odds": {
+            "teamA": 2.12,
+            "teamB": 2.21,
+            "draw": 6.13
+          }
+        }
+      ]
+    },
+    {
+      "key": "quarter",
+      "name": "1/4决赛",
+      "matches": [
+        {
+          "id": "QF_01",
+          "round": "quarter",
+          "teamA": "TBD",
+          "teamB": "TBD",
+          "matchDate": "2026-07-09",
+          "matchTime": "21:00",
+          "venue": "Sao Paulo",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "quarter",
+          "sortOrder": 27,
+          "isPlaceholder": true
+        },
+        {
+          "id": "QF_02",
+          "round": "quarter",
+          "teamA": "TBD",
+          "teamB": "TBD",
+          "matchDate": "2026-07-10",
+          "matchTime": "21:00",
+          "venue": "Madrid",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "quarter",
+          "sortOrder": 28,
+          "isPlaceholder": true
+        }
+      ]
+    },
+    {
+      "key": "semi",
+      "name": "半决赛",
+      "matches": [
+        {
+          "id": "SF_01",
+          "round": "semi",
+          "teamA": "TBD",
+          "teamB": "TBD",
+          "matchDate": "2026-07-13",
+          "matchTime": "21:00",
+          "venue": "Rio de Janeiro",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "semi",
+          "sortOrder": 29,
+          "isPlaceholder": true
+        }
+      ]
+    },
+    {
+      "key": "final",
+      "name": "决赛",
+      "matches": [
+        {
+          "id": "FN_01",
+          "round": "final",
+          "teamA": "TBD",
+          "teamB": "TBD",
+          "matchDate": "2026-07-19",
+          "matchTime": "21:00",
+          "venue": "MetLife Stadium",
+          "status": "scheduled",
+          "scoreA": null,
+          "scoreB": null,
+          "isKnockout": true,
+          "stage": "final",
+          "sortOrder": 30,
+          "isPlaceholder": true
+        }
+      ]
+    }
+  ]
+}

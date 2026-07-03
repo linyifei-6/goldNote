@@ -67,6 +67,16 @@
       </view>
     </view>
 
+    <view class="form-item compact-item" wx:if="{{showPlatformNameInput}}">
+      <text class="form-label">平台名称</text>
+      <input class="form-input" placeholder="输入平台名称（最多20字）" value="{{platformName}}" bindinput="onPlatformNameInput" />
+    </view>
+
+    <view class="form-item compact-item" wx:if="{{showPlatformFeeInput}}">
+      <text class="form-label">手续费率（小数）</text>
+      <input class="form-input" type="digit" placeholder="例如 0.004 表示 0.4%" value="{{platformFeeRate}}" bindinput="onPlatformFeeRateInput" />
+    </view>
+
     <view class="form-item compact-item inline-item">
       <text class="form-label inline-label">交易日期</text>
       <picker class="form-picker inline-picker" mode="date" value="{{date}}" end="{{today}}" bindchange="onDateChange">
@@ -148,7 +158,7 @@
     <view class="profile-row">
       <text class="profile-label">头像</text>
       <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
-        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/主页.png'}}" mode="aspectFill" />
         <text class="profile-op">修改</text>
       </view>
     </view>

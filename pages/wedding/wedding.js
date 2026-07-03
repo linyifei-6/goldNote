@@ -2,7 +2,7 @@ const storage = require('../../utils/storage')
 const auth = require('../../utils/auth')
 const social = require('../../utils/social')
 const chat = require('../../utils/chat')
-const noteNav = require('../../utils/noteNav')
+const noteNav = require('./noteNav')
 
 const INVITEE_STATUS = ['未确认', '已确认']
 const TASK_TYPES = ['婚纱摄影', '婚宴酒店', '婚礼策划', '婚礼服务', '婚礼节点', '婚品物料', '婚房装修', '其他']
@@ -72,6 +72,7 @@ Page({
       priorityIndex: 2,
       dueDate: '',
       note: '',
+      noteImages: [],
       budgetAmount: '',
       actualAmount: ''
     },
@@ -1019,6 +1020,7 @@ Page({
         priorityIndex,
         dueDate: target.dueDate || this.data.today,
         note: target.note || '',
+        noteImages: Array.isArray(target.noteImages) ? target.noteImages : [],
         budgetAmount: (Number(target.budgetAmount) || 0).toFixed(2),
         actualAmount: (Number(target.actualAmount) || 0).toFixed(2)
       }
@@ -1079,6 +1081,66 @@ Page({
     })
   },
 
+  async onAddTaskEditImage() {
+    const user = auth.ensureLogin()
+    if (!user) return
+
+    try {
+      const res = await wx.chooseImage({ count: 9, sizeType: ['compressed'], sourceType: ['album', 'camera'] })
+      const filePaths = res.tempFilePaths || []
+      if (!filePaths.length) return
+
+      wx.showLoading({ title: '上传图片中' })
+
+      const images = Array.isArray(this.data.taskEditForm.noteImages) ? [...this.data.taskEditForm.noteImages] : []
+      for (const filePath of filePaths) {
+        const uploadResult = await wx.cloud.uploadFile({
+          cloudPath: `wedding-task-images/${user.id}/${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`,
+          filePath
+        })
+        if (uploadResult && uploadResult.fileID) {
+          images.push(uploadResult.fileID)
+        }
+      }
+
+      this.setData({ 'taskEditForm.noteImages': images })
+      wx.hideLoading()
+      wx.showToast({ title: '图片已添加', icon: 'success' })
+    } catch (error) {
+      wx.hideLoading()
+      wx.showToast({ title: '图片上传失败', icon: 'none' })
+    }
+  },
+
+  onPreviewTaskEditImages(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    const images = Array.isArray(this.data.taskEditForm.noteImages) ? this.data.taskEditForm.noteImages : []
+    if (!images.length) return
+    wx.previewImage({
+      current: images[index] || images[0],
+      urls: images
+    })
+  },
+
+  async onRemoveTaskEditImage(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    if (!Number.isFinite(index)) return
+
+    const images = Array.isArray(this.data.taskEditForm.noteImages) ? [...this.data.taskEditForm.noteImages] : []
+    if (index < 0 || index >= images.length) return
+
+    const [removed] = images.splice(index, 1)
+    this.setData({ 'taskEditForm.noteImages': images })
+
+    if (removed && removed.startsWith('cloud://')) {
+      try {
+        await wx.cloud.deleteFile({ fileList: [removed] })
+      } catch (err) {
+        console.warn('删除云端任务编辑图片失败', err)
+      }
+    }
+  },
+
   onTaskEditDateChange(e) {
     this.setData({
       'taskEditForm.dueDate': e.detail.value
@@ -1097,6 +1159,7 @@ Page({
       priority: form.priorityIndex + 1,
       dueDate: form.dueDate,
       note: form.note,
+      noteImages: form.noteImages,
       budgetAmount: form.budgetAmount,
       actualAmount: form.actualAmount
     }, this.getWeddingOwnerId())
@@ -1186,6 +1249,7 @@ Page({
       taskDetailVisible: true,
       taskDetail: target,
       taskDetailNote: target.note || '',
+      taskDetailImages: Array.isArray(target.noteImages) ? target.noteImages : [],
       taskDetailBudgetText: (Number(target.budgetAmount) || 0).toFixed(2),
       taskDetailActualText: (Number(target.actualAmount) || 0).toFixed(2)
     })
@@ -1195,6 +1259,69 @@ Page({
     this.setData({
       taskDetailNote: e.detail.value
     })
+  },
+
+  async onAddTaskDetailImage() {
+    const user = auth.ensureLogin()
+    if (!user) return
+
+    try {
+      const res = await wx.chooseImage({ count: 9, sizeType: ['compressed'], sourceType: ['album', 'camera'] })
+      const filePaths = res.tempFilePaths || []
+      if (!filePaths.length) return
+
+      wx.showLoading({ title: '上传图片中' })
+
+      const currentImages = Array.isArray(this.data.taskDetailImages) ? [...this.data.taskDetailImages] : []
+
+      for (const filePath of filePaths) {
+        const uploadResult = await wx.cloud.uploadFile({
+          cloudPath: `wedding-task-images/${user.id}/${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`,
+          filePath
+        })
+        if (uploadResult && uploadResult.fileID) {
+          currentImages.push(uploadResult.fileID)
+        }
+      }
+
+      this.setData({ taskDetailImages: currentImages })
+      wx.hideLoading()
+      wx.showToast({ title: '图片已添加', icon: 'success' })
+    } catch (error) {
+      wx.hideLoading()
+      wx.showToast({ title: '图片上传失败', icon: 'none' })
+    }
+  },
+
+  onPreviewTaskDetailImages(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    const images = Array.isArray(this.data.taskDetailImages) ? this.data.taskDetailImages : []
+    if (!images.length) return
+    wx.previewImage({
+      current: images[index] || images[0],
+      urls: images
+    })
+  },
+
+  async onRemoveTaskDetailImage(e) {
+    e.stopPropagation && e.stopPropagation()
+    const index = Number(e.currentTarget.dataset.index)
+    if (!Number.isFinite(index)) return
+
+    const images = Array.isArray(this.data.taskDetailImages) ? [...this.data.taskDetailImages] : []
+    if (index < 0 || index >= images.length) return
+
+    const [removed] = images.splice(index, 1)
+    this.setData({ taskDetailImages: images })
+
+    // 清理云端文件
+    if (removed && removed.startsWith('cloud://')) {
+      try {
+        await wx.cloud.deleteFile({ fileList: [removed] })
+      } catch (err) {
+        console.warn('删除云端任务详情图片失败', err)
+      }
+    }
   },
 
   onSaveTaskDetail() {
@@ -1209,6 +1336,7 @@ Page({
       priority: detail.priority,
       dueDate: detail.dueDate,
       note: this.data.taskDetailNote,
+      noteImages: this.data.taskDetailImages,
       budgetAmount: detail.budgetAmount,
       actualAmount: detail.actualAmount
     }, this.getWeddingOwnerId())

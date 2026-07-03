@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "quiz-match-card": "/components/quiz-match-card/quiz-match-card"
+  },
+  "navigationBarTitleText": "竞猜笔记",
+  "navigationBarBackgroundColor": "#f6b73c",
+  "navigationBarTextStyle": "white"
+}

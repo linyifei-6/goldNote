@@ -2,6 +2,7 @@
   min-height: 100vh;
   padding: 20rpx;
   background: #f7f3ef;
+  font-size: 24rpx;
 }
 
 .tip {

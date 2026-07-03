@@ -34,26 +34,35 @@ function generateTransactionId(platform, existingTransactions) {
   return `${code}${String(maxSerial + 1).padStart(4, '0')}`
 }
 
-function calculateFee(type, price, weight, platform) {
+function calculateFee(type, price, weight, platform, inputFeeRate) {
+  // inputFeeRate 优先，如果未提供则按平台默认：招商=0，内置非招商=0.004，自定义=0
+  let feeRate = Number(inputFeeRate)
+  const hasFeeRate = Number.isFinite(feeRate) && feeRate >= 0
+
   if (type === 'sell') {
-    // 招商平台卖出不收手续费，其他平台收 0.4%
-    if (platform === '招商') {
-      return { feeRate: 0, feeAmount: 0, netAmount: price * weight }
+    if (hasFeeRate) {
+      feeRate = feeRate
+    } else if (platform === '招商') {
+      feeRate = 0
+    } else if (['民生', '浙商'].includes(platform)) {
+      feeRate = 0.004
     } else {
-      const feeRate = 0.004
-      const feeAmount = price * weight * feeRate
-      const netAmount = price * weight * 0.996
-      return { feeRate, feeAmount, netAmount }
+      // 自定义平台或未知平台默认 0
+      feeRate = 0
     }
-  } else {
-    return { feeRate: 0, feeAmount: 0, netAmount: -(price * weight) }
+    const feeAmount = price * weight * feeRate
+    const netAmount = price * weight - feeAmount
+    return { feeRate, feeAmount, netAmount }
   }
+
+  return { feeRate: 0, feeAmount: 0, netAmount: -(price * weight) }
 }
 
 function normalizePlatform(platform) {
   const text = String(platform || '').trim()
   if (!text) return '其他'
-  return ['招商', '民生', '浙商', '其他'].includes(text) ? text : '其他'
+  // 保留自定义平台名，不再统一映射为 '其他'
+  return text
 }
 
 function normalizeDate(dateText, fallbackDate) {
@@ -116,7 +125,7 @@ exports.main = async (event, context) => {
       const timeText = nowBeijing.timeText
       const timestamp = `${txDate} ${timeText}`
 
-      const feeInfo = calculateFee(type, price, weight, platform)
+      const feeInfo = calculateFee(type, price, weight, platform, transaction.fee_rate)
       
       const newTransaction = {
         userId: targetUserId,
@@ -171,7 +180,7 @@ exports.main = async (event, context) => {
 
       const now = new Date()
       const timeText = getBeijingDateTimeParts(now).timeText
-      const feeInfo = calculateFee(type, price, weight, platform)
+      const feeInfo = calculateFee(type, price, weight, platform, updateData.fee_rate !== undefined ? updateData.fee_rate : targetTx.fee_rate)
 
       await transactionsCollection
         .where({ userId: targetUserId, id: id })

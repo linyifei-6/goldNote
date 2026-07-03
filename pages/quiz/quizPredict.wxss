@@ -1,0 +1,57 @@
+
+.container { min-height: 100vh; background: #f5f5f5; padding-bottom: 120rpx; }
+.match-banner {
+  background: linear-gradient(135deg, #f6b73c, #f59e0b);
+  padding: 30rpx; text-align: center; color: #fff;
+}
+.match-meta { font-size: 24rpx; opacity: 0.8; }
+.teams { display: flex; align-items: center; justify-content: center; margin: 20rpx 0; }
+.team { display: flex; flex-direction: column; align-items: center; gap: 8rpx; }
+.flag { font-size: 64rpx; }
+.name { font-size: 32rpx; font-weight: 700; }
+.vstext { margin: 0 40rpx; font-size: 28rpx; opacity: 0.7; }
+.venue { font-size: 22rpx; opacity: 0.7; }
+.section { background: #fff; margin: 16rpx; padding: 24rpx; border-radius: 12rpx; }
+.section-title { font-size: 28rpx; font-weight: 600; color: #333; margin-bottom: 16rpx; }
+.market-text { display: block; font-size: 22rpx; color: #8a6d1d; margin-bottom: 12rpx; }
+.odds-row { display: flex; gap: 12rpx; }
+.odd-item {
+  flex: 1; padding: 20rpx 12rpx; border-radius: 12rpx; border: 2rpx solid #eee;
+  text-align: center; transition: all 0.2s;
+}
+.odd-item.selected { border-color: #f6b73c; background: #fff8e1; }
+.odd-label { display: block; font-size: 24rpx; color: #666; margin-bottom: 8rpx; }
+.odd-value { display: block; font-size: 36rpx; font-weight: 700; color: #f6b73c; }
+.score-row { display: flex; align-items: center; justify-content: center; gap: 20rpx; }
+.score-input {
+  width: 120rpx; height: 88rpx; text-align: center; font-size: 40rpx; font-weight: 700;
+  background: #f4f7fb; border-radius: 12rpx;
+}
+.score-colon { font-size: 40rpx; font-weight: 700; color: #333; }
+.pool-info { display: flex; gap: 24rpx; font-size: 24rpx; color: #666; margin-bottom: 8rpx; }
+.stake-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8rpx; }
+.stake-label { font-size: 28rpx; color: #333; }
+.potential { font-size: 26rpx; color: #4caf50; font-weight: 600; }
+.summary { background: #fff8e1; }
+.summary-label { display: block; font-size: 26rpx; font-weight: 600; color: #f6b73c; margin-bottom: 8rpx; }
+.summary-line { display: block; font-size: 24rpx; color: #666; line-height: 1.8; }
+.highlight { font-size: 28rpx; font-weight: 700; color: #f6b73c; }
+.btn-submit {
+  position: fixed; bottom: 30rpx; left: 30rpx; right: 30rpx;
+  height: 88rpx; line-height: 88rpx; border-radius: 44rpx;
+  background: linear-gradient(135deg, #f6b73c, #f59e0b);
+  color: #fff; font-size: 30rpx; font-weight: 700; text-align: center;
+}
+.btn-submit[disabled] { opacity: 0.5; }
+
+.current-pred { background: #fff8e1; border: 2rpx solid #f6b73c; }
+.pred-text { font-size: 26rpx; color: #333; line-height: 1.6; }
+.pred-hint { font-size: 22rpx; color: #999; margin-top: 8rpx; }
+.knockout-tip {
+  margin: 0 16rpx 18rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  background: #eef5ff;
+  color: #2f5c9e;
+  font-size: 22rpx;
+}

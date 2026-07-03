@@ -177,7 +177,7 @@
     <view class="profile-row">
       <text class="profile-label">头像</text>
       <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
-        <image class="profile-avatar" src="{{user.avatarUrl || '/images/logo.png'}}" mode="aspectFill" />
+        <image class="profile-avatar" src="{{user.avatarUrl || '/images/主页.png'}}" mode="aspectFill" />
         <text class="profile-op">修改</text>
       </view>
     </view>
